@@ -10,33 +10,33 @@ import com.ems.util.ApplicationUtil;
  * This action is shared by both Admin and Organizer menus.
  */
 public class NotificationAction {
-
+    
     private final NotificationService notificationService;
     private final OrganizerService organizerService;
-
+    
     public NotificationAction() {
         this.notificationService = ApplicationUtil.notificationService();
         this.organizerService = ApplicationUtil.organizerService();
     }
-
+    
     /**
      * Displays unread notifications for a user.
      * 
      * @param userId the ID of the user
      */
     public void displayUnreadNotifications(int userId) {
-        notificationService.displayUnreadNotifications(userId);
+    	 notificationService.displayUnreadNotifications(userId);
     }
-
+    
     /**
      * Displays all notifications for a user.
      * 
      * @param userId the ID of the user
      */
     public void displayAllNotifications(int userId) {
-        notificationService.displayAllNotifications(userId);
+    	notificationService.displayAllNotifications(userId);
     }
-
+    
     /**
      * Sends an event update notification to all registered attendees.
      * 
@@ -44,9 +44,9 @@ public class NotificationAction {
      * @param message the message to send
      */
     public void sendEventUpdate(int eventId, String message) {
-        organizerService.sendEventUpdate(eventId, message);
+    	organizerService.sendEventUpdate(eventId, message);
     }
-
+    
     /**
      * Sends a schedule change notification to all registered attendees.
      * 
@@ -54,6 +54,6 @@ public class NotificationAction {
      * @param message the message to send
      */
     public void sendScheduleChange(int eventId, String message) {
-        organizerService.sendScheduleChange(eventId, message);
+    	organizerService.sendScheduleChange(eventId, message);
     }
 }

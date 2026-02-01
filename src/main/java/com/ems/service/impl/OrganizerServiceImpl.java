@@ -394,7 +394,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	        return registrationDao.getTicketSales(organizerId);
 	    } catch (DataAccessException e) {
 	        System.out.println(e.getMessage());
-	        return List.of(); // safe fallback
+	        return List.of(); 
 	    }
 	}
 	
@@ -406,8 +406,13 @@ public class OrganizerServiceImpl implements OrganizerService {
 	        return registrationDao.getRevenueSummary(organizerId);
 	    } catch (DataAccessException e) {
 	        System.out.println(e.getMessage());
-	        return 0.0; // safe fallback
+	        return 0.0; 
 	    }
+	}
+
+	@Override
+	public void sendCancellationRequest(Event selectedEvent, String message) {
+		notificationService.sendPersonalNotification(selectedEvent.getApprovedBy(), message, "CANCELLATION REQUEST");
 	}
 
 

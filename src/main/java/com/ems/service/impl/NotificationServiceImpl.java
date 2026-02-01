@@ -132,4 +132,14 @@ public class NotificationServiceImpl implements NotificationService {
 		}
 	}
 
+	@Override
+	public void sendPersonalNotification(int userId, String message, String type) {
+		try {
+			notificationDao.sendNotification(userId, message, type);
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		
+	}
+
 }

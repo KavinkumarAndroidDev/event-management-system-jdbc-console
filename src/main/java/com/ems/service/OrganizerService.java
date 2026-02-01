@@ -59,4 +59,6 @@ public interface OrganizerService {
     
     Event getOrganizerEventById(int organizerId, int eventId);
 
+	void sendCancellationRequest(Event selectedEvent, String message);
+
 }

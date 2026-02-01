@@ -8,80 +8,152 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.List;
 
-/*
- * Utility methods for date and time handling across the application.
+/**
+ * Central utility class for date and time handling.
  *
  * Responsibilities:
- * - Convert between local time and UTC
- * - Parse and format dates and date-time values
- * - Provide consistent date-time input handling for console interactions
+ * - Standardizes date and time parsing, formatting, and conversions
+ * - Ensures consistent handling of local time and UTC across the application
  *
- * Centralizes date logic to avoid duplication
- * and inconsistent time conversions.
+ * Design notes:
+ * - Date and time values are processed or stored in UTC
+ * - ZonedDateTime is used to explicitly apply system time zone during conversion
+ * - Prevents errors caused by implicit or incorrect time zone assumptions
  */
 public final class DateTimeUtil {
 
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private DateTimeUtil() {
     }
 
-    private static final List<String> DATE_FORMATS =
-            Arrays.asList("yyyy-MM-dd", "dd-MM-yyyy", "dd/MM/yyyy");
+    /**
+     * System default time zone used for local conversions.
+     */
+    private static final ZoneId SYSTEM_ZONE = ZoneId.systemDefault();
 
-    private static final List<String> DATE_TIME_FORMATS =
-            Arrays.asList(
-                    "yyyy-MM-dd HH:mm",
-                    "dd-MM-yyyy HH:mm",
-                    "dd/MM/yyyy HH:mm",
-                    "yyyy-MM-dd HH:mm:ss",
-                    "dd-MM-yyyy HH:mm:ss",
-                    "dd/MM/yyyy HH:mm:ss"
-            );
+    /**
+     * Formatter used for displaying dates in the application.
+     */
+    private static final DateTimeFormatter DISPLAY_DATE_FORMAT =
+            DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-    public static String formatDateTime(LocalDateTime localDateTime) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return "Date: " + localDateTime.toLocalDate().format(formatter)
-                + " Time: " + localDateTime.toLocalTime();
-    }
+    /**
+     * Supported date formats for parsing LocalDate values.
+     */
+    private static final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    );
 
+    /**
+     * Supported date-time formats for parsing LocalDateTime values.
+     */
+    private static final List<DateTimeFormatter> DATE_TIME_FORMATTERS = List.of(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+    );
+
+    /* ===================== CURRENT TIME ===================== */
+
+    /**
+     * Retrieves the current UTC timestamp.
+     *
+     * @return current UTC instant
+     */
     public static Instant getCurrentUtc() {
         return Instant.now();
     }
 
+    /**
+     * Converts a UTC instant to system local time.
+     *
+     * @param utcInstant the UTC instant
+     * @return zoned date-time in system default time zone
+     */
     public static ZonedDateTime convertUtcToLocal(Instant utcInstant) {
-        return utcInstant.atZone(ZoneId.systemDefault());
+        return utcInstant.atZone(SYSTEM_ZONE);
     }
 
+    /* ===================== CONVERSIONS ===================== */
+
+    /**
+     * Converts a SQL Timestamp to UTC instant.
+     *
+     * @param timestamp the SQL timestamp
+     * @return UTC instant
+     */
     public static Instant convertLocalToUtc(Timestamp timestamp) {
         return timestamp.toInstant();
     }
 
+    /**
+     * Converts a LocalDateTime in system default time zone to UTC instant.
+     *
+     * @param localDateTime the local date-time
+     * @return UTC instant
+     */
     public static Instant convertLocalDefaultToUtc(LocalDateTime localDateTime) {
-        return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+        return localDateTime.atZone(SYSTEM_ZONE).toInstant();
     }
 
+    /* ===================== FORMATTING ===================== */
+
+    /**
+     * Formats a LocalDateTime into a user-friendly date and time string.
+     *
+     * @param localDateTime the local date-time to format
+     * @return formatted date-time string
+     */
+    public static String formatDateTime(LocalDateTime localDateTime) {
+        return localDateTime.toLocalDate().format(DISPLAY_DATE_FORMAT)
+                + " " + localDateTime.toLocalTime();
+    }
+
+    /* ===================== PARSING ===================== */
+
+    /**
+     * Parses a date string into a LocalDate using supported formats.
+     *
+     * @param dateString the date string to parse
+     * @return parsed LocalDate or null if parsing fails
+     */
     public static LocalDate parseLocalDate(String dateString) {
-        for (String format : DATE_FORMATS) {
+        if (dateString == null || dateString.isBlank()) {
+            return null;
+        }
+
+        for (DateTimeFormatter formatter : DATE_FORMATTERS) {
             try {
-                return LocalDate.parse(
-                        dateString,
-                        DateTimeFormatter.ofPattern(format)
-                );
+                return LocalDate.parse(dateString, formatter);
             } catch (DateTimeParseException ignored) {
             }
         }
         return null;
     }
 
+    /**
+     * Parses a date-time string into a LocalDateTime using supported formats.
+     *
+     * @param dateTimeString the date-time string to parse
+     * @return parsed LocalDateTime or null if parsing fails
+     */
     public static LocalDateTime parseLocalDateTime(String dateTimeString) {
-        for (String format : DATE_TIME_FORMATS) {
+        if (dateTimeString == null || dateTimeString.isBlank()) {
+            return null;
+        }
+
+        for (DateTimeFormatter formatter : DATE_TIME_FORMATTERS) {
             try {
-                return LocalDateTime.parse(
-                        dateTimeString,
-                        DateTimeFormatter.ofPattern(format)
-                );
+                return LocalDateTime.parse(dateTimeString, formatter);
             } catch (DateTimeParseException ignored) {
             }
         }

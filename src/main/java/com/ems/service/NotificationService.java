@@ -11,4 +11,7 @@ public interface NotificationService {
 	void displayUnreadNotifications(int userId);
 
 	void displayAllNotifications(int userId);
+	
+	//
+	void sendPersonalNotification(int userId, String message, String type);
 }
