@@ -6,6 +6,7 @@ import com.ems.model.Event;
 import com.ems.model.Venue;
 import com.ems.service.AdminService;
 import com.ems.service.EventService;
+import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
@@ -26,66 +27,196 @@ public class AdminVenueManagementAction {
 
     public void addVenue() {
 		Venue venue = new Venue();
+	    String venueName;
+	    while (true) {
+	        venueName = InputValidationUtil.readNonEmptyString(
+	        		ScannerUtil.getScanner(), "Enter the venue name (3 - 100 characters): ");
+	        if (venueName.length() >= 3 && venueName.length() <= 100) {
+	            venue.setName(venueName);
+	            break;
+	        }
+	        System.out.println("Venue name must be between 3 and 100 characters.");
+	    }
 
-		venue.setName(
-				InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the venue name: "));
-		venue.setStreet(InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the street: "));
-		venue.setCity(InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the city: "));
-		venue.setState(InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the state: "));
-		venue.setPincode(
-				InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the pincode: "));
-		venue.setMaxCapacity(
-				InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the maximum capacity: "));
+	    String street;
+	    while (true) {
+	        street = InputValidationUtil.readNonEmptyString(
+	        		ScannerUtil.getScanner(), "Enter the street name (3 - 100 characters): ");
+	        if (street.length() >= 3 && street.length() <= 100) {
+	            venue.setStreet(street);
+	            break;
+	        }
+	        System.out.println("Street name must be between 3 and 100 characters.");
+	    }
 
-        adminService.addVenue(venue);
-		System.out.println("Venue added successfully.");
-    }
+	    String city;
+	    while (true) {
+	        city = InputValidationUtil.readNonEmptyString(
+	        		ScannerUtil.getScanner(), "Enter the city name (3 - 30 characters): ");
+	        if (city.length() >= 3 && city.length() <= 30) {
+	            venue.setCity(city);
+	            break;
+	        }
+	        System.out.println("City name must be between 3 and 30 characters.");
+	    }
+
+	    String state;
+	    while (true) {
+	        state = InputValidationUtil.readNonEmptyString(
+	        		ScannerUtil.getScanner(), "Enter the state name (2 - 30 characters): ");
+	        if (state.length() >= 2 && state.length() <= 30) {
+	            venue.setState(state);
+	            break;
+	        }
+	        System.out.println("State name must be between 2 and 30 characters.");
+	    }
+
+	    String pincode;
+	    while (true) {
+	        pincode = InputValidationUtil.readNonEmptyString(
+	        		ScannerUtil.getScanner(), "Enter the pincode (5 - 10 characters): ");
+	        if (pincode.length() >= 5 && pincode.length() <= 10) {
+	            venue.setPincode(pincode);
+	            break;
+	        }
+	        System.out.println("Pincode must be between 5 and 10 characters.");
+	    }
+
+	    venue.setMaxCapacity(
+	            InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the maximum capacity: ")
+	    );
+
+	    adminService.addVenue(venue);
+	    System.out.println("Venue added successfully.");
+	}
 
     public void updateVenue() {
-		Venue selectedVenue = selectVenue();
-		if (selectedVenue == null)
-			return;
 
-		System.out.println("Press Enter to keep the current value");
+        Venue selectedVenue = selectVenue();
+        if (selectedVenue == null) {
+            return;
+        }
+        
+        if(selectedVenue.getStatus() == false) {
+        	char choice = InputValidationUtil.readChar(ScannerUtil.getScanner(), 
+        			"The selected venue is inactive\nDo you need activate the venue (Y/N): ");
+        	if(choice == 'Y' || choice == 'y') {
+        		adminService.activateVenue(selectedVenue.getVenueId());
+        		System.out.println("Venue activated successfully.");
 
-		String name = InputValidationUtil.readString(ScannerUtil.getScanner(),
-				"Venue name (" + selectedVenue.getName() + "): ");
-		if (!name.isBlank()) {
-			selectedVenue.setName(name);
-		}
+        		return;
+        	}
+        	System.out.println("Action cancelled by user!");
+        	return;
+        }
+        System.out.println("Press Enter to keep the current value");
 
-		String street = InputValidationUtil.readString(ScannerUtil.getScanner(),
-				"Street (" + selectedVenue.getStreet() + "): ");
-		if (!street.isBlank()) {
-			selectedVenue.setStreet(street);
-		}
+        String name;
+        while (true) {
+            name = InputValidationUtil.readString(
+                    ScannerUtil.getScanner(),
+                    "Venue name (" + selectedVenue.getName() + ") [3 - 100]: "
+            );
 
-		String city = InputValidationUtil.readString(ScannerUtil.getScanner(),
-				"City (" + selectedVenue.getCity() + "): ");
-		if (!city.isBlank()) {
-			selectedVenue.setCity(city);
-		}
+            if (name.isBlank()) {
+                break;
+            }
 
-		String state = InputValidationUtil.readString(ScannerUtil.getScanner(),
-				"State (" + selectedVenue.getState() + "): ");
-		if (!state.isBlank()) {
-			selectedVenue.setState(state);
-		}
+            if (name.length() >= 3 && name.length() <= 100) {
+                selectedVenue.setName(name);
+                break;
+            }
 
-		String pincode = InputValidationUtil.readString(ScannerUtil.getScanner(),
-				"Pincode (" + selectedVenue.getPincode() + "): ");
-		if (!pincode.isBlank()) {
-			selectedVenue.setPincode(pincode);
-		}
+            System.out.println("Venue name must be between 3 and 100 characters.");
+        }
 
-		int capacity = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-				"Maximum capacity (" + selectedVenue.getMaxCapacity() + ") enter 0 to skip: ");
-		if (capacity > 0) {
-			selectedVenue.setMaxCapacity(capacity);
-		}
+        String street;
+        while (true) {
+            street = InputValidationUtil.readString(
+                    ScannerUtil.getScanner(),
+                    "Street (" + selectedVenue.getStreet() + ") [3 - 100]: "
+            );
 
-		adminService.updateVenue(selectedVenue);
-		System.out.println("Venue updated successfully");
+            if (street.isBlank()) {
+                break;
+            }
+
+            if (street.length() >= 3 && street.length() <= 100) {
+                selectedVenue.setStreet(street);
+                break;
+            }
+
+            System.out.println("Street name must be between 3 and 100 characters.");
+        }
+
+        String city;
+        while (true) {
+            city = InputValidationUtil.readString(
+                    ScannerUtil.getScanner(),
+                    "City (" + selectedVenue.getCity() + ") [3 - 30]: "
+            );
+
+            if (city.isBlank()) {
+                break;
+            }
+
+            if (city.length() >= 3 && city.length() <= 30) {
+                selectedVenue.setCity(city);
+                break;
+            }
+
+            System.out.println("City name must be between 3 and 30 characters.");
+        }
+
+        String state;
+        while (true) {
+            state = InputValidationUtil.readString(
+                    ScannerUtil.getScanner(),
+                    "State (" + selectedVenue.getState() + ") [2 - 30]: "
+            );
+
+            if (state.isBlank()) {
+                break;
+            }
+
+            if (state.length() >= 2 && state.length() <= 30) {
+                selectedVenue.setState(state);
+                break;
+            }
+
+            System.out.println("State name must be between 2 and 30 characters.");
+        }
+
+        String pincode;
+        while (true) {
+            pincode = InputValidationUtil.readString(
+                    ScannerUtil.getScanner(),
+                    "Pincode (" + selectedVenue.getPincode() + ") [5 - 10]: "
+            );
+
+            if (pincode.isBlank()) {
+                break;
+            }
+
+            if (pincode.length() >= 5 && pincode.length() <= 10) {
+                selectedVenue.setPincode(pincode);
+                break;
+            }
+
+            System.out.println("Pincode must be between 5 and 10 characters.");
+        }
+
+        int capacity = InputValidationUtil.readInt(
+                ScannerUtil.getScanner(),
+                "Maximum capacity (" + selectedVenue.getMaxCapacity() + ") enter 0 to skip: "
+        );
+
+        if (capacity > 0) {
+            selectedVenue.setMaxCapacity(capacity);
+        }
+
+        adminService.updateVenue(selectedVenue);
+        System.out.println("Venue updated successfully.");
     }
 
     public void removeVenue() {
@@ -126,7 +257,7 @@ public class AdminVenueManagementAction {
 		if (venues.isEmpty()) {
 			System.out.println("No venues found.");
 		} else {
-			MenuHelper.displayVenues(venues);
+			AdminMenuHelper.printVenues(venues);
 		}
 	}
 	
@@ -139,8 +270,8 @@ public class AdminVenueManagementAction {
 			return null;
 		}
 
-		MenuHelper.displayVenues(venues);
-
+		AdminMenuHelper.printVenues(venues);
+		
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select a venue (1-" + venues.size() + "): ");
 

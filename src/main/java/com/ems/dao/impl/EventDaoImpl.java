@@ -84,7 +84,7 @@ public class EventDaoImpl implements EventDao {
 	@Override
 	public List<Event> listAllEvents() throws DataAccessException {
 		List<Event> events = new ArrayList<>();
-		String sql = "select distinct e.* " + "from events e " + "inner join tickets t on e.event_id = t.event_id ";
+		String sql = "SELECT e.* FROM events e";
 
 		try (Connection con = DBConnectionUtil.getConnection(); Statement ps = con.createStatement()) {
 
@@ -103,7 +103,7 @@ public class EventDaoImpl implements EventDao {
 		String sql =
 		        "SELECT e.* " +
 		        "FROM events e " +
-		        "WHERE e.status in (?) " +
+		        "WHERE e.status = ? " +
 		        "AND e.approved_at IS NULL " +
 		        "AND e.start_datetime > UTC_TIMESTAMP()";
 

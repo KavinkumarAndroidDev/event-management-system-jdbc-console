@@ -12,6 +12,7 @@ public class Venue {
 	private int maxCapacity;
 	private LocalDateTime createdAt;
 	private LocalDateTime updateAt;
+	private boolean isActive;
 	/**
 	 * @param venueId
 	 * @param name
@@ -92,6 +93,11 @@ public class Venue {
 	public void setUpdateAt(LocalDateTime updateAt) {
 		this.updateAt = updateAt;
 	}
-	
+	public void setStatus(boolean status) {
+		this.isActive = status;	
+	}
+	public boolean getStatus() {
+		return isActive;
+	}
 	
 }

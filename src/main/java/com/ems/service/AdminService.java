@@ -1,10 +1,12 @@
 package com.ems.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.ems.enums.NotificationType;
 import com.ems.enums.UserRole;
 import com.ems.model.Category;
+import com.ems.model.EventRegistrationReport;
 import com.ems.model.User;
 import com.ems.model.Venue;
 
@@ -32,9 +34,9 @@ public interface AdminService {
 	void markCompletedEvents();
 
 	// reports & analytics 
-	void getEventWiseRegistrations(int eventId);
+	List<EventRegistrationReport> getEventWiseRegistrations(int eventId);
 
-	void getRevenueReport();
+	Map<Integer, Double> getRevenueReport();
 
 	void getOrganizerWisePerformance();
 
@@ -55,4 +57,6 @@ public interface AdminService {
 	void updateVenue(Venue selectedVenue);
 
 	void removeVenue(int venueId);
+
+	void activateVenue(int venueId);
 }

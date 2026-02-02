@@ -72,7 +72,7 @@ public class VenueDaoImpl implements VenueDao {
 
     @Override
     public Map<Integer, String> getAllCities() throws DataAccessException{
-        String sql = "select venue_id, city from venues where is_active = TRUE order by city";
+        String sql = "select venue_id, city from venues where is_active = 1 order by city";
         Map<Integer, String> cities = new HashMap<>();
 
         try (Connection con = DBConnectionUtil.getConnection();
@@ -90,7 +90,7 @@ public class VenueDaoImpl implements VenueDao {
 
 	@Override
 	public List<Venue> getAllVenues() throws DataAccessException{
-		String sql = "select * from venues where is_active = 1";
+		String sql = "select name, city, venue_id , street, state, pincode, max_capacity , created_at, updated_at, is_active from venues";
 		List<Venue> venues = new ArrayList<>();
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -109,6 +109,7 @@ public class VenueDaoImpl implements VenueDao {
         		if(rs.getTimestamp("updated_at") != null) {
         			venue.setUpdateAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("updated_at").toInstant()).toLocalDateTime());
         		}
+        		venue.setStatus(rs.getInt("is_active") == 1);
         		venues.add(venue);
         	}
         } catch (SQLException e) {
@@ -229,6 +230,49 @@ public class VenueDaoImpl implements VenueDao {
 	    } catch (Exception e) {
 	        throw new DataAccessException("Failed to remove venue");
 	    }
+	}
+	
+	@Override
+	public void activateVenue(int venueId) throws DataAccessException {
+	    String sql = "update venues set is_active=1 where venue_id=?";
+
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setInt(1, venueId);
+	        ps.executeUpdate();
+	    } catch (Exception e) {
+	        throw new DataAccessException("Failed to remove venue");
+	    }
+	}
+
+	@Override
+	public List<Venue> getActiveVenues() throws DataAccessException {
+		String sql = "select * from venues where is_active = 1";
+		List<Venue> venues = new ArrayList<>();
+        try (Connection con = DBConnectionUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+        	ResultSet rs = ps.executeQuery();
+        	while(rs.next()) {
+        		Venue venue = new Venue();
+        		venue.setName(rs.getString("name"));
+        		
+        		venue.setCity(rs.getString("city"));
+        		venue.setVenueId(rs.getInt("venue_id"));
+        		venue.setStreet(rs.getString("street"));
+        		venue.setState(rs.getString("state"));
+        		venue.setPincode(rs.getString("pincode"));
+        		venue.setMaxCapacity(rs.getInt("max_capacity"));
+        		venue.setCreatedAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("created_at").toInstant()).toLocalDateTime());
+        		if(rs.getTimestamp("updated_at") != null) {
+        			venue.setUpdateAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("updated_at").toInstant()).toLocalDateTime());
+        		}
+        		venues.add(venue);
+        	}
+        } catch (SQLException e) {
+            throw new DataAccessException("Error fetching venues");
+        }
+        return venues;
 	}
 
 }

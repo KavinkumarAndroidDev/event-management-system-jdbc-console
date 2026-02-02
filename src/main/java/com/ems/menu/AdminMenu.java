@@ -1,9 +1,5 @@
 package com.ems.menu;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
 import com.ems.actions.AdminCategoryManagementAction;
 import com.ems.actions.AdminEventManagementAction;
 import com.ems.actions.AdminNotificationManagementAction;
@@ -15,16 +11,8 @@ import com.ems.actions.AdminVenueManagementAction;
 import com.ems.actions.NotificationAction;
 import com.ems.actions.SystemLogAction;
 import com.ems.enums.NotificationType;
-import com.ems.enums.UserRole;
-import com.ems.model.Event;
-import com.ems.model.Offer;
-import com.ems.model.OrganizerEventSummary;
-import com.ems.model.Ticket;
 import com.ems.model.User;
-import com.ems.util.AdminMenuHelper;
-import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
-import com.ems.util.MenuHelper;
 import com.ems.util.ScannerUtil;
 
 /*
@@ -126,8 +114,8 @@ public class AdminMenu extends BaseMenu {
 
 	private void userManagementMenu() {
 		while (true) {
-			System.out.println("\nUser Management\n" + "1. View all users\n" + "2. View organizers\n"
-					+ "3. Activate user\n" + "4. Suspend user\n" + "5. Back\n" + ">");
+			System.out.println("\nUser Management\n" + "1. View all users\n" + "2. View organizers\n" + "3. View admins\n"
+					+ "4. Activate user\n" + "5. Suspend user\n" + "6. Back\n" + ">");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -142,18 +130,21 @@ public class AdminMenu extends BaseMenu {
 				userManagementAction.listUsersByRole("Organizer");
 				break;
 			}
-
 			case 3: {
+				userManagementAction.listUsersByRole("Admin");
+				break;
+			}
+			case 4: {
 				userManagementAction.changeUserStatus("ACTIVE");
 				break;
 			}
 
-			case 4: {
+			case 5: {
 				userManagementAction.changeUserStatus("SUSPENDED");
 				break;
 			}
 
-			case 5: {
+			case 6: {
 				return;
 			}
 
@@ -220,32 +211,13 @@ public class AdminMenu extends BaseMenu {
 
 			switch (choice) {
 			case 1:
-				Event selectedEvent = eventManagementAction.selectAnyEvent();
-				if (selectedEvent == null)
-					break;
-
-				reportAction.getEventWiseRegistrations(selectedEvent.getEventId());
+				reportAction.viewEventWiseRegistrations();
 				break;
-			case 2:{
-					List<User> user = userManagementAction.getUsersByRole(UserRole.ORGANIZER.toString());
-					MenuHelper.displayUsers(user);
-					int organizerChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the valid choice (1 - " + user.size() +")");
-					while(organizerChoice < 1 || organizerChoice > user.size()) {
-						organizerChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the valid choice (1 - " + user.size() +")");
-					}
-					List<OrganizerEventSummary> list =
-				            reportAction.getOrganizerEventSummary(user.get(organizerChoice - 1).getUserId());
-
-				    if (list.isEmpty()) {
-				        System.out.println("No event conducted by the organizer!");
-				        return;
-				    }
-
-				    AdminMenuHelper.printOrganizerEventSummary(list);
-				    break;
-				}
+			case 2:
+				reportAction.viewOrganizerReport();
+				break;
 			case 3:
-				reportAction.getRevenueReport();
+				reportAction.viewRevenueReport();
 				break;
 			case 4:
 				return;
@@ -268,27 +240,23 @@ public class AdminMenu extends BaseMenu {
 			switch (choice) {
 
 			case 1: {
-				String msg = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter system message: ");
 
-				notificationManagementAction.sendSystemWideNotification(msg, NotificationType.SYSTEM.name());
+				notificationManagementAction.sendSystemWideNotification(NotificationType.SYSTEM);
 				break;
 			}
 
 			case 2: {
-				String msg = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(),
-						"Enter promotional message: ");
-
-				notificationManagementAction.sendSystemWideNotification(msg, NotificationType.EVENT.name());
+				notificationManagementAction.sendSystemWideNotification(NotificationType.EVENT);
 				break;
 			}
 
 			case 3: {
-				sendNotificationByRole();
+				notificationManagementAction.sendNotificationByRole();
 				break;
 			}
 
 			case 4: {
-				sendNotificationToSpecificUser();
+				notificationManagementAction.sendNotificationToSpecificUser();
 				break;
 			}
 
@@ -308,95 +276,11 @@ public class AdminMenu extends BaseMenu {
 		}
 	}
 
-	private void sendNotificationToSpecificUser() {
-
-		List<User> users = userManagementAction.getAllUsers();
-
-		if (users.isEmpty()) {
-			System.out.println("No users available");
-			return;
-		}
-
-		MenuHelper.displayUsers(users);
-
-		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select a user (1-" + users.size() + "): ");
-
-		while (choice < 1 || choice > users.size()) {
-			choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-		}
-
-		User selectedUser = users.get(choice - 1);
-
-		System.out.println("\nSelect notification type\n" + "1. SYSTEM\n" + "2. EVENT\n" + "3. PAYMENT\n>");
-
-		int typeChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-
-		NotificationType type;
-
-		if (typeChoice == 1) {
-			type = NotificationType.SYSTEM;
-		} else if (typeChoice == 2) {
-			type = NotificationType.EVENT;
-		} else if (typeChoice == 3) {
-			type = NotificationType.PAYMENT;
-		} else {
-			System.out.println("Invalid notification type selected.");
-			return;
-		}
-
-		String message = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter message: ");
-
-		notificationManagementAction.sendNotificationToUser(message, type, selectedUser.getUserId());
-
-		System.out.println("Notification sent successfully.");
-	}
-
-	private void sendNotificationByRole() {
-
-		System.out.println("\nSelect user role\n" + "1. Attendee\n" + "2. Organizer\n>");
-
-		int roleChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-
-		UserRole role;
-
-		if (roleChoice == 1) {
-			role = UserRole.ATTENDEE;
-		} else if (roleChoice == 2) {
-			role = UserRole.ORGANIZER;
-		} else {
-			System.out.println("Invalid role selected. Please try again.");
-			return;
-		}
-
-		System.out.println("\nSelect notification type\n" + "1. SYSTEM\n" + "2. EVENT\n" + "3. PAYMENT\n>");
-
-		int typeChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-
-		NotificationType type;
-
-		if (typeChoice == 1) {
-			type = NotificationType.SYSTEM;
-		} else if (typeChoice == 2) {
-			type = NotificationType.EVENT;
-		} else if (typeChoice == 3) {
-			type = NotificationType.PAYMENT;
-		} else {
-			System.out.println("Invalid notification type selected.");
-			return;
-		}
-
-		String message = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter message: ");
-
-		notificationManagementAction.sendNotificationByRole(message, type, role);
-
-		System.out.println("Notification sent successfully.");
-	}
-
 	private void categoryManagementMenu() {
 
 		while (true) {
 			System.out.println("\nCategory Management\n" + "1. View all categories\n" + "2. Add new category\n"
-					+ "3. Update category name\n" + "4. Delete category\n" + "5. Back\n>");
+					+ "3. Update category\n" + "4. Delete category\n" + "5. Back\n>");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -492,71 +376,17 @@ public class AdminMenu extends BaseMenu {
 			switch (choice) {
 
 			case 1: {
-				List<Event> events = ticketManagementAction.getAvailableEvents();
-				if (events.isEmpty()) {
-					System.out.println("No events available at the moment.");
-					break;
-				}
-
-				MenuHelper.printEventSummaries(events);
-
-				int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-						"Select an event (1-" + events.size() + "): ");
-				while (eChoice < 1 || eChoice > events.size()) {
-					eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-				}
-
-				Event selectedEvent = events.get(eChoice - 1);
-				List<Ticket> tickets = ticketManagementAction.getTicketsForEvent(selectedEvent.getEventId());
-
-				if (tickets.isEmpty()) {
-					System.out.println("No tickets found for this event");
-					break;
-				}
-
-				AdminMenuHelper.printTicketDetails(tickets);
+				ticketManagementAction.viewTicketsByEvent();
 				break;
 			}
 
 			case 2: {
-				List<Event> events = ticketManagementAction.getAvailableEvents();
-				if (events.isEmpty()) {
-					System.out.println("No events available at the moment.");
-					break;
-				}
-
-				MenuHelper.printEventSummaries(events);
-
-				int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-						"Select an event (1-" + events.size() + "): ");
-				while (eChoice < 1 || eChoice > events.size()) {
-					eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-				}
-
-				Event selectedEvent = events.get(eChoice - 1);
-				List<Ticket> tickets = ticketManagementAction.getTicketsForEvent(selectedEvent.getEventId());
-
-				AdminMenuHelper.printTicketCapacitySummary(tickets);
+				ticketManagementAction.viewTicketSummary();
 				break;
 			}
 
 			case 3: {
-				List<Event> events = ticketManagementAction.getAvailableEvents();
-				if (events.isEmpty()) {
-					System.out.println("No events available at the moment.");
-					break;
-				}
-
-				MenuHelper.printEventSummaries(events);
-
-				int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-						"Select an event (1-" + events.size() + "): ");
-				while (eChoice < 1 || eChoice > events.size()) {
-					eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-				}
-
-				Event selectedEvent = events.get(eChoice - 1);
-				ticketManagementAction.getEventWiseRegistrations(selectedEvent.getEventId());
+				ticketManagementAction.viewEventRegistrations();
 				break;
 			}
 
@@ -608,24 +438,17 @@ public class AdminMenu extends BaseMenu {
 
 			switch (choice) {
 			case 1:
-				List<Offer> offers = offerManagementAction.getAllOffers();
-				if (offers.isEmpty()) {
-					System.out.println("No offers found.");
-				} else {
-					MenuHelper.displayOffers(offers);
-				}
+				offerManagementAction.viewAllOffers();
 				break;
-
 			case 2:
-				createOffer();
+				offerManagementAction.createOffer();
 				break;
 			case 3:
-				toggleOfferStatus();
+				offerManagementAction.changeOfferStatus();
 				break;
 
 			case 4:
-				Map<String, Integer> report = offerManagementAction.getOfferUsageReport();
-				report.forEach((code, count) -> System.out.println(code + " | Used: " + count));
+				offerManagementAction.viewOfferUsageReport();
 				break;
 
 			case 5:
@@ -636,161 +459,7 @@ public class AdminMenu extends BaseMenu {
 			}
 		}
 	}
-
-	private void createOffer() {
-
-		List<Event> events = ticketManagementAction.getAvailableEvents();
-
-		if (events.isEmpty()) {
-			System.out.println("No events available");
-			return;
-		}
-
-		MenuHelper.printEventSummaries(events);
-
-		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select event (1-" + events.size() + "): ");
-
-		while (eChoice < 1 || eChoice > events.size()) {
-			eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-		}
-
-		Event event = events.get(eChoice - 1);
-
-		String code = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the offer code: ");
-
-		int discount = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the discount percentage: ");
-		while (discount < 0 || discount > 100) {
-			discount = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the discount percentage (1 - 100): ");
-		}
-		/*
-		 * Offer start date must: - Not be in the past - Not exceed the event start time
-		 * 
-		 * This ensures offers are only active before the event begins.
-		 */
-		LocalDateTime from = null;
-
-		while (from == null) {
-		    String input = InputValidationUtil.readString(
-		            ScannerUtil.getScanner(),
-		            "Enter the valid from (dd-MM-yyyy HH:mm): "
-		    );
-
-		    from = DateTimeUtil.parseLocalDateTime(input);
-
-		    if (from == null
-		            || from.isBefore(LocalDateTime.now())
-		            || from.isAfter(event.getStartDateTime())) {
-
-		        System.out.println("Invalid 'from' date time. Please try again.");
-		        from = null;
-		    }
-		}
-
-
-		/*
-		 * Offer end date must: - Not be in the past - Be after the offer start date -
-		 * Not exceed the event start time
-		 * 
-		 * This prevents invalid or overlapping offer periods.
-		 */
-		LocalDateTime to = null;
-
-		while (to == null) {
-		    String input = InputValidationUtil.readString(
-		            ScannerUtil.getScanner(),
-		            "Enter the valid to (dd-MM-yyyy HH:mm): "
-		    );
-
-		    to = DateTimeUtil.parseLocalDateTime(input);
-
-		    if (to == null
-		            || to.isBefore(LocalDateTime.now())
-		            || to.isBefore(from)
-		            || to.isAfter(event.getStartDateTime())) {
-
-		        System.out.println("Invalid 'to' date time. Please try again.");
-		        to = null;
-		    }
-		}
-
-		int offerId = offerManagementAction.createOffer(event.getEventId(), code, discount, from, to);
-
-		System.out.println("Offer created successfully. Offer ID: " + offerId);
-	}
-
-	private void toggleOfferStatus() {
-
-		System.out.println("\n1. Activate offer\n" + "2. Deactivate offer\n" + "3. Back\n" + ">");
-
-		int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-
-		if (option == 3) {
-			return;
-		}
-
-		List<Offer> offers = offerManagementAction.getAllOffers();
-
-		if (offers.isEmpty()) {
-			System.out.println("No offers found.");
-			return;
-		}
-
-		List<Offer> filtered;
-		if (option == 1) {
-			filtered = AdminMenuHelper.filterExpiredOffers(offers);
-		} else if (option == 2) {
-			filtered = AdminMenuHelper.filterActiveOffers(offers);
-		} else {
-			System.out.println("Invalid option. Please select a valid menu number.");
-			return;
-		}
-
-		if (filtered.isEmpty()) {
-			System.out.println("No applicable offers found");
-			return;
-		}
-
-		MenuHelper.displayOffers(filtered);
-
-		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-				"Select offer (1-" + filtered.size() + "): ");
-
-		while (choice < 1 || choice > filtered.size()) {
-			choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-		}
-
-		Offer selectedOffer = filtered.get(choice - 1);
-
-		LocalDateTime newValidTo;
-
-		if (option == 1) {
-			String dateInput = InputValidationUtil.readString(ScannerUtil.getScanner(),"Activate until (dd-MM-yyyy HH:mm): ");
-			newValidTo = DateTimeUtil.parseLocalDateTime(dateInput);
-		} else {
-			newValidTo = LocalDateTime.now();
-		}
-		Event event = eventManagementAction.getEventById(selectedOffer.getEventId());
-		if (event == null) {
-			System.out.println("No event found for the offer!");
-			return;
-		}
-		if (newValidTo.isAfter(event.getStartDateTime())) {
-			System.out.println("Offer validity must end before the event starts.");
-			return;
-		}
-
-		char updateChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(),
-				"Are you sure you want to update offer status (Y/N)\n");
-		if (updateChoice == 'Y' || updateChoice == 'y') {
-			offerManagementAction.toggleOfferStatus(selectedOffer.getOfferId(), newValidTo);
-
-			System.out.println(option == 1 ? "Offer activated successfully." : "Offer deactivated successfully.");
-		} else {
-			System.out.println("Process aborted!");
-		}
-
-	}
-
+	
 	private void feedbackModerationMenu() {
 		while (true) {
 			System.out.println(

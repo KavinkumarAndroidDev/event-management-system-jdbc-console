@@ -82,6 +82,8 @@ public interface EventService {
 
 	String getVenueAddress(int venueId);
 
+	List<Venue> getActiveVenues();
+	
 	List<Venue> getAllVenues();
 
 	Venue getVenueById(int venueId);

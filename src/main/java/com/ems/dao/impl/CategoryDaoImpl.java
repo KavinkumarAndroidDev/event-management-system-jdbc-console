@@ -89,6 +89,9 @@ public class CategoryDaoImpl implements CategoryDao {
             ps.executeUpdate();
 
         } catch (SQLException e) {
+        	if (isDuplicateKey(e)) {
+                throw new DataAccessException("Category already exists: " + name, e);
+            }
             throw new DataAccessException("Unable to add category", e);
         }
     }
@@ -156,4 +159,10 @@ public class CategoryDaoImpl implements CategoryDao {
         }
     }
 
+
+
+	private boolean isDuplicateKey(SQLException e) {
+	    // MySQL: SQLState 23000, error code 1062
+	    return "23000".equals(e.getSQLState());
+	}
 }

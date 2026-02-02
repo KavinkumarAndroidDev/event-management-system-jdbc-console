@@ -15,7 +15,7 @@ public interface VenueDao {
 	
 	Map<Integer, String> getAllCities()  throws DataAccessException;
 
-	List<Venue> getAllVenues() throws DataAccessException;
+	List<Venue> getActiveVenues() throws DataAccessException;
 
 	boolean isVenueAvailable(int venueId, Timestamp from, Timestamp from2) throws DataAccessException;
 
@@ -26,5 +26,9 @@ public interface VenueDao {
 	void updateVenue(Venue venue) throws DataAccessException;
 
 	void deactivateVenue(int venueId) throws DataAccessException;
+
+	List<Venue> getAllVenues() throws DataAccessException;
+
+	void activateVenue(int venueId) throws DataAccessException;
 
 }

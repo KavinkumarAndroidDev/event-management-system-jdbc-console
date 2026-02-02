@@ -2,53 +2,102 @@ package com.ems.util;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.ems.model.Event;
+import com.ems.model.EventRegistrationReport;
 import com.ems.model.Offer;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.Ticket;
+import com.ems.model.Venue;
 import com.ems.service.EventService;
 
 public class AdminMenuHelper {
 
-    private static EventService eventService = ApplicationUtil.eventService();
+    private static final EventService eventService = ApplicationUtil.eventService();
+
+    private static final int TABLE_WIDTH = 110;
+    private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
+    private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
 
     public static void printAllEventsWithStatus(List<Event> events) {
-        System.out.println("\nAvailable Events");
-        System.out.println("----------------------------------------------");
-
-        int displayIndex = 1;
-        for (Event event : events) {
-            String category = eventService.getCategory(event.getCategoryId()).getName();
-            int totalAvailable = eventService.getAvailableTickets(event.getEventId());
-
-            System.out.println(
-                displayIndex + " | Title: " +
-                event.getTitle() + " | Category: " +
-                category + " | " +
-                DateTimeUtil.formatDateTime(event.getStartDateTime()) +
-                " | Tickets: " + totalAvailable + " | Status: " + event.getStatus()
-            );
-
-            displayIndex++;
+        if (events == null || events.isEmpty()) {
+            System.out.println("No events found.");
+            return;
         }
 
-        System.out.println("----------------------------------------------");
+        System.out.println("\nAVAILABLE EVENTS");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-30s %-20s %-20s %-10s %-10s%n",
+                "NO", "TITLE", "CATEGORY", "START DATE", "TICKETS", "STATUS"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (Event event : events) {
+            String category = eventService
+                    .getCategory(event.getCategoryId())
+                    .getName();
+
+            int available = eventService
+                    .getAvailableTickets(event.getEventId());
+
+            System.out.printf(
+                    "%-5d %-30s %-20s %-20s %-10d %-10s%n",
+                    index++,
+                    truncate(event.getTitle(), 29),
+                    category,
+                    DateTimeUtil.formatDateTime(event.getStartDateTime()),
+                    available,
+                    event.getStatus()
+            );
+        }
+
+        System.out.println(SEPARATOR);
     }
 
     public static void printTicketDetails(List<Ticket> tickets) {
-        System.out.println("\nAvailable ticket types:");
+        if (tickets == null || tickets.isEmpty()) {
+            System.out.println("No ticket types found.");
+            return;
+        }
+
+        System.out.println("\nTICKET DETAILS");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-20s %-10s %-15s%n",
+                "NO", "TYPE", "PRICE", "CAPACITY"
+        );
+
+        System.out.println(SUB_SEPARATOR);
 
         int index = 1;
-        for (Ticket ticket : tickets) {
-            System.out.println(index + ". " + ticket.getTicketType() + " | ₹" + ticket.getPrice() + " | "
-                    + "Tickets: " + ticket.getAvailableQuantity() + "/" + ticket.getTotalQuantity());
-            index++;
+        for (Ticket t : tickets) {
+            System.out.printf(
+                    "%-5d %-20s ₹%-9.2f %-7d/%-7d%n",
+                    index++,
+                    t.getTicketType(),
+                    t.getPrice(),
+                    t.getAvailableQuantity(),
+                    t.getTotalQuantity()
+            );
         }
+
+        System.out.println(SEPARATOR);
     }
 
     public static void printOrganizerEventSummary(List<OrganizerEventSummary> list) {
-        System.out.println("\nOrganizer Events Summary");
+        if (list == null || list.isEmpty()) {
+            System.out.println("No organizer data found.");
+            return;
+        }
+
+        System.out.println("\nORGANIZER EVENT SUMMARY");
+        System.out.println(SEPARATOR);
 
         String currentStatus = "";
 
@@ -56,14 +105,18 @@ public class AdminMenuHelper {
             if (!s.getStatus().equals(currentStatus)) {
                 currentStatus = s.getStatus();
                 System.out.println("\n[" + currentStatus + "]");
+                System.out.println(SUB_SEPARATOR);
             }
 
-            System.out.println(
-                s.getTitle()
-                + " | Tickets Booked: " + s.getBookedTickets()
-                + " out of " + s.getTotalTickets()
+            System.out.printf(
+                    "%-40s Tickets Booked: %-5d / %-5d%n",
+                    truncate(s.getTitle(), 39),
+                    s.getBookedTickets(),
+                    s.getTotalTickets()
             );
         }
+
+        System.out.println(SEPARATOR);
     }
 
     public static void printTicketCapacitySummary(List<Ticket> tickets) {
@@ -75,8 +128,11 @@ public class AdminMenuHelper {
             available += t.getAvailableQuantity();
         }
 
-        System.out.println("Event Capacity Summary\n" + "Total Tickets: " + total + "\n" + "Available Tickets: "
-                + available);
+        System.out.println("\nEVENT CAPACITY SUMMARY");
+        System.out.println(SEPARATOR);
+        System.out.println("Total Tickets     : " + total);
+        System.out.println("Available Tickets : " + available);
+        System.out.println(SEPARATOR);
     }
 
     public static List<Offer> filterActiveOffers(List<Offer> offers) {
@@ -89,7 +145,230 @@ public class AdminMenuHelper {
     public static List<Offer> filterExpiredOffers(List<Offer> offers) {
         LocalDateTime now = LocalDateTime.now();
         return offers.stream()
-                .filter(o -> o.getEventId() != 0 && o.getValidTo() != null && o.getValidTo().isBefore(now))
+                .filter(o -> o.getEventId() != 0
+                        && o.getValidTo() != null
+                        && o.getValidTo().isBefore(now))
                 .toList();
+    }
+    
+    
+    
+    public static void printVenues(List<Venue> venues) {
+        if (venues == null || venues.isEmpty()) {
+            System.out.println("No venues found.");
+            return;
+        }
+
+        System.out.println("\nAVAILABLE VENUES");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-22s %-18s %-15s %-12s %-10s %-12s%n",
+                "NO", "VENUE NAME", "STREET", "CITY", "STATE", "CAPACITY", "STATUS"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (Venue v : venues) {
+
+            String status = v.getStatus() ? "ACTIVE" : "INACTIVE";
+
+            System.out.printf(
+                    "%-5d %-22s %-18s %-15s %-12s %-10d %-12s%n",
+                    index++,
+                    truncate(v.getName(), 21),
+                    truncate(v.getStreet(), 17),
+                    v.getCity(),
+                    v.getState(),
+                    v.getMaxCapacity(),
+                    status
+            );
+        }
+
+        System.out.println(SEPARATOR);
+    }
+
+
+    public static void printVenueDetails(Venue v) {
+        if (v == null) {
+            System.out.println("Venue not found.");
+            return;
+        }
+
+        System.out.println("\nVENUE DETAILS");
+        System.out.println(SEPARATOR);
+
+        System.out.println("Name        : " + v.getName());
+        System.out.println("Street      : " + v.getStreet());
+        System.out.println("City        : " + v.getCity());
+        System.out.println("State       : " + v.getState());
+        System.out.println("Pincode     : " + v.getPincode());
+        System.out.println("Capacity    : " + v.getMaxCapacity());
+
+        System.out.println(SEPARATOR);
+    }
+    
+    public static void printEventRegistrationReport(List<EventRegistrationReport> reports) {
+        if (reports == null || reports.isEmpty()) {
+            System.out.println("No registration records found.");
+            return;
+        }
+
+        System.out.println("\nEVENT REGISTRATION REPORT");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-30s %-20s %-15s %-10s %-20s%n",
+                "NO", "EVENT TITLE", "USER", "TICKET TYPE", "QTY", "REGISTERED ON"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (EventRegistrationReport r : reports) {
+            System.out.printf(
+                    "%-5d %-30s %-20s %-15s %-10d %-20s%n",
+                    index++,
+                    truncate(r.getEventTitle(), 29),
+                    truncate(r.getUserName(), 19),
+                    truncate(r.getTicketType(), 14),
+                    r.getQuantity(),
+                    DateTimeUtil.formatDateTime(r.getRegistrationDate())
+            );
+        }
+
+        System.out.println(SEPARATOR);
+    }
+    
+    public static void printOfferUsageReport(Map<String, Integer> report) {
+        if (report == null || report.isEmpty()) {
+            System.out.println("No offer usage data found.");
+            return;
+        }
+
+        System.out.println("\nOFFER USAGE REPORT");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-20s %-15s%n",
+                "NO", "OFFER CODE", "USAGE COUNT"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (Map.Entry<String, Integer> entry : report.entrySet()) {
+            System.out.printf(
+                    "%-5d %-20s %-15d%n",
+                    index++,
+                    truncate(entry.getKey(), 19),
+                    entry.getValue()
+            );
+        }
+
+        System.out.println(SEPARATOR);
+    }
+
+    
+    public static void printOffers(List<Offer> offers) {
+        if (offers == null || offers.isEmpty()) {
+            System.out.println("No offers found.");
+            return;
+        }
+
+        System.out.println("\nOFFERS REPORT");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-10s %-15s %-12s %-20s %-20s %-12s%n",
+                "NO", "OFFER ID", "CODE", "DISCOUNT", "VALID FROM", "VALID TO", "STATUS"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        LocalDateTime now = LocalDateTime.now();
+        int index = 1;
+
+        for (Offer o : offers) {
+
+            String discount = o.getDiscountPercentage() != null
+                    ? o.getDiscountPercentage() + "%"
+                    : "NA";
+
+            String status;
+
+            if (o.getValidFrom() != null && o.getValidTo() != null) {
+
+                if (now.isBefore(o.getValidFrom())) {
+                    status = "UPCOMING";
+                } else if (!now.isAfter(o.getValidTo())) {
+                    status = "ACTIVE";
+                } else {
+                    status = "EXPIRED";
+                }
+
+            } else {
+                status = "UNKNOWN";
+            }
+
+
+            System.out.printf(
+                    "%-5d %-10d %-15s %-12s %-20s %-20s %-12s%n",
+                    index++,
+                    o.getOfferId(),
+                    truncate(o.getCode(), 14),
+                    discount,
+                    DateTimeUtil.formatDateTime(o.getValidFrom()),
+                    DateTimeUtil.formatDateTime(o.getValidTo()),
+                    status
+            );
+        }
+
+        System.out.println(SEPARATOR);
+    }
+    
+    
+    
+    public static void printEventRevenueReport(Map<String, Double> revenueReport) {
+        if (revenueReport == null || revenueReport.isEmpty()) {
+            System.out.println("No revenue data available.");
+            return;
+        }
+
+        System.out.println("\nEVENT WISE REVENUE REPORT");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+                "%-5s %-40s %-20s%n",
+                "NO", "EVENT TITLE", "REVENUE"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        double totalRevenue = 0;
+
+        for (Map.Entry<String, Double> entry : revenueReport.entrySet()) {
+            totalRevenue += entry.getValue();
+
+            System.out.printf(
+                    "%-5d %-40s ₹%-20.2f%n",
+                    index++,
+                    truncate(entry.getKey(), 39),
+                    entry.getValue()
+            );
+        }
+
+        System.out.println(SEPARATOR);
+        System.out.printf("TOTAL REVENUE: ₹%.2f%n", totalRevenue);
+    }
+
+    
+    private static String truncate(String value, int max) {
+        if (value == null || value.length() <= max) {
+            return value;
+        }
+        return value.substring(0, max - 3) + "...";
     }
 }

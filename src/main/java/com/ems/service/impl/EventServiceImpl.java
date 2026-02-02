@@ -429,6 +429,18 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<Venue> getActiveVenues() {
+        try {
+            List<Venue> venues = venueDao.getActiveVenues();
+            return venues != null ? venues : new ArrayList<>();
+        } catch (DataAccessException e) {
+            systemLogService.log(0, "ERROR", "VENUE", 0,
+                "Failed to get all venues: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
     public List<Venue> getAllVenues() {
         try {
             List<Venue> venues = venueDao.getAllVenues();
@@ -439,7 +451,6 @@ public class EventServiceImpl implements EventService {
             return new ArrayList<>();
         }
     }
-
     @Override
     public boolean isVenueAvailable(int venueId, LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime == null || endTime == null) {

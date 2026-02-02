@@ -1,6 +1,7 @@
 package com.ems.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -167,56 +168,34 @@ public class AdminServiceImpl implements AdminService {
 	 * in reverse chronological order.
 	 */
 	@Override
-	public void getEventWiseRegistrations(int eventId) {
+	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) {
 		try {
 			List<EventRegistrationReport> reports = registrationDao.getEventWiseRegistrations(eventId);
 
 			if (reports.isEmpty()) {
-				System.out.println("No registrations found for this event");
-				return;
+				return new ArrayList<>();
 			}
-			reports.sort(Comparator.comparing(EventRegistrationReport::getRegistrationDate).reversed());
-			if (!reports.isEmpty()) {
-				System.out.println("Event Wise Registration");
-				reports.forEach(System.out::println);
-			} else {
-				System.out.println("No registrations for the given event!");
-			}
-
+			return reports;
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
+		return new ArrayList<>();
 	}
 
 	/*
 	 * Displays revenue generated per event.
 	 */
 	@Override
-	public void getRevenueReport() {
+	public Map<Integer, Double> getRevenueReport() {
 		try {
 			Map<Integer, Double> revenueMap = eventDao.getEventWiseRevenue();
-
-			if (revenueMap.isEmpty()) {
-				System.out.println("No revenue data available.");
-				return;
-			}
 			
-			System.out.println("\nEvent Wise Revenue Report");
-			System.out.println("-----------------------------------");
-
-			revenueMap.forEach((event, revenue) -> {
-				try {
-					System.out.println("Event : " + eventDao.getEventById(event).getTitle() + " | Revenue : ₹" + revenue);
-				} catch (DataAccessException e) {
-					System.out.println(e);
-				}
-			});
-
-			System.out.println("-----------------------------------");
+			return revenueMap;
 
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
+		return Collections.emptyMap();
 	}
 
 	/*
@@ -335,6 +314,7 @@ public class AdminServiceImpl implements AdminService {
 					null,
 					"Category created: " + name
 				);
+			System.out.println("Category added successfully.");
 
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
@@ -457,6 +437,24 @@ public class AdminServiceImpl implements AdminService {
 					"VENUE",
 					venueId,
 					"Venue removed"
+				);
+
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+	
+	@Override
+	public void activateVenue(int venueId) {
+		try {
+			venueDao.activateVenue(venueId);
+			
+			systemLogService.log(
+					null,
+					"ACTIVATE",
+					"VENUE",
+					venueId,
+					"Venue activated"
 				);
 
 		} catch (DataAccessException e) {

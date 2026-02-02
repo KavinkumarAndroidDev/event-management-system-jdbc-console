@@ -25,6 +25,10 @@ import com.ems.service.EventService;
  * Acts as a lightweight view layer for the CLI application.
  */
 public class MenuHelper {
+	
+	private static final int TABLE_WIDTH = 110;
+	private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
+	private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
 
     /**
      * Service dependency used to fetch additional event-related details
@@ -38,81 +42,100 @@ public class MenuHelper {
      * @param events list of events to display
      */
     public static void printEventDetails(List<Event> events) {
-        if (!events.isEmpty()) {
-            events.forEach(event -> {
-                String category = eventService.getCategory(event.getCategoryId()).getName();
-                String venueName = eventService.getVenueName(event.getVenueId());
-                String venueAddress = eventService.getVenueAddress(event.getVenueId());
-                int totalAvailable = eventService.getAvailableTickets(event.getEventId());
-                List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
+        if (events == null || events.isEmpty()) {
+            System.out.println("No events found.");
+            return;
+        }
 
-                System.out.println("\n==============================================");
-                System.out.println("Event ID        : " + event.getEventId());
-                System.out.println("Title           : " + event.getTitle());
+        for (Event event : events) {
+            String category = eventService.getCategory(event.getCategoryId()).getName();
+            String venueName = eventService.getVenueName(event.getVenueId());
+            String venueAddress = eventService.getVenueAddress(event.getVenueId());
+            int totalAvailable = eventService.getAvailableTickets(event.getEventId());
+            List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
 
-                if (event.getDescription() != null) {
-                    System.out.println("Description     : " + event.getDescription());
-                }
+            System.out.println(SEPARATOR);
+            System.out.println("EVENT DETAILS");
+            System.out.println(SEPARATOR);
 
-                System.out.println("Category        : " + category);
-                System.out.println("Duration        : "
-                        + DateTimeUtil.formatDateTime(event.getStartDateTime())
-                        + " to "
-                        + DateTimeUtil.formatDateTime(event.getEndDateTime()));
+            System.out.printf("Event ID        : %s%n", event.getEventId());
+            System.out.printf("Title           : %s%n", event.getTitle());
 
-                System.out.println("Total Tickets   : " + totalAvailable);
+            if (event.getDescription() != null) {
+                System.out.printf("Description     : %s%n", event.getDescription());
+            }
 
-                System.out.println("\nTicket Types");
-                System.out.println("----------------------------------------------");
+            System.out.printf("Category        : %s%n", category);
+            System.out.printf(
+                    "Duration        : %s to %s%n",
+                    DateTimeUtil.formatDateTime(event.getStartDateTime()),
+                    DateTimeUtil.formatDateTime(event.getEndDateTime())
+            );
+            System.out.printf("Total Tickets   : %d%n", totalAvailable);
 
-                for (Ticket ticket : tickets) {
-                    System.out.println("• "
-                            + ticket.getTicketType()
-                            + " | Price: ₹"
-                            + ticket.getPrice()
-                            + " | Available: "
-                            + ticket.getAvailableQuantity());
-                }
+            System.out.println();
+            System.out.println("TICKET TYPES");
+            System.out.println(SUB_SEPARATOR);
 
-                System.out.println("\nVenue");
-                System.out.println("----------------------------------------------");
-                System.out.println("Name            : " + venueName);
-                System.out.println("Address         : " + venueAddress);
+            for (Ticket t : tickets) {
+                System.out.printf(
+                        "%-20s ₹%-8.2f Available: %-5d%n",
+                        t.getTicketType(),
+                        t.getPrice(),
+                        t.getAvailableQuantity()
+                );
+            }
 
-                System.out.println("==============================================");
-            });
+            System.out.println();
+            System.out.println("VENUE");
+            System.out.println(SUB_SEPARATOR);
+            System.out.println("Name    : " + venueName);
+            System.out.println("Address : " + venueAddress);
+
+            System.out.println(SEPARATOR);
         }
     }
+
 
     /**
      * Displays summarized information for a list of events.
      *
      * @param events list of events to display
      */
-    public static void printEventSummaries(List<Event> events) {
-        if (!events.isEmpty()) {
-            System.out.println("\nAvailable Events");
-            System.out.println("----------------------------------------------");
+	public static void printEventSummaries(List<Event> events) {
+	    if (events == null || events.isEmpty()) {
+	        System.out.println("No events found.");
+	        return;
+	    }
+	
+	    System.out.println("\nAVAILABLE EVENTS");
+	    System.out.println(SEPARATOR);
+	
+	    System.out.printf(
+	            "%-5s %-30s %-20s %-20s %-10s%n",
+	            "NO", "TITLE", "CATEGORY", "START DATE", "TICKETS"
+	    );
+	
+	    System.out.println(SUB_SEPARATOR);
+	
+	    int index = 1;
+	    for (Event event : events) {
+	        String category = eventService.getCategory(event.getCategoryId()).getName();
+	        int available = eventService.getAvailableTickets(event.getEventId());
+	
+	        System.out.printf(
+	                "%-5d %-30s %-20s %-20s %-10d%n",
+	                index++,
+	                truncate(event.getTitle(), 29),
+	                category,
+	                DateTimeUtil.formatDateTime(event.getStartDateTime()),
+	                available
+	        );
+	    }
+	
+	    System.out.println(SEPARATOR);
+	}
 
-            int displayIndex = 1;
-            for (Event event : events) {
-                String category = eventService.getCategory(event.getCategoryId()).getName();
-                int totalAvailable = eventService.getAvailableTickets(event.getEventId());
-
-                System.out.println(
-                        displayIndex + " | Title: " +
-                                event.getTitle() + " | Category: " +
-                                category + " | " +
-                                DateTimeUtil.formatDateTime(event.getStartDateTime()) +
-                                " | Tickets: " + totalAvailable
-                );
-
-                displayIndex++;
-            }
-
-            System.out.println("----------------------------------------------");
-        }
-    }
 
     /**
      * Displays a formatted list of users.
@@ -120,37 +143,35 @@ public class MenuHelper {
      * @param users list of users to display
      */
     public static void displayUsers(List<User> users) {
-        if (users == null || users.isEmpty()) {
-            System.out.println("No users found.");
-            return;
-        }
+	    if (users == null || users.isEmpty()) {
+	        System.out.println("No users found.");
+	        return;
+	    }
+	
+	    System.out.println(SEPARATOR);
+	    System.out.printf(
+	            "%-5s %-5s %-20s %-10s %-25s %-15s %-10s%n",
+	            "NO", "ID", "NAME", "GENDER", "EMAIL", "PHONE", "STATUS"
+	    );
+	    System.out.println(SUB_SEPARATOR);
+	
+	    int index = 1;
+	    for (User user : users) {
+	        System.out.printf(
+	                "%-5d %-5d %-20s %-10s %-25s %-15s %-10s%n",
+	                index++,
+	                user.getUserId(),
+	                truncate(user.getFullName(), 19),
+	                user.getGender(),
+	                user.getEmail(),
+	                user.getPhone() == null ? "-" : user.getPhone(),
+	                user.getStatus()
+	        );
+	    }
+	
+	    System.out.println(SEPARATOR);
+	}
 
-        if (!users.isEmpty()) {
-            System.out.println("\n==============================================================");
-            System.out.printf(
-                    "%-5s %-5s %-20s %-10s %-25s %-15s %-10s%n",
-                    "NO", "ID", "Name", "Gender", "Email", "Phone", "Status"
-            );
-            System.out.println("==============================================================");
-
-            int displayIndex = 1;
-            for (User user : users) {
-                System.out.printf(
-                        "%-5d %-5d %-20s %-10s %-25s %-15s %-10s%n",
-                        displayIndex,
-                        user.getUserId(),
-                        user.getFullName(),
-                        user.getGender(),
-                        user.getEmail(),
-                        user.getPhone() == null ? "-" : user.getPhone(),
-                        user.getStatus()
-                );
-                displayIndex++;
-            }
-
-            System.out.println("==============================================================");
-        }
-    }
 
     /**
      * Displays detailed information for a single event.
@@ -259,45 +280,63 @@ public class MenuHelper {
      *
      * @param tickets list of ticket types to display
      */
-    public static void printTicketSummaries(List<Ticket> tickets) {
-        if (!tickets.isEmpty()) {
-            System.out.println("\nAvailable ticket types: ");
+	public static void printTicketSummaries(List<Ticket> tickets) {
+	    if (tickets == null || tickets.isEmpty()) {
+	        System.out.println("No ticket types found.");
+	        return;
+	    }
+	
+	    System.out.println("\nTICKET SUMMARY");
+	    System.out.println(SEPARATOR);
+	
+	    System.out.printf(
+	            "%-5s %-20s %-10s %-15s%n",
+	            "NO", "TYPE", "PRICE", "CAPACITY"
+	    );
+	
+	    System.out.println(SUB_SEPARATOR);
+	
+	    int index = 1;
+	    for (Ticket t : tickets) {
+	        System.out.printf(
+	                "%-5d %-20s ₹%-9.2f %-7d/%-7d%n",
+	                index++,
+	                t.getTicketType(),
+	                t.getPrice(),
+	                t.getAvailableQuantity(),
+	                t.getTotalQuantity()
+	        );
+	    }
+	
+	    System.out.println(SEPARATOR);
+	}
 
-            int displayIndex = 1;
-            for (Ticket ticket : tickets) {
-                System.out.println(
-                        displayIndex + " | " +
-                                ticket.getTicketType() + " | ₹" +
-                                ticket.getPrice() + " | " +
-                                "Tickets: " + ticket.getAvailableQuantity()
-                                + "/" + ticket.getTotalQuantity()
-                );
-                displayIndex++;
-            }
-        } else {
-            System.out.println("No ticket types for the given event id");
-            return;
-        }
-    }
 
     /**
      * Displays booking details for a user's registrations.
      *
      * @param bookingDetails list of booking details to display
      */
-    public static void printBookingDetails(List<BookingDetail> bookingDetails) {
-        System.out.println("Booking Details\n");
+	public static void printBookingDetails(List<BookingDetail> bookingDetails) {
+	    if (bookingDetails == null || bookingDetails.isEmpty()) {
+	        System.out.println("No bookings found.");
+	        return;
+	    }
+	
+	    System.out.println("\nBOOKING DETAILS");
+	    System.out.println(SEPARATOR);
+	
+	    for (BookingDetail b : bookingDetails) {
+	        System.out.println(SUB_SEPARATOR);
+	        System.out.println("Event   : " + b.getEventName());
+	        System.out.println("Venue   : " + b.getVenueName() + " (" + b.getCity() + ")");
+	        System.out.println("Tickets : " + b.getTicketType() + " x " + b.getQuantity());
+	        System.out.println("Total   : ₹" + b.getTotalCost());
+	    }
+	
+	    System.out.println(SEPARATOR);
+	}
 
-        for (BookingDetail b : bookingDetails) {
-            System.out.println("------------------------------------------");
-            System.out.println("Event  : " + b.getEventName());
-            System.out.println("Venue : " + b.getVenueName() + " (" + b.getCity() + ")");
-            System.out.println("Tickets: " + b.getTicketType() + " x " + b.getQuantity() + " tickets");
-            System.out.println("Total : ₹" + b.getTotalCost());
-        }
-
-        System.out.println("------------------------------------------");
-    }
 
     /**
      * Displays a formatted list of user event registrations.
@@ -368,5 +407,11 @@ public class MenuHelper {
 
             System.out.println("Invalid selection. Please try again.");
         }
+    }
+    private static String truncate(String value, int max) {
+        if (value == null || value.length() <= max) {
+            return value;
+        }
+        return value.substring(0, max - 3) + "...";
     }
 }

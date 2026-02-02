@@ -2,6 +2,7 @@ package com.ems.actions;
 
 import java.util.List;
 
+import com.ems.enums.EventStatus;
 import com.ems.model.Event;
 import com.ems.model.Ticket;
 import com.ems.service.AdminService;
@@ -40,12 +41,27 @@ public class AdminEventManagementAction {
 	}
 	
     public void listTicketsForEvent() {
-    	Event selectedEvent = selectAnyEvent();
-		if (selectedEvent == null)
+    	
+    	List<Event> events = getAllEvents();
+    	List<Event> filteredEvents = events.stream().filter(e -> e.getStatus().equals(EventStatus.PUBLISHED.toString())).toList();
+		if (filteredEvents.isEmpty()) {
+			System.out.println("No events available at the moment.");
 			return;
+		}
 
-		List<Ticket> tickets = eventService.getTicketTypes(selectedEvent.getEventId());
+		AdminMenuHelper.printAllEventsWithStatus(filteredEvents);
 
+		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
+				"Select an event (1-" + filteredEvents.size() + "): ");
+
+		while (choice < 1 || choice > filteredEvents.size()) {
+			choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
+		}
+
+		Event event = filteredEvents.get(choice - 1);
+
+		List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
+		
 		if (tickets.isEmpty()) {
 			System.out.println("No ticket options are available for this event.");
 			return;
@@ -153,7 +169,7 @@ public class AdminEventManagementAction {
 			return null;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		AdminMenuHelper.printAllEventsWithStatus(events);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + events.size() + "): ");

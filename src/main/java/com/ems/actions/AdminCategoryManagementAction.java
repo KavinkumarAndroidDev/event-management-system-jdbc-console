@@ -49,8 +49,10 @@ public class AdminCategoryManagementAction {
      */
     public void addCategory() {
     	String name = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter category name: ");
-        adminService.addCategory(name.trim());
-        System.out.println("Category added successfully.");
+    	while(name.length() < 3 || name.length() > 30) {
+    		name = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter category name (3 - 30 characters): ");
+    	}
+        adminService.addCategory(name.trim()); 
     }
     /*
      * It prints the existing categories

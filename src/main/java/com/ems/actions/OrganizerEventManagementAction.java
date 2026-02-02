@@ -594,7 +594,7 @@ public class OrganizerEventManagementAction {
      * @return list of venues
      */
     public List<Venue> getAllVenues() {
-        return eventService.getAllVenues();
+        return eventService.getActiveVenues();
     }
 
     /**
