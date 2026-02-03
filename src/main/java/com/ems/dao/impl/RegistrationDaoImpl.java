@@ -41,7 +41,9 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	        "inner join registration_tickets rt on r.registration_id = rt.registration_id " +
 	        "inner join tickets t on rt.ticket_id = t.ticket_id " +
 	        "inner join events e on r.event_id = e.event_id " +
-	        "where r.event_id = ?";
+	        "where r.event_id = ? " +
+	        "  and r.status = 'CONFIRMED'";
+
 	
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {

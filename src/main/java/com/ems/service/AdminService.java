@@ -7,6 +7,7 @@ import com.ems.enums.NotificationType;
 import com.ems.enums.UserRole;
 import com.ems.model.Category;
 import com.ems.model.EventRegistrationReport;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.User;
 import com.ems.model.Venue;
 
@@ -36,7 +37,7 @@ public interface AdminService {
 	// reports & analytics 
 	List<EventRegistrationReport> getEventWiseRegistrations(int eventId);
 
-	Map<Integer, Double> getRevenueReport();
+	List<EventRevenueReport> getRevenueReport();
 
 	void getOrganizerWisePerformance();
 

@@ -23,4 +23,8 @@ public interface OfferService {
 
     // reports
     Map<String, Integer> getOfferUsageReport();
+
+	Offer getOffer(int eventId, String offerCode);
+
+	boolean hasUserUsedOfferCode(int userId, int offerId);
 }

@@ -125,4 +125,24 @@ public class OfferServiceImpl implements OfferService {
 		}
 		return new HashMap<>();
 	}
+	
+	@Override
+	public Offer getOffer(int eventId, String offerCode) {
+		try {
+			return offerDao.getOffer(eventId, offerCode);
+		}catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		return null;
+	}
+
+	@Override
+	public boolean hasUserUsedOfferCode(int userId, int offerId) {
+		try {
+			return offerDao.hasUserUsedOfferCode(userId, offerId);
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		return false;
+	}
 }

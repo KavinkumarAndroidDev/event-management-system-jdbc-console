@@ -17,6 +17,7 @@ import com.ems.dao.OfferDao;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Offer;
 import com.ems.util.DBConnectionUtil;
+import com.ems.util.DateTimeUtil;
 
 /*
  * Handles database operations related to offers.
@@ -72,7 +73,7 @@ public class OfferDaoImpl implements OfferDao {
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setString(1, offer.getCode().toUpperCase());
+            ps.setString(1, offer.getCode().trim().toUpperCase());
             ps.setObject(2, offer.getDiscountPercentage());
             ps.setTimestamp(3,
                 offer.getValidFrom() != null ? Timestamp.valueOf(offer.getValidFrom()) : null);
@@ -86,22 +87,6 @@ public class OfferDaoImpl implements OfferDao {
 
         } catch (Exception e) {
             throw new DataAccessException("Failed to create offer");
-        }
-    }
-
-    @Override
-    public void assignOfferToEvent(int offerId, int eventId) throws DataAccessException {
-        String sql = "update offers set event_id = ? where offer_id = ?";
-
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, eventId);
-            ps.setInt(2, offerId);
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            throw new DataAccessException("Failed to assign offer to event");
         }
     }
 
@@ -148,54 +133,6 @@ public class OfferDaoImpl implements OfferDao {
     }
 
 	@Override
-	public Offer getValidOfferForEvent(int eventId, String code) throws DataAccessException {
-	
-	    String sql =
-	        "SELECT * FROM offers " +
-	        "WHERE event_id = ? " +
-	        "AND UPPER(code) = ? " +
-	        "AND (valid_from IS NULL OR valid_from <= NOW()) " +
-	        "AND (valid_to IS NULL OR valid_to >= NOW())";
-	
-	    try (Connection con = DBConnectionUtil.getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
-	
-	        ps.setInt(1, eventId);
-	        ps.setString(2, code.trim().toUpperCase());
-	
-	        try (ResultSet rs = ps.executeQuery()) {
-	            if (rs.next()) {
-	                Offer offer = new Offer();
-	                offer.setOfferId(rs.getInt("offer_id"));
-	                offer.setEventId(rs.getInt("event_id"));
-	                offer.setCode(rs.getString("code"));
-	                offer.setDiscountPercentage(rs.getInt("discount_percentage"));
-	
-	                if (rs.getTimestamp("valid_from") != null) {
-	                    offer.setValidFrom(
-	                        rs.getTimestamp("valid_from").toLocalDateTime()
-	                    );
-	                }
-	
-	                if (rs.getTimestamp("valid_to") != null) {
-	                    offer.setValidTo(
-	                        rs.getTimestamp("valid_to").toLocalDateTime()
-	                    );
-	                }
-	
-	                return offer;
-	            }
-	        }
-	
-	    } catch (SQLException e) {
-	        throw new DataAccessException("Failed to fetch offer for the event");
-	    }
-	
-	    return null;
-	}
-
-
-	@Override
 	public void recordOfferUsage(
 	        int offerId,
 	        int userId,
@@ -228,13 +165,49 @@ public class OfferDaoImpl implements OfferDao {
 			ps.setInt(2, offerId);
 			ResultSet rs = ps.executeQuery();
 			if(rs.next()) {
-				return false;
-			}else {
 				return true;
+			}else {
+				return false;
 			}
 		}catch(SQLException e) {
 			throw new DataAccessException("Failed to fetch offer code usage");
 		}
 	}
+	
+	@Override
+	public Offer getOffer(int eventId, String inputCode) throws DataAccessException {
+	    Offer offer = null;
+	    String sql = "SELECT offer_id, event_id, code, discount_percentage, valid_from, valid_to " +
+	                 "FROM offers WHERE event_id = ? AND code = ?";
 
+	    try (Connection conn = DBConnectionUtil.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+	        
+	        pstmt.setInt(1, eventId);
+	        pstmt.setString(2, inputCode.trim().toUpperCase());
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                offer = new Offer();
+	                offer.setOfferId(rs.getInt("offer_id"));
+	                offer.setEventId(rs.getInt("event_id"));
+	                offer.setCode(rs.getString("code"));
+	                offer.setDiscountPercentage(rs.getInt("discount_percentage"));
+	                
+	                Timestamp fromTs = rs.getTimestamp("valid_from");
+	                if (fromTs != null) offer.setValidFrom(fromTs.toLocalDateTime());
+	                
+	                Timestamp toTs = rs.getTimestamp("valid_to");
+	                if (toTs != null) offer.setValidTo(toTs.toLocalDateTime());
+	            }
+	        }
+	    } catch (SQLException e) {
+	    	throw new DataAccessException("Error fetching the offercode", e);
+	    }
+	    return offer; 
+	}
+
+	
+	
+	
 }

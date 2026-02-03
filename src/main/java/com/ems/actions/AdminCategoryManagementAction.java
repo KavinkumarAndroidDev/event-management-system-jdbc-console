@@ -15,8 +15,8 @@ public class AdminCategoryManagementAction {
         this.adminService = ApplicationUtil.adminService();
     }
     
-    /*
-     * Prints all available categories
+    /**
+     * prints all the categories
      */
     public void listAllCategories() {
         List<Category> categories = adminService.getAllCategories();
@@ -24,6 +24,7 @@ public class AdminCategoryManagementAction {
             System.out.println("No categories found.");
             return;
         }
+        //TODO: MAKE A ADMIN MENU HERLPER FUNCTION TO PRINT THE CATEGORY ON THE UNIVERSAL FORAMT
         System.out.println("\n-------------------------------------------");
         System.out.printf("%-5s %-25s %-10s%n", "No", "Name", "Status");
         System.out.println("-------------------------------------------");
@@ -44,8 +45,9 @@ public class AdminCategoryManagementAction {
     }
 
     
-    /*
+    /**
      * Gets user input and add a new category
+     * Category name must be between 3 and 30 characters
      */
     public void addCategory() {
     	String name = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter category name: ");
@@ -54,7 +56,8 @@ public class AdminCategoryManagementAction {
     	}
         adminService.addCategory(name.trim()); 
     }
-    /*
+    
+    /**
      * It prints the existing categories
      * user select a category to update
      */
@@ -83,10 +86,11 @@ public class AdminCategoryManagementAction {
 		System.out.println("Category updated successfully");
         
     }
-    /*
+    
+    /**
      * Prints all active category and admin select any 
      * and the category is deactivated, not completely delted
-     */
+     */  
     public void deleteCategory() {
     	
 		Category selectedCategory = selectCategory();
@@ -109,7 +113,7 @@ public class AdminCategoryManagementAction {
 
     }
     
-   /*
+   /**
     * It returns the list of all available categories
     */
     public List<Category> getAllCategories(){
@@ -117,6 +121,7 @@ public class AdminCategoryManagementAction {
     	return categories;
     }
     
+    //TODO: Remove this
     /*
      * Helper function to display the categories
      */

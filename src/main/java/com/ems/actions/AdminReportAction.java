@@ -1,12 +1,11 @@
 package com.ems.actions;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.ems.enums.UserRole;
 import com.ems.model.Event;
 import com.ems.model.EventRegistrationReport;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.User;
 import com.ems.service.AdminService;
@@ -72,21 +71,16 @@ public class AdminReportAction {
         return organizerService.getOrganizerEventSummary(organizerId);
     }
 
-    public Map<Integer, Double> getRevenueReport() {
+    public List<EventRevenueReport> getRevenueReport() {
         return adminService.getRevenueReport();
     }
 
 
-	public void viewRevenueReport() {
-		Map<Integer, Double> revenueMap = getRevenueReport();
-		Map<String, Double> revenueReport = new LinkedHashMap<>();
+    public void viewRevenueReport() {
 
-		revenueMap.forEach((eventId, revenue) -> {
-			revenueReport.put(
-	                eventService.getEventById(eventId).getTitle(),
-	                revenue
-	        );
-		});
-		AdminMenuHelper.printEventRevenueReport(revenueReport);
-	}
+        List<EventRevenueReport> reports = getRevenueReport();
+
+        AdminMenuHelper.printEventRevenueReport(reports);
+    }
+
 }

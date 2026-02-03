@@ -46,5 +46,19 @@ public class OrganizerEventSummary {
 	public void setBookedTickets(int bookedTickets) {
 		this.bookedTickets = bookedTickets;
 	}
+	
+	public int getStatusPriority() {
+	    switch (status) {
+	        case "PUBLISHED":
+	            return 1;
+	        case "DRAFT":
+	            return 2;
+	        case "CANCELLED":
+	            return 3;
+	        default:
+	            return 99;
+	    }
+	}
+
 
 }

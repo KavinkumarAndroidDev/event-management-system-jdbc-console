@@ -7,6 +7,7 @@ import java.util.Map;
 import com.ems.exception.DataAccessException;
 import com.ems.model.BookingDetail;
 import com.ems.model.Event;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.UserEventRegistration;
 
@@ -35,8 +36,6 @@ public interface EventDao {
 
 	 List<BookingDetail> viewBookingDetails(int userId) throws DataAccessException;
 	
-	 Map<Integer, Double> getEventWiseRevenue() throws DataAccessException;
-
 	 Map<String, Integer> getOrganizerWiseEventCount() throws DataAccessException;
 	 
 	 
@@ -54,5 +53,7 @@ public interface EventDao {
 	 List<Event> getEventsByOrganizer(int organizerId) throws DataAccessException;
 	 
 	 List<OrganizerEventSummary> getEventSummaryByOrganizer(int organizerId) throws DataAccessException;
+
+	 List<EventRevenueReport> getEventWiseRevenueReport() throws DataAccessException;
 
 }

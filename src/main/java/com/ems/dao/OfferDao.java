@@ -13,17 +13,15 @@ public interface OfferDao {
 
     int createOffer(Offer offer) throws DataAccessException;
 
-    void assignOfferToEvent(int offerId, int eventId) throws DataAccessException;
-
     void updateOfferActiveStatus(int offerId,  Instant validDate) throws DataAccessException;
 
     Map<String, Integer> getOfferUsageReport() throws DataAccessException;
     
-    Offer getValidOfferForEvent(int eventId, String code) throws DataAccessException;
-
     void recordOfferUsage(int offerId, int userId, int registrationId) throws DataAccessException;
 
 	boolean hasUserUsedOfferCode(int userId, int offerId)  throws DataAccessException ;
+
+	Offer getOffer(int eventId, String inputCode) throws DataAccessException;
 
 }
 

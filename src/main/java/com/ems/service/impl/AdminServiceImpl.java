@@ -1,7 +1,6 @@
 package com.ems.service.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import com.ems.enums.UserRole;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Category;
 import com.ems.model.EventRegistrationReport;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.User;
 import com.ems.model.Venue;
 import com.ems.service.AdminService;
@@ -186,16 +186,18 @@ public class AdminServiceImpl implements AdminService {
 	 * Displays revenue generated per event.
 	 */
 	@Override
-	public Map<Integer, Double> getRevenueReport() {
+	public List<EventRevenueReport> getRevenueReport() {
+		List<EventRevenueReport> eventRevenueReport = new ArrayList<>();
 		try {
-			Map<Integer, Double> revenueMap = eventDao.getEventWiseRevenue();
+			eventRevenueReport = eventDao.getEventWiseRevenueReport();
 			
-			return revenueMap;
+			return eventRevenueReport;
 
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
-		return Collections.emptyMap();
+		return eventRevenueReport;
+		
 	}
 
 	/*

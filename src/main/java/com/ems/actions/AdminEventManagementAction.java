@@ -16,7 +16,7 @@ import com.ems.util.ScannerUtil;
 public class AdminEventManagementAction {
     private final AdminService adminService;
     private final EventService eventService;
-
+    
     public AdminEventManagementAction() {
         this.adminService = ApplicationUtil.adminService();
         this.eventService = ApplicationUtil.eventService();
@@ -159,7 +159,7 @@ public class AdminEventManagementAction {
     public int getAvailableTickets(int eventId) {
         return eventService.getAvailableTickets(eventId);
     }
-    
+    //TODO: REMOVE THIS AND 
 	public Event selectAnyEvent() {
 
 		List<Event> events = getAllEvents();

@@ -1,11 +1,13 @@
 package com.ems.util;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import com.ems.model.Event;
 import com.ems.model.EventRegistrationReport;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.Offer;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.Ticket;
@@ -19,7 +21,12 @@ public class AdminMenuHelper {
     private static final int TABLE_WIDTH = 110;
     private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
     private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
-
+    
+    /**
+     * Helper function to print the event along with the status of the event
+     * 
+     * @param events list of events to be displayed
+     */
     public static void printAllEventsWithStatus(List<Event> events) {
         if (events == null || events.isEmpty()) {
             System.out.println("No events found.");
@@ -58,7 +65,12 @@ public class AdminMenuHelper {
 
         System.out.println(SEPARATOR);
     }
-
+    
+    /**
+     * print the ticket details in the formatted way
+     * 
+     * @param tickets list of tickets
+     */
     public static void printTicketDetails(List<Ticket> tickets) {
         if (tickets == null || tickets.isEmpty()) {
             System.out.println("No ticket types found.");
@@ -89,28 +101,43 @@ public class AdminMenuHelper {
 
         System.out.println(SEPARATOR);
     }
-
-    public static void printOrganizerEventSummary(List<OrganizerEventSummary> list) {
-        if (list == null || list.isEmpty()) {
+    
+    /**
+     * To display the event summary of the organizer
+     * 
+     * @param organizerEventSummary list of organizer event summary
+     */
+    public static void printOrganizerEventSummary(List<OrganizerEventSummary> summaries) {
+        if (summaries == null || summaries.isEmpty()) {
             System.out.println("No organizer data found.");
             return;
         }
+        
+        List<OrganizerEventSummary> orderedList =
+                summaries.stream()
+                        .sorted(
+                                Comparator
+                                        .comparingInt(OrganizerEventSummary::getStatusPriority)
+                                        .thenComparing(OrganizerEventSummary::getTitle)
+                        )
+                        .toList();
 
         System.out.println("\nORGANIZER EVENT SUMMARY");
         System.out.println(SEPARATOR);
 
-        String currentStatus = "";
+        System.out.printf(
+                "%-5s %-45s %-12s %-15s %-15s%n",
+                "NO", "EVENT TITLE", "STATUS", "BOOKED", "TOTAL"
+        );
 
-        for (OrganizerEventSummary s : list) {
-            if (!s.getStatus().equals(currentStatus)) {
-                currentStatus = s.getStatus();
-                System.out.println("\n[" + currentStatus + "]");
-                System.out.println(SUB_SEPARATOR);
-            }
-
+        System.out.println(SUB_SEPARATOR);
+        int index = 1;
+        for (OrganizerEventSummary s : orderedList) {
             System.out.printf(
-                    "%-40s Tickets Booked: %-5d / %-5d%n",
-                    truncate(s.getTitle(), 39),
+                    "%-5d %-45s %-12s %-15d %-15d%n",
+                    index++,
+                    truncate(s.getTitle(), 44),
+                    s.getStatus(),
                     s.getBookedTickets(),
                     s.getTotalTickets()
             );
@@ -119,6 +146,14 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
 
+
+
+    
+    /**
+     * Print the summary of sold and available tickets
+     * 
+     * @param tickets
+     */
     public static void printTicketCapacitySummary(List<Ticket> tickets) {
         int total = 0;
         int available = 0;
@@ -330,8 +365,9 @@ public class AdminMenuHelper {
     
     
     
-    public static void printEventRevenueReport(Map<String, Double> revenueReport) {
-        if (revenueReport == null || revenueReport.isEmpty()) {
+    public static void printEventRevenueReport(List<EventRevenueReport> reports) {
+
+        if (reports == null || reports.isEmpty()) {
             System.out.println("No revenue data available.");
             return;
         }
@@ -340,29 +376,39 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
 
         System.out.printf(
-                "%-5s %-40s %-20s%n",
-                "NO", "EVENT TITLE", "REVENUE"
+                "%-5s %-35s %-12s %-12s %-15s %-15s%n",
+                "NO",
+                "EVENT TITLE",
+                "REGS",
+                "TICKETS",
+                "REVENUE",
+                "AVG PRICE"
         );
 
         System.out.println(SUB_SEPARATOR);
 
         int index = 1;
-        double totalRevenue = 0;
+        double grandTotal = 0;
 
-        for (Map.Entry<String, Double> entry : revenueReport.entrySet()) {
-            totalRevenue += entry.getValue();
+        for (EventRevenueReport report : reports) {
+
+            grandTotal += report.getTotalRevenue();
 
             System.out.printf(
-                    "%-5d %-40s ₹%-20.2f%n",
+                    "%-5d %-35s %-12d %-12d ₹%-14.2f ₹%-14.2f%n",
                     index++,
-                    truncate(entry.getKey(), 39),
-                    entry.getValue()
+                    truncate(report.getEventTitle(), 34),
+                    report.getTotalRegistrations(),
+                    report.getTicketsSold(),
+                    report.getTotalRevenue(),
+                    report.getAvgTicketPrice()
             );
         }
 
         System.out.println(SEPARATOR);
-        System.out.printf("TOTAL REVENUE: ₹%.2f%n", totalRevenue);
+        System.out.printf("TOTAL REVENUE: ₹%.2f%n", grandTotal);
     }
+
 
     
     private static String truncate(String value, int max) {
