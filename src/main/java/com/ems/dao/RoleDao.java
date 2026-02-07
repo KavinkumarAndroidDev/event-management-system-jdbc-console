@@ -6,6 +6,12 @@ import com.ems.exception.DataAccessException;
 import com.ems.model.Role;
 
 public interface RoleDao {
-	
-	List<Role> getRoles()  throws DataAccessException;
+
+    /**
+     * Retrieves all active roles from the system
+     *
+     * @return list of roles
+     * @throws DataAccessException
+     */
+    List<Role> getRoles() throws DataAccessException;
 }

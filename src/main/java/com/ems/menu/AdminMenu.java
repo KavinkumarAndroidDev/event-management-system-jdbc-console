@@ -53,11 +53,24 @@ public class AdminMenu extends BaseMenu {
 	public void start() {
 		while (true) {
 			eventManagementAction.markCompletedEvents();
-			System.out.println("\nAdmin Menu\n" + "1. User Management\n" + "2. Event Management\n"
-					+ "3. Category Management\n" + "4. Venue Management\n" + "5. Ticket & Registration Management\n"
-					+ "6. Payment & Revenue Management\n" + "7. Offer & Promotion Management\n"
-					+ "8. Reports & Analytics\n" + "9. Notifications\n" + "10. Feedback Moderation\n"
-					+ "11. Role Management\n" + "12. View system logs\n" + "13. Logout\n>" );
+			System.out.println(
+				    "\nAdmin menu\n" +
+				    "1 User management\n" +
+				    "2 Event management\n" +
+				    "3 Category management\n" +
+				    "4 Venue management\n" +
+				    "5 Ticket and registration management\n" +
+				    "6 Payment and revenue management\n" +
+				    "7 Offer and promotion management\n" +
+				    "8 Reports and analytics\n" +
+				    "9 Notifications\n" +
+				    "10 Feedback moderation\n" +
+				    "11 Role management\n" +
+				    "12 System logs\n" +
+				    "13 Logout\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -114,8 +127,16 @@ public class AdminMenu extends BaseMenu {
 
 	private void userManagementMenu() {
 		while (true) {
-			System.out.println("\nUser Management\n" + "1. View all users\n" + "2. View organizers\n" + "3. View admins\n"
-					+ "4. Activate user\n" + "5. Suspend user\n" + "6. Back\n" + ">");
+			System.out.println(
+				    "\nUser management\n" +
+				    "1 View all users\n" +
+				    "2 View organizers\n" +
+				    "3 View admins\n" +
+				    "4 Activate user\n" +
+				    "5 Suspend user\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -159,8 +180,17 @@ public class AdminMenu extends BaseMenu {
 	private void eventManagementMenu() {
 
 		while (true) {
-			System.out.println("\nEvent Management\n" + "1. View all events\n" + "2. View event details\n"
-					+ "3. View ticket options\n" + "4. Approve event\n" + "5. Cancel event\n" + "6. Back\n>");
+			System.out.println(
+				    "\nEvent management\n" +
+				    "1 View all events\n" +
+				    "2 View event details\n" +
+				    "3 View ticket options\n" +
+				    "4 Approve event\n" +
+				    "5 Cancel event\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -204,8 +234,15 @@ public class AdminMenu extends BaseMenu {
 
 	private void reportsMenu() {
 		while (true) {
-			System.out.println("\nReports & Analytics\n" + "1. Event-wise registrations\n"
-					+ "2. Organizer-wise performance\n" + "3. Revenue report\n" + "4. Back\n" + ">");
+			System.out.println(
+				    "\nReports and analytics\n" +
+				    "1 Event registrations\n" +
+				    "2 Organizer performance\n" +
+				    "3 Revenue report\n" +
+				    "4 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -231,9 +268,17 @@ public class AdminMenu extends BaseMenu {
 	private void notificationMenu() {
 
 		while (true) {
-			System.out.println("\nNotifications\n" + "1. Send system update (all users)\n"
-					+ "2. Send promotional message (all users)\n" + "3. Send notification to user role\n"
-					+ "4. Send notification to specific user\n" + "5. View my notifications\n" + "6. Back\n>");
+			System.out.println(
+				    "\nNotifications\n" +
+				    "1 Send system update\n" +
+				    "2 Send promotional message\n" +
+				    "3 Notify user role\n" +
+				    "4 Notify specific user\n" +
+				    "5 View notifications\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -279,8 +324,16 @@ public class AdminMenu extends BaseMenu {
 	private void categoryManagementMenu() {
 
 		while (true) {
-			System.out.println("\nCategory Management\n" + "1. View all categories\n" + "2. Add new category\n"
-					+ "3. Update category\n" + "4. Delete category\n" + "5. Back\n>");
+			System.out.println(
+				    "\nCategory management\n" +
+				    "1 View all categories\n" +
+				    "2 Add category\n" +
+				    "3 Update category\n" +
+				    "4 Delete category\n" +
+				    "5 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -323,8 +376,16 @@ public class AdminMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-					"\nVenue Management\n" + "1. View all venues\n" + "2. Add new venue\n" + "3. Update venue details\n"
-							+ "4. Remove venue\n" + "5. View events at a venue\n" + "6. Back\n\n>");
+				    "\nVenue management\n" +
+				    "1 View all venues\n" +
+				    "2 Add venue\n" +
+				    "3 Update venue details\n" +
+				    "4 Remove venue\n" +
+				    "5 View events by city\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -366,10 +427,18 @@ public class AdminMenu extends BaseMenu {
 
 	private void ticketRegistrationManagementMenu() {
 		while (true) {
-			System.out.println("\nTicket & Registration Management\n" + "1. View tickets by event\n"
-					+ "2. View ticket availability summary\n" + "3. View registrations by event\n"
-					+ "4. View registrations by user\n" + "5. Cancel a registration\n"
-					+ "6. Restore cancelled registration\n" + "7. Back\n" + ">");
+			System.out.println(
+				    "\nTicket and registration management\n" +
+				    "1 View tickets by event\n" +
+				    "2 Ticket availability summary\n" +
+				    "3 Registrations by event\n" +
+				    "4 Registrations by user\n" +
+				    "5 Cancel registration\n" +
+				    "6 Restore registration\n" +
+				    "7 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -413,9 +482,17 @@ public class AdminMenu extends BaseMenu {
 
 	private void paymentRevenueManagementMenu() {
 		while (true) {
-			System.out.println("\nPayment & Revenue Management\n" + "1. View payments by event\n"
-					+ "2. View payments by user\n" + "3. View failed payments\n" + "4. View payment summary\n"
-					+ "5. Initiate refund\n" + "6. Back\n" + ">");
+			System.out.println(
+				    "\nPayment and revenue management\n" +
+				    "1 Payments by event\n" +
+				    "2 Payments by user\n" +
+				    "3 Failed payments\n" +
+				    "4 Payment summary\n" +
+				    "5 Initiate refund\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -431,8 +508,16 @@ public class AdminMenu extends BaseMenu {
 
 	private void offerPromotionManagementMenu() {
 		while (true) {
-			System.out.println("\nOffer & Promotion Management\n" + "1. View all offers\n" + "2. Create new offer\n"
-					+ "3. Activate or deactivate offer\n" + "4. View offer usage report\n" + "5. Back\n" + ">");
+			System.out.println(
+				    "\nOffer and promotion management\n" +
+				    "1 View offers\n" +
+				    "2 Create offer\n" +
+				    "3 Activate or deactivate offer\n" +
+				    "4 Offer usage report\n" +
+				    "5 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -463,8 +548,15 @@ public class AdminMenu extends BaseMenu {
 	private void feedbackModerationMenu() {
 		while (true) {
 			System.out.println(
-					"\nFeedback Moderation\n" + "1. View feedback by event\n" + "2. View feedback by organizer\n"
-							+ "3. Delete feedback\n" + "4. Flag feedback as reviewed\n" + "5. Back\n" + ">");
+				    "\nFeedback moderation\n" +
+				    "1 View feedback by event\n" +
+				    "2 View feedback by organizer\n" +
+				    "3 Delete feedback\n" +
+				    "4 Mark feedback as reviewed\n" +
+				    "5 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -480,8 +572,17 @@ public class AdminMenu extends BaseMenu {
 
 	private void roleManagementMenu() {
 		while (true) {
-			System.out.println("\nRole Management\n" + "1. View all roles\n" + "2. Create new role\n"
-					+ "3. Assign role to user\n" + "4. Update role name\n" + "5. Delete role\n" + "6. Back\n" + ">");
+			System.out.println(
+				    "\nRole management\n" +
+				    "1 View roles\n" +
+				    "2 Create role\n" +
+				    "3 Assign role\n" +
+				    "4 Update role\n" +
+				    "5 Delete role\n" +
+				    "6 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 

@@ -38,8 +38,8 @@ public final class DateTimeUtil {
     /**
      * Formatter used for displaying dates in the application.
      */
-    private static final DateTimeFormatter DISPLAY_DATE_FORMAT =
-            DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final DateTimeFormatter DISPLAY_DATE_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
     /**
      * Supported date formats for parsing LocalDate values.
@@ -80,8 +80,12 @@ public final class DateTimeUtil {
      * @return zoned date-time in system default time zone
      */
     public static ZonedDateTime convertUtcToLocal(Instant utcInstant) {
+        if (utcInstant == null) {
+            return null;
+        }
         return utcInstant.atZone(SYSTEM_ZONE);
     }
+
 
     /* ===================== CONVERSIONS ===================== */
 
@@ -92,7 +96,7 @@ public final class DateTimeUtil {
      * @return UTC instant
      */
     public static Instant convertLocalToUtc(Timestamp timestamp) {
-        return timestamp.toInstant();
+        return timestamp == null ? null : timestamp.toInstant();
     }
 
     /**
@@ -104,7 +108,34 @@ public final class DateTimeUtil {
     public static Instant convertLocalDefaultToUtc(LocalDateTime localDateTime) {
         return localDateTime.atZone(SYSTEM_ZONE).toInstant();
     }
+    
+    /**
+     * Converts a LocalDateTime to UTC instant.
+     * 
+     * @param localDateTime
+     * @return UTC instant
+     */
+	public static Instant convertLocalToUtc(LocalDateTime localDateTime) {
+	    if (localDateTime == null) {
+	        return null;
+	    }
+	    return convertLocalDefaultToUtc(localDateTime);
+	}
+	
+	/**
+	 * Converts a UTC instant to LocalDateTime.
+	 * 
+	 * @param utcInstant
+	 * @return localDateTime the local date-time
+	 */
+	public static LocalDateTime convertUtcToLocalDateTime(Instant utcInstant) {
+	    if (utcInstant == null) {
+	        return null;
+	    }
+	    return utcInstant.atZone(SYSTEM_ZONE).toLocalDateTime();
+	}
 
+	
     /* ===================== FORMATTING ===================== */
 
     /**
@@ -113,10 +144,12 @@ public final class DateTimeUtil {
      * @param localDateTime the local date-time to format
      * @return formatted date-time string
      */
-    public static String formatDateTime(LocalDateTime localDateTime) {
-        return localDateTime.toLocalDate().format(DISPLAY_DATE_FORMAT)
-                + " " + localDateTime.toLocalTime();
-    }
+	public static String formatDateTime(LocalDateTime localDateTime) {
+	    if (localDateTime == null) {
+	        return null;
+	    }
+	    return localDateTime.format(DISPLAY_DATE_TIME_FORMAT);
+	}
 
     /* ===================== PARSING ===================== */
 
@@ -159,4 +192,5 @@ public final class DateTimeUtil {
         }
         return null;
     }
+
 }

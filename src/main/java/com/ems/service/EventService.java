@@ -54,7 +54,7 @@ public interface EventService {
 
 	
 	// feedback
-	void submitRating(int userId, int eventId, int rating, String comments);
+	boolean submitRating(int userId, int eventId, int rating, String comments);
 
 	
 	// Event listing & retrival

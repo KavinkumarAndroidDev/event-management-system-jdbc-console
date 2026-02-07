@@ -22,10 +22,11 @@ import com.ems.util.DateTimeUtil;
  *
  * Responsibilities:
  * - Persist and retrieve user accounts
- * - Update user status and role related data
- * - Fetch user information for administrative and authentication use cases
+ * - Update user status and authentication related data
+ * - Fetch user information for administrative workflows
  */
 public class UserDaoImpl implements UserDao {
+
 
 	
 	@Override
@@ -33,6 +34,7 @@ public class UserDaoImpl implements UserDao {
 			String status, LocalDateTime createdAt, LocalDateTime updatedAt, String gender) 
 			throws DataAccessException {
 		
+		// Stores user timestamps in UTC for consistency
 		String sql = "insert into users(full_name, email, phone, password_hash, role_id, created_at, status, " +
 		             "updated_at, gender) values (?,?,?,?,?,?,?,?,?)";
 		
@@ -46,7 +48,7 @@ public class UserDaoImpl implements UserDao {
 			ps.setInt(5, roleId);
 			Instant utcInstant = DateTimeUtil.convertLocalDefaultToUtc(createdAt);
 			ps.setTimestamp(6, Timestamp.from(utcInstant));
-			ps.setString(7, "ACTIVE");
+			ps.setString(7, status);
 			ps.setTimestamp(8, null);
 			ps.setString(9, gender);
 			ps.executeUpdate();
@@ -57,7 +59,11 @@ public class UserDaoImpl implements UserDao {
 	}
 	
 	@Override
-	public User findByEmail(String email) throws DataAccessException {
+	public User findByEmail(String email)
+	        throws DataAccessException {
+
+	    // Email lookup is normalized to lowercase
+
 		User user = null;
 		String sql = "select * from users where email = ?";
 		
@@ -80,13 +86,12 @@ public class UserDaoImpl implements UserDao {
 	        			        rs.getTimestamp("created_at").toInstant()
 	        			    ).toLocalDateTime(),
 	        			    rs.getTimestamp("updated_at") == null
-	        			        ? null
-	        			        : rs.getTimestamp("updated_at").toLocalDateTime(),
+	        			    	? null: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at").toInstant()
+	        			      ),
 	        			    rs.getString("gender"),
 	        			    rs.getInt("failed_attempts"),
-	        			    rs.getTimestamp("last_login") == null
-	        			        ? null
-	        			        : rs.getTimestamp("last_login").toLocalDateTime()
+							rs.getTimestamp("last_login") == null ? null
+									: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
 
 	        			);
 	        	}
@@ -100,7 +105,11 @@ public class UserDaoImpl implements UserDao {
 	}
 	
 	@Override
-	public boolean updateUserStatus(int userId, String status) throws DataAccessException {
+	public boolean updateUserStatus(int userId, String status)
+	        throws DataAccessException {
+
+	    // Prevents status changes on admin accounts
+
 		String adminCheck = "select r.role_name from roles r inner join users u on r.role_id = u.role_id where u.user_id = ?";
 		String sql = "update users set status = ? where user_id = ?";
 		
@@ -156,14 +165,12 @@ public class UserDaoImpl implements UserDao {
 					    DateTimeUtil.convertUtcToLocal(
 					        rs.getTimestamp("created_at").toInstant()
 					    ).toLocalDateTime(),
-					    rs.getTimestamp("updated_at") == null
-					        ? null
-					        : rs.getTimestamp("updated_at").toLocalDateTime(),
+						rs.getTimestamp("updated_at") == null ? null
+								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at").toInstant()),
 					    rs.getString("gender"),
 					    rs.getInt("failed_attempts"),
-					    rs.getTimestamp("last_login") == null
-					        ? null
-					        : rs.getTimestamp("last_login").toLocalDateTime()
+						rs.getTimestamp("last_login") == null ? null
+								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
 
 					);
 	            users.add(user); 
@@ -178,8 +185,12 @@ public class UserDaoImpl implements UserDao {
 	}
 	
 	@Override
-	public UserRole getRole(User user) throws DataAccessException {
-	    String query = "SELECT role_name FROM Roles WHERE role_id = ?";
+	public UserRole getRole(User user)
+	        throws DataAccessException {
+
+	    // Maps database role name to application enum
+
+	    String query = "SELECT role_name FROM roles WHERE role_id = ?";
 	    String roleName = "";
 
 	    try (Connection conn = DBConnectionUtil.getConnection();
@@ -205,7 +216,7 @@ public class UserDaoImpl implements UserDao {
 	    	return UserRole.ORGANIZER;
 	    }
 	    
-		return null;
+		throw new DataAccessException("Unknown role found!");
 	}
 
 	@Override
@@ -230,14 +241,13 @@ public class UserDaoImpl implements UserDao {
 					    DateTimeUtil.convertUtcToLocal(
 					        rs.getTimestamp("created_at").toInstant()
 					    ).toLocalDateTime(),
-					    rs.getTimestamp("updated_at") == null
-					        ? null
-					        : rs.getTimestamp("updated_at").toLocalDateTime(),
+						rs.getTimestamp("updated_at") == null ? null
+								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at")
+										.toInstant()),
 					    rs.getString("gender"),
 					    rs.getInt("failed_attempts"),
-					    rs.getTimestamp("last_login") == null
-					        ? null
-					        : rs.getTimestamp("last_login").toLocalDateTime()
+						rs.getTimestamp("last_login") == null ? null
+								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
 
 					);
 	            users.add(user); 
@@ -270,8 +280,13 @@ public class UserDaoImpl implements UserDao {
 	
 	
 	@Override
-	public void incrementFailedAttempts(int userId) throws DataAccessException {
+	public void incrementFailedAttempts(int userId)
+	        throws DataAccessException {
+
+	    // Used for account lock or security checks
+
 	    String sql = "update users set failed_attempts = failed_attempts + 1 where user_id = ?";
+	    
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
 	        ps.setInt(1, userId);
@@ -282,8 +297,13 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
-	public void resetFailedAttempts(int userId) throws DataAccessException {
-	    String sql = "update users set failed_attempts = 0, last_login = now() where user_id = ?";
+	public void resetFailedAttempts(int userId)
+	        throws DataAccessException {
+
+	    // Resets security counters after successful login
+
+	    String sql = "update users set failed_attempts = 0, last_login = utc_timestamp() where user_id = ?";
+
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
 	        ps.setInt(1, userId);

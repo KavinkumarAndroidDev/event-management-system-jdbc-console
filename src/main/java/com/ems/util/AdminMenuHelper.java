@@ -10,6 +10,7 @@ import com.ems.model.EventRegistrationReport;
 import com.ems.model.EventRevenueReport;
 import com.ems.model.Offer;
 import com.ems.model.OrganizerEventSummary;
+import com.ems.model.SystemLog;
 import com.ems.model.Ticket;
 import com.ems.model.Venue;
 import com.ems.service.EventService;
@@ -408,6 +409,43 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
         System.out.printf("TOTAL REVENUE: ₹%.2f%n", grandTotal);
     }
+    
+	public static void printSystemLogs(List<SystemLog> logs) {
+	
+	    if (logs == null || logs.isEmpty()) {
+	        System.out.println("No logs found.");
+	        return;
+	    }
+	
+	    System.out.println("\nSYSTEM LOGS");
+	    System.out.println(SEPARATOR);
+	
+	    System.out.printf(
+	        "%-5s %-20s %-10s %-22s %-15s %-40s%n",
+	        "NO", "TIME", "USER", "ACTION", "ENTITY", "MESSAGE"
+	    );
+	
+	    System.out.println(SUB_SEPARATOR);
+	
+	    int index = 1;
+	    for (SystemLog log : logs) {
+	
+	        System.out.printf(
+	            "%-5d %-20s %-10s %-22s %-15s %-40s%n",
+	            index++,
+	            DateTimeUtil.formatDateTime(log.getCreatedAt()),
+	            log.getUserId() == null ? "SYSTEM" : log.getUserId().toString(),
+	            truncate(log.getAction(), 21),
+	            truncate(log.getEntity(), 14),
+	            truncate(log.getMessage(), 39)
+	        );
+	    }
+	
+	    System.out.println(SEPARATOR);
+	}
+
+
+
 
 
     

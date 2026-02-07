@@ -67,29 +67,39 @@ public class EventSearchAction {
      * Handles searching events by a specific date.
      * Prompts user for date input and displays matching events.
      */
-    public void handleSearchByDate() {
-        LocalDate date = DateTimeUtil.parseLocalDate("Enter date (dd-mm-yyyy): ");
-        if (date == null) return;
+	public void handleSearchByDate() {
+	    String input = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter date (dd-mm-yyyy): ");
+	
+	    LocalDate date = DateTimeUtil.parseLocalDate(input);
+	    if (date == null) {
+	        System.out.println("Invalid date format.");
+	        return;
+	    }
+	
+	    List<Event> events = searchByDate(date);
+	
+	    if (events.isEmpty()) {
+	        System.out.println("No events found on " + date);
+	        return;
+	    }
+	
+	    MenuHelper.printEventSummaries(events);
+	}
 
-        List<Event> events = searchByDate(date);
-
-        if (events.isEmpty()) {
-            System.out.println("No events found on " + date);
-            return;
-        }
-
-        MenuHelper.printEventSummaries(events);
-    }
 
     /**
      * Handles searching events within a date range.
      * Validates date order before performing search.
      */
     public void handleSearchByDateRange() {
-        LocalDate start = DateTimeUtil.parseLocalDate("Enter start date (dd-mm-yyyy): ");
+    	String startInput = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter start date (dd-mm-yyyy): ");
+    	
+	    LocalDate start = DateTimeUtil.parseLocalDate(startInput);
         if (start == null) return;
-
-        LocalDate end = DateTimeUtil.parseLocalDate("Enter end date (dd-mm-yyyy): ");
+        
+    	String endInput = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter end date (dd-mm-yyyy): ");
+    	
+	    LocalDate end = DateTimeUtil.parseLocalDate(endInput);
         if (end == null) return;
 
         if (start.isAfter(end)) {

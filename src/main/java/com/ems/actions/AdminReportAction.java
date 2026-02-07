@@ -15,6 +15,7 @@ import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminReportAction {
@@ -60,7 +61,9 @@ public class AdminReportAction {
 	        return;
 	    }
 
-	    AdminMenuHelper.printOrganizerEventSummary(list);
+//	    AdminMenuHelper.printOrganizerEventSummary(list);
+	    PaginationUtil.paginate(list, AdminMenuHelper::printOrganizerEventSummary);
+
     }
     
     public List<EventRegistrationReport>  getEventWiseRegistrations(int eventId) {

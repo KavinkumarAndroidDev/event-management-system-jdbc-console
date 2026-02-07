@@ -76,23 +76,27 @@ public class UserServiceImpl implements UserService {
 	        		    "Invalid password attempt"
 	        		);
 
-	            userDao.incrementFailedAttempts(user.getUserId());
+	            int attempts = user.getFailedAttempts() + 1;
+				userDao.incrementFailedAttempts(user.getUserId());
+				
+				if (attempts >= 3) {
+					try {
+					    userDao.updateUserStatus(user.getUserId(), "SUSPENDED");
+					} catch (DataAccessException ex) {
+					    throw new AuthorizationException("Account locked. Contact admin@ems.com");
+					}
+				    systemLogService.log(
+				        user.getUserId(),
+				        "ACCOUNT_SUSPENDED",
+				        "USER",
+				        user.getUserId(),
+				        "Account suspended due to multiple failed login attempts"
+				    );
+				    throw new AuthorizationException(
+				        "Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info"
+				    );
+				}
 
-	            if (user.getFailedAttempts() + 1 >= 3) {
-	                userDao.updateUserStatus(user.getUserId(), "SUSPENDED");
-	                systemLogService.log(
-	                	    user.getUserId(),
-	                	    "ACCOUNT_SUSPENDED",
-	                	    "USER",
-	                	    user.getUserId(),
-	                	    "Account suspended due to multiple failed login attempts"
-	                	);
-
-
-	                throw new AuthorizationException(
-	                    "Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info"
-	                );
-	            }
 
 	            throw new AuthenticationException("Invalid credentials");
 	        }

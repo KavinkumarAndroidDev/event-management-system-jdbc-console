@@ -12,6 +12,7 @@ import com.ems.model.Ticket;
 import com.ems.model.Venue;
 import com.ems.service.EventService;
 import com.ems.service.OrganizerService;
+import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
@@ -228,7 +229,7 @@ public class OrganizerEventManagementAction {
             return;
         }
 
-        MenuHelper.printEventSummaries(events);
+        AdminMenuHelper.printAllEventsWithStatus(events);
 
         int choice = MenuHelper.selectFromList(events.size(), "Select an event");
 
@@ -274,8 +275,7 @@ public class OrganizerEventManagementAction {
             System.out.println("No upcoming events available for editing.");
             return;
         }
-
-        MenuHelper.printEventSummaries(sortedEvents);
+        AdminMenuHelper.printAllEventsWithStatus(sortedEvents);
 
         int choice = MenuHelper.selectFromList(sortedEvents.size(), "Select an event");
 
@@ -372,7 +372,7 @@ public class OrganizerEventManagementAction {
             return;
         }
 
-        MenuHelper.printEventSummaries(sortedEvents);
+        AdminMenuHelper.printAllEventsWithStatus(sortedEvents);
 
         int choice = MenuHelper.selectFromList(sortedEvents.size(), "Select an event");
 
@@ -424,18 +424,21 @@ public class OrganizerEventManagementAction {
 			System.out.println("No events found.");
 			return;
 		}
+		LocalDateTime now = LocalDateTime.now();
 
 		List<Event> eligibleEvents = events.stream()
-				.filter(e -> EventStatus.APPROVED.toString().equals(e.getStatus())
-						&& e.getStartDateTime().isAfter(LocalDateTime.now()) && e.getUpdatedAt() != null)
+				.filter(e -> EventStatus.APPROVED.name().equals(e.getStatus())
+				        && e.getStartDateTime().isAfter(now)
+				        && e.getApprovedAt() != null)
 				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
 
 		if (eligibleEvents.isEmpty()) {
-			System.out.println("No eligible events available for publishing");
+			System.out.println("No approved upcoming events available for publishing.");
 			return;
 		}
+		System.out.println("\nApproved events ready for publishing:\n");
+        AdminMenuHelper.printAllEventsWithStatus(eligibleEvents);
 
-		MenuHelper.printEventSummaries(eligibleEvents);
 
 		int choice = MenuHelper.selectFromList(eligibleEvents.size(), "Select an event");
 
@@ -445,12 +448,20 @@ public class OrganizerEventManagementAction {
 		int capacity = selectedEvent.getCapacity();
 
 		int remainingCapacity = capacity;
+		
+		System.out.println("\nYou are publishing the following event:");
+		System.out.println("Event: " + selectedEvent.getTitle());
+		System.out.println("Total Capacity: " + capacity);
+		System.out.println("You must allocate tickets equal to the total capacity.");
 
 		while (remainingCapacity > 0) {
 
-			System.out.println("\nEvent Capacity: " + capacity + "\nRemaining Capacity: " + remainingCapacity);
-
-			System.out.println("\n1. Add ticket type\n" + "2. Cancel publishing\n\n>");
+//			System.out.println("\nEvent Capacity: " + capacity + "\nRemaining Capacity: " + remainingCapacity);
+			
+			System.out.println("\nChoose an action:");
+			System.out.println("1. Add a new ticket type");
+			System.out.println("2. Cancel and exit publishing");
+			System.out.print("> ");
 
 			int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -462,6 +473,9 @@ public class OrganizerEventManagementAction {
 				System.out.println("Invalid option. Please select from the menu.");
 				continue;
 			}
+			
+			System.out.println("\nCreating a new ticket type for this event.");
+			System.out.println("Remaining capacity: " + remainingCapacity);
 
 			Ticket ticket = new Ticket();
 			ticket.setEventId(eventId);
@@ -492,9 +506,21 @@ public class OrganizerEventManagementAction {
 
 			remainingCapacity -= qty;
 		}
+		
+		System.out.println("\nAll tickets created successfully."
+				+ "\nDo you want to publish this event now?"
+				+ "\n1. Yes, publish event"
+				+ "\n2. Cancel");
 
+		int confirm = InputValidationUtil.readInt(ScannerUtil.getScanner(), "> ");
+
+		if (confirm != 1) {
+		    System.out.println("Publishing cancelled.");
+		    return;
+		}
+		
 		boolean published = organizerService.publishEvent(eventId);
-
+		
 		System.out.println(published ? "Event published successfully" : "Publish failed");
 	}
 	
@@ -522,7 +548,8 @@ public class OrganizerEventManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(cancellableEvents);
+        AdminMenuHelper.printAllEventsWithStatus(cancellableEvents);
+
 
 		int choice = MenuHelper.selectFromList(cancellableEvents.size(), "Select an event");
 

@@ -57,7 +57,7 @@ public class OfferServiceImpl implements OfferService {
 	 * as a percentage
 	 */
 	@Override
-	public int createOffer(int eventId, String code, Integer discount, LocalDateTime from, LocalDateTime to) {
+	public boolean createOffer(int eventId, String code, Integer discount, LocalDateTime from, LocalDateTime to) {
 		Offer offer = new Offer();
 		offer.setEventId(eventId);
 		offer.setCode(code);
@@ -68,20 +68,22 @@ public class OfferServiceImpl implements OfferService {
 		try {
 			int offerId = offerDao.createOffer(offer);
 
-			systemLogService.log(
-			    null,
-			    "CREATE",
-			    "OFFER",
-			    offerId,
-			    "Offer created with code: " + code
-			);
-
-			return offerId;
+			if(offerId != 0 ) {
+				systemLogService.log(
+					    null,
+					    "CREATE",
+					    "OFFER",
+					    offerId,
+					    "Offer created with code: " + code
+					);
+				return true;
+			}
+			return false;
 
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
-		return 0;
+		return false;
 	}
 
 	/*

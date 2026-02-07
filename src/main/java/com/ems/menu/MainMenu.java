@@ -21,14 +21,15 @@ public class MainMenu {
     
 	public void start() {
 		while(true) {
-			System.out.println("\nMain Menu"
-					+ "\n\nEnter your choice:"
-			        + "\n1. Login"
-			        + "\n2. Register as User"
-			        + "\n3. Register as Organizer"
-			        + "\n4. Continue as Guest"
-			        + "\n5. Exit the app"
-			        + "\n>");
+			System.out.println(
+				    "\nMain menu\n" +
+				    "1 Login\n" +
+				    "2 Register as attendee\n" +
+				    "3 Register as organizer\n" +
+				    "4 Continue as guest\n" +
+				    "5 Exit\n\n" +
+				    "Choice:"
+				);
 			int input = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 			switch(input) {
 				case 1:
@@ -52,7 +53,7 @@ public class MainMenu {
 	                }
 	                break;
 	            default:
-	            	System.out.println("Enter the valid option (1 - 5)");
+	            	System.out.println("Invalid choice. Please select a number between 1 and 5.");
 			}
 			
 		}
@@ -82,7 +83,7 @@ public class MainMenu {
 	                break;
 	
 	            default:
-	                System.out.println("Unknown user role.");
+	                System.out.println("Login failed due to an unsupported user role.");
 	        }
 
 	    } catch (AuthorizationException | AuthenticationException e) {
@@ -98,7 +99,7 @@ public class MainMenu {
 	private boolean confirmLogout() {
 	    char choice = InputValidationUtil.readChar(
 	        ScannerUtil.getScanner(),
-	        "Are you sure to leave the application (Y/N): "
+	        "Are you sure you want to exit? (Y/N): "
 	    );
 	    return Character.toUpperCase(choice) == 'Y';
 	}

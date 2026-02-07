@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,20 +22,23 @@ import com.ems.util.DateTimeUtil;
  * Handles database operations related to offers.
  *
  * Responsibilities:
- * - Retrieve available offers
+ * - Retrieve and validate available offers
  * - Persist offer creation and updates
- * - Associate offers with events
+ * - Track offer usage
  * - Generate offer usage reports
  */
 public class OfferDaoImpl implements OfferDao {
 
+	@Override
+	public List<Offer> getAllOffers() throws DataAccessException {
 
-    @Override
-    public List<Offer> getAllOffers() throws DataAccessException {
+	    // Filters out expired offers at DAO level
+	    String sql = "select offer_id, event_id, code, discount_percentage, valid_from, valid_to "
+	    		+ "from offers "
+	    		+ "where valid_to > utc_timestamp() ";
+
         List<Offer> offers = new ArrayList<>();
-
-        String sql = "select offer_id, event_id, code, discount_percentage, valid_from, valid_to from offers";
-
+        
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -47,15 +49,20 @@ public class OfferDaoImpl implements OfferDao {
                 offer.setEventId(rs.getInt("event_id"));
                 offer.setCode(rs.getString("code"));
                 offer.setDiscountPercentage(rs.getInt("discount_percentage"));
-                offer.setValidFrom(rs.getTimestamp("valid_from") != null
-                        ? rs.getTimestamp("valid_from").toLocalDateTime()
-                        : null);
-                offer.setValidTo(rs.getTimestamp("valid_to") != null
-                        ? rs.getTimestamp("valid_to").toLocalDateTime()
-                        : null);
-                if(offer.getValidTo().isAfter(LocalDateTime.now()) ) {
-                	offers.add(offer);
-                }
+                Timestamp fromTs = rs.getTimestamp("valid_from");
+                offer.setValidFrom(
+                    fromTs != null
+                        ? DateTimeUtil.convertUtcToLocalDateTime(fromTs.toInstant())
+                        : null
+                );
+                
+                Timestamp toTs = rs.getTimestamp("valid_to");
+                offer.setValidTo(
+                    toTs != null
+                        ? DateTimeUtil.convertUtcToLocalDateTime(toTs.toInstant())
+                        : null
+                );
+                offers.add(offer);
             }
         } catch (Exception e) {
             throw new DataAccessException("Failed to fetch offers");
@@ -64,11 +71,14 @@ public class OfferDaoImpl implements OfferDao {
         return offers;
     }
 
-    @Override
-    public int createOffer(Offer offer) throws DataAccessException {
-        String sql =
-            "insert into offers (code, discount_percentage, valid_from, valid_to, event_id) " +
-            "values (?, ?, ?, ?, ?)";
+	@Override
+	public int createOffer(Offer offer) throws DataAccessException {
+
+	    // Offer code normalized to avoid case sensitivity issues
+	    String sql =
+	        "insert into offers (code, discount_percentage, valid_from, valid_to, event_id) " +
+	        "values (?, ?, ?, ?, ?)";
+
 
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -76,9 +86,16 @@ public class OfferDaoImpl implements OfferDao {
             ps.setString(1, offer.getCode().trim().toUpperCase());
             ps.setObject(2, offer.getDiscountPercentage());
             ps.setTimestamp(3,
-                offer.getValidFrom() != null ? Timestamp.valueOf(offer.getValidFrom()) : null);
+            	    offer.getValidFrom() != null
+            	        ? Timestamp.from(DateTimeUtil.convertLocalToUtc(offer.getValidFrom()))
+            	        : null
+            	);
             ps.setTimestamp(4,
-                offer.getValidTo() != null ? Timestamp.valueOf(offer.getValidTo()) : null);
+            	    offer.getValidTo() != null
+            	        ? Timestamp.from(DateTimeUtil.convertLocalToUtc(offer.getValidTo()))
+            	        : null
+            	);
+
             ps.setInt(5, offer.getEventId());
             ps.executeUpdate();
 
@@ -90,9 +107,12 @@ public class OfferDaoImpl implements OfferDao {
         }
     }
 
-    @Override
-    public void updateOfferActiveStatus(int offerId, Instant validDate) throws DataAccessException {
-        String sql = "update offers set valid_to = ? where offer_id = ?";
+	@Override
+	public void updateOfferActiveStatus(int offerId, Instant validDate)
+	        throws DataAccessException {
+
+	    // Marks offer as inactive by updating validity end time
+	    String sql = "update offers set valid_to = ? where offer_id = ?";
 
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -132,16 +152,15 @@ public class OfferDaoImpl implements OfferDao {
         return report;
     }
 
-	@Override
-	public void recordOfferUsage(
-	        int offerId,
-	        int userId,
-	        int registrationId
-	) throws DataAccessException {
+    @Override
+    public void recordOfferUsage(int offerId, int userId, int registrationId)
+            throws DataAccessException {
 
-	    String sql =
-	        "INSERT INTO offer_usages (offer_id, user_id, registration_id, used_at) " +
-	        "VALUES (?, ?, ?, utc_timestamp())";
+        // Records a single usage entry for audit and reporting
+        String sql =
+            "INSERT INTO offer_usages (offer_id, user_id, registration_id, used_at) " +
+            "VALUES (?, ?, ?, utc_timestamp())";
+
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -156,9 +175,12 @@ public class OfferDaoImpl implements OfferDao {
 	    }
 	}
 
-	@Override
-	public boolean hasUserUsedOfferCode(int userId, int offerId) throws DataAccessException {
-		String sql = "select * from offer_usages where user_id = ? and offer_id = ?";
+    @Override
+    public boolean hasUserUsedOfferCode(int userId, int offerId)
+            throws DataAccessException {
+
+        // Existence check avoids unnecessary row fetching
+        String sql = "select 1 from offer_usages where user_id = ? and offer_id = ?";
 		try(Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)){
 			ps.setInt(1, userId);
@@ -174,11 +196,14 @@ public class OfferDaoImpl implements OfferDao {
 		}
 	}
 	
-	@Override
-	public Offer getOffer(int eventId, String inputCode) throws DataAccessException {
-	    Offer offer = null;
-	    String sql = "SELECT offer_id, event_id, code, discount_percentage, valid_from, valid_to " +
-	                 "FROM offers WHERE event_id = ? AND code = ?";
+    @Override
+    public Offer getOffer(int eventId, String inputCode)
+            throws DataAccessException {
+
+        // Fetches offer scoped to event and normalized code
+        String sql = "SELECT offer_id, event_id, code, discount_percentage, valid_from, valid_to " +
+                     "FROM offers WHERE event_id = ? AND code = ?";
+        Offer offer = null;
 
 	    try (Connection conn = DBConnectionUtil.getConnection();
 	         PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -195,10 +220,14 @@ public class OfferDaoImpl implements OfferDao {
 	                offer.setDiscountPercentage(rs.getInt("discount_percentage"));
 	                
 	                Timestamp fromTs = rs.getTimestamp("valid_from");
-	                if (fromTs != null) offer.setValidFrom(fromTs.toLocalDateTime());
-	                
 	                Timestamp toTs = rs.getTimestamp("valid_to");
-	                if (toTs != null) offer.setValidTo(toTs.toLocalDateTime());
+	                
+	                if (fromTs != null)
+	                    offer.setValidFrom(DateTimeUtil.convertUtcToLocalDateTime(fromTs.toInstant()));
+
+	                if (toTs != null)
+	                    offer.setValidTo(DateTimeUtil.convertUtcToLocalDateTime(toTs.toInstant()));
+
 	            }
 	        }
 	    } catch (SQLException e) {
@@ -206,8 +235,4 @@ public class OfferDaoImpl implements OfferDao {
 	    }
 	    return offer; 
 	}
-
-	
-	
-	
 }

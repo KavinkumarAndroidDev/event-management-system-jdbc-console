@@ -12,21 +12,31 @@ import com.ems.dao.SystemLogDao;
 import com.ems.exception.DataAccessException;
 import com.ems.model.SystemLog;
 import com.ems.util.DBConnectionUtil;
-
+import com.ems.util.DateTimeUtil;
+/*
+ * Handles database operations related to system audit logs.
+ *
+ * Responsibilities:
+ * - Persist system wide audit logs
+ * - Retrieve logs for monitoring and diagnostics
+ */
 public class SystemLogDaoImpl implements SystemLogDao {
 
 	@Override
 	public void log(
-			Integer userId,
-			String action,
-			String entity,
-			Integer entityId,
-			String message) throws DataAccessException {
+	        Integer userId,
+	        String action,
+	        String entity,
+	        Integer entityId,
+	        String message)
+	        throws DataAccessException {
 
-		String sql =
-			"insert into system_logs " +
-			"(user_id, action, entity, entity_id, message, created_at) " +
-			"values (?, ?, ?, ?, ?, utc_timestamp())";
+	    // Allows nullable user and entity references for system generated logs
+	    String sql =
+	        "insert into system_logs " +
+	        "(user_id, action, entity, entity_id, message, created_at) " +
+	        "values (?, ?, ?, ?, ?, utc_timestamp())";
+
 
 		try (Connection con = DBConnectionUtil.getConnection();
 		     PreparedStatement ps = con.prepareStatement(sql)) {
@@ -59,10 +69,13 @@ public class SystemLogDaoImpl implements SystemLogDao {
 
 	@Override
 	public List<SystemLog> findAll() throws DataAccessException {
-	    List<SystemLog> logs = new ArrayList<>();
+
+	    // Returns logs ordered by most recent for admin views
 	    String sql = "SELECT log_id, user_id, action, entity, entity_id, message, created_at "
 	               + "FROM system_logs "
 	               + "ORDER BY created_at DESC";
+
+	    List<SystemLog> logs = new ArrayList<>();
 	
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
@@ -81,9 +94,11 @@ public class SystemLogDaoImpl implements SystemLogDao {
 	
 	            Timestamp ts = rs.getTimestamp("created_at");
 	            if (ts != null) {
-	                log.setCreatedAt(ts.toLocalDateTime());
+	                log.setCreatedAt(
+	                    DateTimeUtil.convertUtcToLocalDateTime(ts.toInstant())
+	                );
 	            }
-	
+	            
 	            logs.add(log);
 	        }
 	    } catch (SQLException e) {

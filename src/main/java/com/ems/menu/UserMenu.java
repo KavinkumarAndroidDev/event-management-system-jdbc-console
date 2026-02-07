@@ -42,16 +42,16 @@ public class UserMenu extends BaseMenu {
 
         while (true) {
 
-            System.out.println(
-                "\nUser Menu\n\n"
-                + "1. Browse Events\n"
-                + "2. Search & Filter Events\n"
-                + "3. My Registrations\n"
-                + "4. Notifications\n"
-                + "5. Feedback\n"
-                + "6. Logout\n"
-                + ">"
-            );
+        	System.out.println(
+        		    "\nUser menu\n" +
+        		    "1 Browse events\n" +
+        		    "2 Search and filter events\n" +
+        		    "3 My registrations\n" +
+        		    "4 Notifications\n" +
+        		    "5 Feedback\n" +
+        		    "6 Logout\n\n" +
+        		    "Choice:"
+        		);
 
             int choice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
@@ -83,7 +83,7 @@ public class UserMenu extends BaseMenu {
                 }
                 break;
             default:
-                System.out.println("Invalid option. Please select from the menu.");
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -98,14 +98,15 @@ public class UserMenu extends BaseMenu {
     private void browseEventsMenu() {
         while (true) {
             System.out.println(
-                "\nBrowse Events\n\n"
-                + "1. View all available events\n"
-                + "2. View event details\n"
-                + "3. View ticket options\n"
-                + "4. Register for event\n"
-                + "5. Back\n"
-                + ">"
-            );
+            	    "\nBrowse events\n" +
+            	    "1 View all events\n" +
+            	    "2 View event details\n" +
+            	    "3 View ticket options\n" +
+            	    "4 Register for event\n" +
+            	    "5 Back\n\n" +
+            	    "Choice:"
+            	);
+
 
             int choice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
@@ -130,7 +131,7 @@ public class UserMenu extends BaseMenu {
             case 5:
                 return;
             default:
-                System.out.println("Invalid option. Please select from the menu.");
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -141,16 +142,17 @@ public class UserMenu extends BaseMenu {
     public void searchEvents() {
         while (true) {
             System.out.println(
-                "\nSearch & Filter Events\n\n"
-                + "1. Search by category\n"
-                + "2. Search by date\n"
-                + "3. Search by date range\n"
-                + "4. Search by city\n"
-                + "5. Filter by price\n"
-                + "6. View all available events\n"
-                + "7. Back\n"
-                + ">"
-            );
+            	    "\nSearch and filter events\n" +
+            	    "1 Search by category\n" +
+            	    "2 Search by date\n" +
+            	    "3 Search by date range\n" +
+            	    "4 Search by city\n" +
+            	    "5 Filter by price\n" +
+            	    "6 View all events\n" +
+            	    "7 Back\n\n" +
+            	    "Choice:"
+            	);
+
 
             int filterChoice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
@@ -179,7 +181,7 @@ public class UserMenu extends BaseMenu {
             case 7:
                 return;
             default:
-                System.out.println("Invalid option. Please select from the menu.");
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -190,15 +192,15 @@ public class UserMenu extends BaseMenu {
      */
     private void registrationMenu() {
         while (true) {
-            System.out.println(
-                "\nMy Registrations\n\n"
-                + "1. View upcoming events\n"
-                + "2. View past events\n"
-                + "3. View booking details\n"
-                + "4. Cancel registration\n"
-                + "5. Back\n"
-                + ">"
-            );
+        	System.out.println(
+        		    "\nMy registrations\n" +
+        		    "1 Upcoming events\n" +
+        		    "2 Past events\n" +
+        		    "3 Booking details\n" +
+        		    "4 Cancel registration\n" +
+        		    "5 Back\n\n" +
+        		    "Choice:"
+        		);
 
             int choice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
@@ -229,7 +231,7 @@ public class UserMenu extends BaseMenu {
             case 5:
                 return;
             default:
-                System.out.println("Invalid option. Please select from the menu.");
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -240,12 +242,13 @@ public class UserMenu extends BaseMenu {
      */
     private void feedbackMenu() {
         while (true) {
-            System.out.println(
-                "\nFeedback\n\n"
-                + "1. Submit rating\n"
-                + "2. Back\n"
-                + ">"
-            );
+        	System.out.println(
+        		    "\nFeedback\n" +
+        		    "1 Submit rating\n" +
+        		    "2 Back\n\n" +
+        		    "Choice:"
+        		);
+
 
             int choice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
@@ -261,7 +264,7 @@ public class UserMenu extends BaseMenu {
             case 2:
                 return;
             default:
-                System.out.println("Invalid option. Please select from the menu.");
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }

@@ -118,7 +118,7 @@ public class AdminServiceImpl implements AdminService {
 	 * Rule: - Organizer is notified after approval
 	 */
 	@Override
-	public void approveEvents(int userId, int eventId) {
+	public boolean approveEvents(int userId, int eventId) {
 		try {
 			boolean isApproved = eventDao.approveEvent(eventId, userId);
 			if (isApproved) {
@@ -132,9 +132,11 @@ public class AdminServiceImpl implements AdminService {
 						"Event approved by admin"
 					);
 			}
+			return isApproved;
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
+		return false;
 
 	}
 

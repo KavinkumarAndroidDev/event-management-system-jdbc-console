@@ -11,7 +11,7 @@ public interface OfferService {
     // offers
     List<Offer> getAllOffers();
 
-    int createOffer(
+    boolean createOffer(
         int eventId,
         String code,
         Integer discount,

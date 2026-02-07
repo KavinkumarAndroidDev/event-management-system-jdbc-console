@@ -1,7 +1,6 @@
 package com.ems.service;
 
 import java.util.List;
-import java.util.Map;
 
 import com.ems.enums.NotificationType;
 import com.ems.enums.UserRole;
@@ -28,7 +27,7 @@ public interface AdminService {
 	void sendNotificationToUser(String message, NotificationType selectedType, int userId);
 
 	// event management
-	void approveEvents(int userId, int eventId);
+	boolean approveEvents(int userId, int eventId);
 
 	void cancelEvent(int eventId);
 

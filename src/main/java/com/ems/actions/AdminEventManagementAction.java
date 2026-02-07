@@ -81,7 +81,6 @@ public class AdminEventManagementAction {
     }
 
 
-
     public List<Event> getEventsAwaitingApproval() {
         return eventService.listEventsYetToApprove();
     }
@@ -108,8 +107,12 @@ public class AdminEventManagementAction {
 		char approveChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(),
 				"Approve this event? (Y/N)\n");
 		if (approveChoice == 'Y' || approveChoice == 'y') {
-			adminService.approveEvents(adminId, selectedEvent.getEventId());
-			System.out.println("Event approved successfully and the organizer has been notified.");
+			boolean isApproved = adminService.approveEvents(adminId, selectedEvent.getEventId());
+			if(isApproved) {
+				System.out.println("Event approved successfully and the organizer has been notified.");
+			}else {
+				System.out.println("Event approval failed.!");
+			}
 		} else {
 			System.out.println("Action cancelled by user.");
 		}

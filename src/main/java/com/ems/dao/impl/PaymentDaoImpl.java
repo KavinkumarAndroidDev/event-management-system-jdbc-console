@@ -8,6 +8,7 @@ import java.sql.Types;
 
 import com.ems.dao.PaymentDao;
 import com.ems.enums.PaymentMethod;
+import com.ems.enums.PaymentStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.RegistrationResult;
 import com.ems.util.DBConnectionUtil;
@@ -18,64 +19,10 @@ import com.ems.util.DBConnectionUtil;
  * Responsibilities:
  * - Persist payment transactions for registrations
  * - Record payment method, amount, and status
+ * - Handle refunds through status updates
  */
 public class PaymentDaoImpl implements PaymentDao {
-	@Override
-	public boolean processPayment(int regId, double totalAmount, String paymentMethod) 
-			throws DataAccessException {
-		
-		String sql = "insert into payments (registration_id, amount, payment_method, payment_status, created_at) " +
-		             "values(?, ?, ?, 'SUCCESS', utc_timestamp())";
-		
-		try (Connection con = DBConnectionUtil.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql)) {
-			
-			ps.setInt(1, regId);
-			ps.setDouble(2, totalAmount);
-			ps.setString(3, paymentMethod);
-		
-			
-			int updatedRows = ps.executeUpdate();
-			
-			if (updatedRows == 0) {
-				throw new DataAccessException("Error while updating payment!");
-			}
-			
-			return true;
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("Database error while processing payment");
-		}
-	}
-	
-	@Override
-	public boolean processPayment(int regId, double totalAmount, String paymentMethod, int offerId) 
-			throws DataAccessException {
-		
-		String sql = "insert into payments (registration_id, amount, payment_method, payment_status, created_at, offer_id) " +
-		             "values(?, ?, ?, 'SUCCESS', utc_timestamp(), ?)";
-		
-		try (Connection con = DBConnectionUtil.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql)) {
-			
-			ps.setInt(1, regId);
-			ps.setDouble(2, totalAmount);
-			ps.setString(3, paymentMethod);
-			ps.setInt(4, offerId);
-			
-			int updatedRows = ps.executeUpdate();
-			
-			if (updatedRows == 0) {
-				throw new DataAccessException("Error while updating payment!");
-			}
-			
-			return true;
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("Database error while processing payment");
-		}
-	}
-	
+
 	@Override
 	public RegistrationResult registerForEvent(
 	        int userId,
@@ -86,9 +33,9 @@ public class PaymentDaoImpl implements PaymentDao {
 	        PaymentMethod paymentMethod,
 	        String offerCode
 	) throws DataAccessException {
-
+	    // Delegates registration, availability checks, and pricing to stored procedure
 	    String sql = "{ CALL sp_register_for_event(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
-
+	    
 	    RegistrationResult result = new RegistrationResult();
 
 	    try (Connection con = DBConnectionUtil.getConnection();
@@ -101,7 +48,11 @@ public class PaymentDaoImpl implements PaymentDao {
 	        cs.setInt(4, quantity);
 	        cs.setDouble(5, price);
 	        cs.setString(6, paymentMethod.name());
-	        cs.setString(7, offerCode);
+	        if(offerCode == "") {
+	        	cs.setString(7, null);
+	        }else {
+	        	cs.setString(7, offerCode);
+	        }
 
 	        // OUT params
 	        cs.registerOutParameter(8, Types.BOOLEAN);     // o_success
@@ -125,19 +76,22 @@ public class PaymentDaoImpl implements PaymentDao {
 
 	
 	@Override
-	public void updatePaymentStatus(int registrationId) throws DataAccessException {
+	public void updatePaymentStatus(int registrationId)
+	        throws DataAccessException {
 
+	    // Marks a successful payment as refunded
 	    String sql = "UPDATE payments "
 	               + "SET payment_status = ? "
 	               + "WHERE registration_id = ? "
 	               + "AND payment_status = ?";
 
+
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
 
-	        ps.setString(1, "REFUNDED");
+	        ps.setString(1, PaymentStatus.REFUNDED.toString());
 	        ps.setInt(2, registrationId);
-	        ps.setString(3, "SUCCESS");
+	        ps.setString(3, PaymentStatus.SUCCESS.toString());
 
 	        int updatedRows = ps.executeUpdate();
 

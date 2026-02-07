@@ -18,38 +18,57 @@ import com.ems.util.DBConnectionUtil;
  * Responsibilities:
  * - Retrieve ticket availability and ticket details
  * - Persist ticket creation and updates
- * - Manage ticket quantity and pricing data
+ * - Manage ticket quantity and pricing
  */
 public class TicketDaoImpl implements TicketDao {
 
 	
 	@Override
 	public int getAvailableTickets(int eventId) throws DataAccessException {
-		String sql = "select sum(available_quantity) as total_available "
-				+ "from tickets "
-				+ "where event_id = ?";
-		
-		try (Connection con = DBConnectionUtil.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql)) {
-			
-			ps.setInt(1, eventId);
-			
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					return rs.getInt("total_available");
-				}
-			}
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("Error fetching available tickets");
-		}
-		
-		return 0;
+	
+	    String sql =
+	        "select sum(available_quantity) as total_available " +
+	        "from tickets " +
+	        "where event_id = ?";
+	
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	
+	        ps.setInt(1, eventId);
+	
+	        try (ResultSet rs = ps.executeQuery()) {
+	
+	            if (!rs.next()) {
+	                throw new DataAccessException(
+	                    "Unable to determine ticket availability for eventId: " + eventId
+	                );
+	            }
+	
+	            int total = rs.getInt("total_available");
+	
+	            if (rs.wasNull()) {
+	                throw new DataAccessException(
+	                    "No tickets configured for eventId: " + eventId
+	                );
+	            }
+	
+	            return total;
+	        }
+	
+	    } catch (SQLException e) {
+	        throw new DataAccessException(
+	            "Error fetching available tickets for eventId: " + eventId, e
+	        );
+	    }
 	}
+
 	
 	@Override
 	public List<Ticket> getTicketTypes(int eventId) throws DataAccessException {
-		String sql = "select * from tickets where event_id = ? and available_quantity > 0";
+
+	    // Returns only ticket types that can still be purchased
+	    String sql = "select * from tickets where event_id = ? and available_quantity > 0";
+
 		List<Ticket> tickets = new ArrayList<>();
 		
 		try (Connection con = DBConnectionUtil.getConnection();
@@ -103,14 +122,17 @@ public class TicketDaoImpl implements TicketDao {
 			throw new DataAccessException("Error fetching ticket by ID");
 		}
 		
-		return null;
+		throw new DataAccessException("Ticket not found!");
 	}
 	
 	@Override
-	public boolean updateAvailableQuantity(int ticketId, int quantity) 
-			throws DataAccessException {
-		String sql = "update tickets set available_quantity = available_quantity + ? "
-				+ "where ticket_id = ?";
+	public boolean updateAvailableQuantity(int ticketId, int quantity)
+	        throws DataAccessException {
+
+	    // Adjusts available quantity using a delta value
+	    String sql = "update tickets set available_quantity = available_quantity + ? "
+	               + "where ticket_id = ?";
+
 		
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
@@ -129,7 +151,7 @@ public class TicketDaoImpl implements TicketDao {
 	
 	
 	//Organizer functions:
-
+    @Override
     public boolean createTicket(Ticket ticket) throws DataAccessException {
         String sql = "insert into tickets (event_id,ticket_type,price,total_quantity,available_quantity) values (?,?,?,?,?)";
         try (Connection con = DBConnectionUtil.getConnection();
@@ -145,7 +167,8 @@ public class TicketDaoImpl implements TicketDao {
         	throw new DataAccessException("Error creating ticket!");
         }
     }
-
+    
+    @Override
     public boolean updateTicketPrice(int ticketId, double price) throws DataAccessException {
         String sql = "update tickets set price=? where ticket_id=?";
         try (Connection con = DBConnectionUtil.getConnection();
@@ -159,8 +182,13 @@ public class TicketDaoImpl implements TicketDao {
         }
     }
 
-    public boolean updateTicketQuantity(int ticketId, int quantity) throws DataAccessException {
+    @Override
+    public boolean updateTicketQuantity(int ticketId, int quantity)
+            throws DataAccessException {
+
+        // Resets both total and available quantity
         String sql = "update tickets set total_quantity=?, available_quantity=? where ticket_id=?";
+
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -172,7 +200,8 @@ public class TicketDaoImpl implements TicketDao {
         	throw new DataAccessException("Error updating ticket quantity!");
         }
     }
-
+    
+    @Override
     public List<Ticket> getTicketsByEvent(int eventId) throws DataAccessException {
         List<Ticket> list = new ArrayList<>();
         String sql = "select * from tickets where event_id=?";

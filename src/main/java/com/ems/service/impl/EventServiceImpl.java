@@ -229,18 +229,17 @@ public class EventServiceImpl implements EventService {
                 paymentMethod,
                 normalizedOfferCode
             );
-        } catch (Exception e) {
-            systemLogService.log(
-                userId,
-                "REGISTRATION_FAILED",
-                "EVENT",
-                eventId,
-                "Registration failed: " + e.getMessage()
-            );
-            return false;
+        }catch(Exception e) {
+        	systemLogService.log(
+                    userId,
+                    "REGISTRATION_FAILED",
+                    "EVENT",
+                    eventId,
+                    "Registration failed: " + e.getMessage()
+                );
+                return false;
         }
     }
-
     @Override
     public List<UserEventRegistration> viewUpcomingEvents(int userId) {
         try {
@@ -249,6 +248,7 @@ public class EventServiceImpl implements EventService {
             if (registrations == null) {
                 return new ArrayList<>();
             }
+            
 
             return registrations.stream()
                 .filter(r -> r.getStartDateTime() != null &&
@@ -298,26 +298,28 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public void submitRating(int userId, int eventId, int rating, String comments) {
+    public boolean submitRating(int userId, int eventId, int rating, String comments) {
         try {
             String normalizedComments = (comments == null || comments.trim().isEmpty()) 
                 ? null 
                 : comments.trim();
 
-            feedbackDao.submitRating(eventId, userId, rating, normalizedComments);
-
-            systemLogService.log(
-                userId,
-                "SUBMIT_FEEDBACK",
-                "EVENT",
-                eventId,
-                "User submitted rating: " + rating
-            );
-
+            boolean isSuccess = feedbackDao.submitRating(eventId, userId, rating, normalizedComments);
+            if(isSuccess) {
+            	systemLogService.log(
+                        userId,
+                        "SUBMIT_FEEDBACK",
+                        "EVENT",
+                        eventId,
+                        "User submitted rating: " + rating
+                    );
+            }
+            return isSuccess;
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "FEEDBACK", eventId,
                 "Failed to submit rating: " + e.getMessage());
         }
+		return false;
     }
 
     @Override
@@ -342,7 +344,7 @@ public class EventServiceImpl implements EventService {
             return null;
         }
     }
-
+    
     @Override
     public int getAvailableTickets(int eventId) {
         try {

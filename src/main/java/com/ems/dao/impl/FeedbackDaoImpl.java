@@ -13,20 +13,24 @@ import com.ems.util.DBConnectionUtil;
  * Handles database operations related to event feedback.
  *
  * Responsibilities:
- * - Verify user eligibility to submit feedback
+ * - Validate user eligibility for feedback submission
  * - Persist ratings and comments for completed events
  */
 public class FeedbackDaoImpl implements FeedbackDao {
-
 	
-	// Returns: 1 = success, 0 = no completed booking, -1 = insert failed
 	@Override
-	public int submitRating(int eventId, int userId, int rating, String comments) 
-			throws DataAccessException {
-		
-		String sql = "select count(*) from events e join registrations r on e.event_id = r.event_id " +
-	             "where r.user_id = ? and e.event_id = ? and e.status = 'COMPLETED' and r.status = 'CONFIRMED'";
-		
+	public boolean submitRating(int eventId, int userId, int rating, String comments)
+	        throws DataAccessException {
+
+	    // Ensures feedback is allowed only for confirmed registrations of completed events
+	    String sql =
+	        "select count(*) from events e " +
+	        "join registrations r on e.event_id = r.event_id " +
+	        "where r.user_id = ? " +
+	        "and e.event_id = ? " +
+	        "and e.status = 'COMPLETED' " +
+	        "and r.status = 'CONFIRMED'";
+
 		try (Connection con = DBConnectionUtil.getConnection();
 			PreparedStatement ps = con.prepareStatement(sql)) {
 			
@@ -35,10 +39,11 @@ public class FeedbackDaoImpl implements FeedbackDao {
 		    ResultSet rs = ps.executeQuery();
 		    
 		    if (rs.next() && rs.getInt(1) > 0) {
-		        // User has completed booking, proceed with insert
-		        String insertReview = "insert into feedback(event_id, user_id, rating, comments, submitted_at) " +
-		                            "values(?, ?, ?, ?, utc_timestamp())";
-		        
+		    	// Persists feedback only after eligibility check passes
+		    	String insertReview =
+		    	    "insert into feedback(event_id, user_id, rating, comments, submitted_at) " +
+		    	    "values(?, ?, ?, ?, utc_timestamp())";
+
 		        try (PreparedStatement ps1 = con.prepareStatement(insertReview)) {
 			        ps1.setInt(1, eventId);
 			        ps1.setInt(2, userId);
@@ -48,13 +53,13 @@ public class FeedbackDaoImpl implements FeedbackDao {
 			        int affectedRows = ps1.executeUpdate();
 			        
 			        if (affectedRows > 0) {
-			            return 1;  // Success
+			            return true;  
 			        } else {
-			            return -1;  // Insert failed
+			            return false;  
 			        }
 		        }
 		    } else {
-		        return 0;  // No completed booking found
+		        return false;  
 		    }
 		    
 		} catch (SQLException e) {

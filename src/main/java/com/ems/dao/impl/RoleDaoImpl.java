@@ -11,19 +11,22 @@ import com.ems.dao.RoleDao;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Role;
 import com.ems.util.DBConnectionUtil;
+import com.ems.util.DateTimeUtil;
 
 /*
  * Handles database operations related to roles.
  *
  * Responsibilities:
- * - Retrieve active roles from the system
+ * - Retrieve active roles available in the system
  */
 public class RoleDaoImpl implements RoleDao {
 
 	
 	@Override
 	public List<Role> getRoles() throws DataAccessException {
-		List<Role> roles = new ArrayList<>();
+
+	    // Fetches only active roles for assignment and access control
+	    List<Role> roles = new ArrayList<>();
 		String query = "SELECT role_id, role_name, created_at FROM Roles WHERE is_active = true";
 		
 		try (Connection conn = DBConnectionUtil.getConnection();
@@ -32,10 +35,13 @@ public class RoleDaoImpl implements RoleDao {
 			
 			while (rs.next()) {                
 				Role role = new Role(
-					rs.getInt("role_id"),
-					rs.getString("role_name"),
-					rs.getTimestamp("created_at").toLocalDateTime()
-				);
+					    rs.getInt("role_id"),
+					    rs.getString("role_name"),
+					    DateTimeUtil.convertUtcToLocalDateTime(
+					        rs.getTimestamp("created_at").toInstant()
+					    )
+					);
+
 				roles.add(role);
 			}
 			

@@ -1,5 +1,9 @@
 package com.ems.service;
 
+import java.util.List;
+
+import com.ems.model.SystemLog;
+
 public interface SystemLogService {
 
 	void log(
@@ -10,5 +14,5 @@ public interface SystemLogService {
 		String message
 	);
 
-	void printAllLogs();
+	List<SystemLog> getAllLogs();
 }

@@ -65,7 +65,11 @@ public class FeedbackAction {
             ? null
             : comments.trim();
 
-        eventService.submitRating(userId, eventId, rating, comments);
-        System.out.println("Thank you for your feedback!");
+        boolean isSuccess = eventService.submitRating(userId, eventId, rating, comments);
+        if(isSuccess) {
+        	System.out.println("Thank you for your feedback!");
+        }else {
+        	System.out.println("Failed to submit your rating!");
+        }
     }
 }

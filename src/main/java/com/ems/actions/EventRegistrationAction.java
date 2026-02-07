@@ -112,7 +112,7 @@ public class EventRegistrationAction {
                 break;
             }
 
-            offer = offerService.getOffer(eventId, offerCode);
+            offer = offerService.getOffer(eventId, offerCode.trim().toUpperCase());
             LocalDateTime now = LocalDateTime.now();
 
             // Offer does not exist
@@ -153,6 +153,7 @@ public class EventRegistrationAction {
 
             if (choice != null && choice.equalsIgnoreCase("C")) {
                 offer = null;
+                offerCode = "";
                 break;
             }
         }

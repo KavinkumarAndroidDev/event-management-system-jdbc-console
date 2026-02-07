@@ -71,7 +71,9 @@ public class VenueDaoImpl implements VenueDao {
     }
 
     @Override
-    public Map<Integer, String> getAllCities() throws DataAccessException{
+    public Map<Integer, String> getAllCities() throws DataAccessException {
+
+        // Used for venue selection filters
         String sql = "select venue_id, city from venues where is_active = 1 order by city";
         Map<Integer, String> cities = new HashMap<>();
 
@@ -119,7 +121,11 @@ public class VenueDaoImpl implements VenueDao {
 	}
 
 	@Override
-	public boolean isVenueAvailable(int venueId, Timestamp to, Timestamp from) throws DataAccessException {
+	public boolean isVenueAvailable(int venueId, Timestamp to, Timestamp from)
+	        throws DataAccessException {
+
+	    // Checks for overlapping events within the given time window
+
 		String sql =
 		        "SELECT COUNT(*) " +
 		        "FROM events " +
@@ -164,7 +170,13 @@ public class VenueDaoImpl implements VenueDao {
         		venue.setPincode(rs.getString("pincode"));
         		venue.setMaxCapacity(rs.getInt("max_capacity"));
         		venue.setCreatedAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("created_at").toInstant()).toLocalDateTime());
-        		venue.setUpdateAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("updated_at").toInstant()).toLocalDateTime());
+        		Timestamp updatedTs = rs.getTimestamp("updated_at");
+        		if (updatedTs != null) {
+        		    venue.setUpdateAt(
+        		        DateTimeUtil.convertUtcToLocalDateTime(updatedTs.toInstant())
+        		    );
+        		}
+
         	}
         } catch (SQLException e) {
             throw new DataAccessException("Error fetching venues");
@@ -175,6 +187,9 @@ public class VenueDaoImpl implements VenueDao {
 	
 	@Override
 	public void addVenue(Venue venue) throws DataAccessException {
+
+	    // Stores created timestamp in UTC
+
 	    String sql =
 	        "insert into venues (name, street, city, state, pincode, max_capacity, created_at, is_active) " +
 	        "values (?, ?, ?, ?, ?, ?, ?, 1)";
@@ -197,6 +212,9 @@ public class VenueDaoImpl implements VenueDao {
 
 	@Override
 	public void updateVenue(Venue venue) throws DataAccessException {
+
+	    // Updates only active venues
+
 	    String sql =
 	        "update venues set name=?, street=?, city=?, state=?, pincode=?, max_capacity=? " +
 	        "where venue_id=? and is_active=1";
@@ -242,7 +260,7 @@ public class VenueDaoImpl implements VenueDao {
 	        ps.setInt(1, venueId);
 	        ps.executeUpdate();
 	    } catch (Exception e) {
-	        throw new DataAccessException("Failed to remove venue");
+	        throw new DataAccessException("Failed to activate venue");
 	    }
 	}
 

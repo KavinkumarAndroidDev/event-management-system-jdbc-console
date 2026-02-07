@@ -16,21 +16,22 @@ import com.ems.util.DBConnectionUtil;
 import com.ems.util.DateTimeUtil;
 
 /*
- * 
  * Handles database operations related to notifications.
  *
  * Responsibilities:
  * - Persist system, role based, and user specific notifications
- * - Retrieve notifications for users
- * - Update notification read status
+ * - Retrieve user notifications
+ * - Update notification read state
  */
 public class NotificationDaoImpl implements NotificationDao {
 
 	
 	@Override
-	public void sendSystemWideNotification(String message, String notificationType) 
-			throws DataAccessException {
-		String sql = "insert into notifications (user_id, message, type,"
+	public void sendSystemWideNotification(String message, String notificationType)
+	        throws DataAccessException {
+
+	    // Inserts one notification row per active user
+	    String sql = "insert into notifications (user_id, message, type,"
 				+ " created_at, read_status) select u.user_id"
 				+ ", ? , ?, utc_timestamp(), false from users u"
 				+ " where u.status = 'ACTIVE' ";
@@ -47,10 +48,11 @@ public class NotificationDaoImpl implements NotificationDao {
 	}
 	
 	@Override
-	public List<Notification> getUnreadNotifications(int userId) throws DataAccessException {
-		List<Notification> notifications = new ArrayList<>();
-		String sql = "select * from notifications where user_id = ? and read_status = FALSE order by created_at desc";
-		
+	public List<Notification> getUnreadNotifications(int userId)
+	        throws DataAccessException {
+	    // Fetches unread notifications ordered by newest first
+	    String sql = "select * from notifications where user_id = ? and read_status = FALSE order by created_at desc";
+	    List<Notification> notifications = new ArrayList<>();		
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
 			ps.setInt(1, userId);
@@ -64,7 +66,7 @@ public class NotificationDaoImpl implements NotificationDao {
 				notification.setType(rs.getString("type"));
 				Instant created_at = rs.getTimestamp("created_at").toInstant();
 				notification.setCreatedAt(
-				    DateTimeUtil.convertUtcToLocal(created_at).toLocalDateTime()
+				    DateTimeUtil.convertUtcToLocalDateTime(created_at)
 				);
 				notification.setReadStatus(rs.getBoolean("read_status"));
 				notifications.add(notification);
@@ -110,7 +112,7 @@ public class NotificationDaoImpl implements NotificationDao {
 				notification.setType(rs.getString("type"));
 				Instant created_at = rs.getTimestamp("created_at").toInstant();
 				notification.setCreatedAt(
-				    DateTimeUtil.convertUtcToLocal(created_at).toLocalDateTime()
+				    DateTimeUtil.convertUtcToLocalDateTime(created_at)
 				);
 				notification.setReadStatus(rs.getBoolean("read_status"));
 				notifications.add(notification);
@@ -126,6 +128,8 @@ public class NotificationDaoImpl implements NotificationDao {
 	
 	@Override
 	public void markAllAsRead(int userId) throws DataAccessException {
+
+	    // Bulk update to avoid per row updates
 	    String sql = "UPDATE notifications " +
 	                 "SET read_status = TRUE " +
 	                 "WHERE user_id = ? AND read_status = FALSE";
@@ -165,9 +169,11 @@ public class NotificationDaoImpl implements NotificationDao {
 	}
 
 	@Override
-	public void sendNotificationByRole(String message, String notificationType, String role) 
-			throws DataAccessException {
-		String sql = "insert into notifications (user_id, message, type, created_at, read_status) "
+	public void sendNotificationByRole(String message, String notificationType, String role)
+	        throws DataAccessException {
+
+	    // Sends notification only to active users matching the role
+	    String sql = "insert into notifications (user_id, message, type, created_at, read_status) "
 				+ "select u.user_id, ? , ?, utc_timestamp(), false from users u "
 				+ "inner join roles r on u.role_id = r.role_id "
 				+ "where u.status = 'ACTIVE' and role_name = ?";

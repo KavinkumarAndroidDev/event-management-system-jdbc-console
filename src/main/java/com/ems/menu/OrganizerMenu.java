@@ -48,14 +48,16 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nOrganizer Menu\n\n"
-				+ "1. Event Management\n"
-				+ "2. Ticket Management\n"
-				+ "3. Registrations\n"
-				+ "4. Reports\n"
-				+ "5. Notifications\n"
-				+ "6. Logout\n\n>"
-			);
+				    "\nOrganizer menu\n" +
+				    "1 Event management\n" +
+				    "2 Ticket management\n" +
+				    "3 Registrations\n" +
+				    "4 Reports\n" +
+				    "5 Notifications\n" +
+				    "6 Logout\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -81,7 +83,7 @@ public class OrganizerMenu extends BaseMenu {
 				}
 				break;
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -92,15 +94,17 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nEvent Management\n\n"
-				+ "1. Create new event\n"
-				+ "2. View my events\n"
-				+ "3. Update event details\n"
-				+ "4. Update event capacity\n"
-				+ "5. Publish event\n"
-				+ "6. Cancel event\n"
-				+ "7. Back\n\n>"
-			);
+				    "\nEvent management\n" +
+				    "1 Create new event\n" +
+				    "2 View my events\n" +
+				    "3 Update event details\n" +
+				    "4 Update event capacity\n" +
+				    "5 Publish event\n" +
+				    "6 Cancel event\n" +
+				    "7 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -126,7 +130,7 @@ public class OrganizerMenu extends BaseMenu {
 			case 7:
 				return;
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -137,12 +141,13 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nTicket Management\n"
-				+ "1. Update ticket price\n"
-				+ "2. Update ticket quantity\n"
-				+ "3. View ticket availability\n"
-				+ "4. Back\n\n>"
-			);
+				    "\nTicket management\n" +
+				    "1 Update ticket price\n" +
+				    "2 Update ticket quantity\n" +
+				    "3 View ticket availability\n" +
+				    "4 Back\n\n" +
+				    "Choice:"
+				);
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -159,7 +164,7 @@ public class OrganizerMenu extends BaseMenu {
 			case 4:
 				return;
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -170,11 +175,13 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nRegistrations & Attendees\n"
-				+ "1. View event registrations\n"
-				+ "2. View registered users\n"
-				+ "3. Back\n\n>"
-			);
+				    "\nRegistrations and attendees\n" +
+				    "1 View event registrations\n" +
+				    "2 View registered users\n" +
+				    "3 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -185,7 +192,7 @@ public class OrganizerMenu extends BaseMenu {
 					eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
 
 				if (events.isEmpty()) {
-					System.out.println("No events found.");
+					System.out.println("No events available.");
 					break;
 				}
 
@@ -207,7 +214,7 @@ public class OrganizerMenu extends BaseMenu {
 					eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
 
 				if (events.isEmpty()) {
-					System.out.println("No events found.");
+					System.out.println("No events available.");
 					break;
 				}
 
@@ -235,7 +242,7 @@ public class OrganizerMenu extends BaseMenu {
 				return;
 
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -246,13 +253,15 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nReports\n"
-				+ "1. View event registrations\n"
-				+ "2. View ticket sales\n"
-				+ "3. View revenue summary\n"
-				+ "4. View my events summary\n"
-				+ "5. Back\n\n>"
-			);
+				    "\nReports\n" +
+				    "1 Event registrations\n" +
+				    "2 Ticket sales\n" +
+				    "3 Revenue summary\n" +
+				    "4 My events summary\n" +
+				    "5 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -279,14 +288,14 @@ public class OrganizerMenu extends BaseMenu {
 						)
 					);
 				} else {
-					System.out.println("No ticket sales has found");
+					System.out.println("No ticket sales found.");
 				}
 				break;
 
 			case 3:
 				double revenue =
 					reportAction.getRevenueSummary(loggedInUser.getUserId());
-				System.out.println("Total Revenue Generated: ₹" + revenue);
+				System.out.println("Total revenue: ₹" + revenue);
 				break;
 
 			case 4:
@@ -297,7 +306,7 @@ public class OrganizerMenu extends BaseMenu {
 				return;
 
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -337,12 +346,14 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				"\nNotifications\n"
-				+ "1. Send event update\n"
-				+ "2. Send schedule change\n"
-				+ "3. View my notifications\n"
-				+ "4. Back\n\n>"
-			);
+				    "\nNotifications\n" +
+				    "1 Send event update\n" +
+				    "2 Send schedule change\n" +
+				    "3 View notifications\n" +
+				    "4 Back\n\n" +
+				    "Choice:"
+				);
+
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -368,7 +379,7 @@ public class OrganizerMenu extends BaseMenu {
 				String msg =
 					InputValidationUtil.readString(
 						ScannerUtil.getScanner(),
-						"Enter message to send:\n"
+						"Message:\n"
 					);
 
 				if (choice == 1) {
@@ -386,7 +397,7 @@ public class OrganizerMenu extends BaseMenu {
 				return;
 
 			default:
-				System.out.println("Invalid option. Please select from the menu.");
+				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}

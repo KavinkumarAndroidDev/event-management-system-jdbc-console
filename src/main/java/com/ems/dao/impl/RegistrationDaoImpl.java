@@ -10,27 +10,30 @@ import java.util.List;
 import java.util.Map;
 
 import com.ems.dao.RegistrationDao;
+import com.ems.enums.PaymentStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.EventRegistrationReport;
 import com.ems.model.Registration;
 import com.ems.model.RegistrationTicket;
 import com.ems.util.DBConnectionUtil;
+import com.ems.util.DateTimeUtil;
 
 /*
  * Handles database operations related to event registrations.
  *
  * Responsibilities:
- * - Persist and remove event registrations and ticket allocations
- * - Retrieve registration data for events and users
- * - Generate registration and sales related reports
+ * - Persist and update event registrations and ticket allocations
+ * - Retrieve registration data for events and organizers
+ * - Generate registration, sales, and revenue reports
  */
 public class RegistrationDaoImpl implements RegistrationDao {
 
 	
 	@Override
 	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId)
-        throws DataAccessException {
+	        throws DataAccessException {
 
+	    // Returns only confirmed registrations for reporting
 	    List<EventRegistrationReport> reports = new ArrayList<>();
 	
 	    String sql =
@@ -58,8 +61,13 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	            report.setTicketType(rs.getString("ticket_type"));
 	            report.setQuantity(rs.getInt("quantity"));
 	            report.setRegistrationDate(
-	                rs.getTimestamp("registration_date").toLocalDateTime()
-	            );
+	            	    DateTimeUtil.convertUtcToLocalDateTime(
+	            	        rs.getTimestamp("registration_date").toInstant()
+	            	    )
+	            	);
+
+	            
+
 	
 	            reports.add(report);
 	        }
@@ -76,7 +84,11 @@ public class RegistrationDaoImpl implements RegistrationDao {
 
 	
 	@Override
-	public List<Integer> getRegisteredUserIdsByEvent(int eventId) throws DataAccessException {
+	public List<Integer> getRegisteredUserIdsByEvent(int eventId)
+	        throws DataAccessException {
+
+	    // Used for bulk notification or follow up actions
+
 	    String sql = "select distinct user_id from registrations where event_id=?";
 	    List<Integer> userIds = new ArrayList<>();
 
@@ -100,9 +112,12 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	
 	
 	//organizer functions:
+	@Override
+	public int getEventRegistrationCount(int eventId)
+	        throws DataAccessException {
 
-    public int getEventRegistrationCount(int eventId) throws DataAccessException {
-        String sql = "select count(*) from registrations where event_id=?";
+	    // Lightweight count query for capacity checks
+       String sql = "select count(*) from registrations where event_id=? and status='CONFIRMED' ";
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -113,7 +128,8 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	        throw new DataAccessException("Unable to fetch registered count");
 	    }
     }
-
+	
+	@Override
     public List<Map<String, Object>> getRegisteredUsers(int eventId) throws DataAccessException {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "select u.user_id,u.full_name,u.email from users u join registrations r on u.user_id=r.user_id where r.event_id=?";
@@ -134,10 +150,17 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	    }
         return list;
     }
+	
+	@Override
+	public List<Map<String, Object>> getOrganizerWiseRegistrations(int organizerId)
+	        throws DataAccessException {
+	    // Aggregates registrations per event for organizer dashboard
 
-    public List<Map<String, Object>> getOrganizerWiseRegistrations(int organizerId) throws DataAccessException {
         List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "select e.title,count(r.registration_id) total from events e left join registrations r on e.event_id=r.event_id where e.organizer_id=? group by e.event_id";
+        String sql = "select e.title,count(r.registration_id) total from events e left join registrations r \r\n"
+        		+ "  on e.event_id = r.event_id "
+        		+ " and r.status = 'CONFIRMED' "
+        		+ " where e.organizer_id=? group by e.event_id";
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -154,7 +177,8 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	    }
         return list;
     }
-
+	
+	@Override
     public List<Map<String, Object>> getTicketSales(int organizerId) throws DataAccessException {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "select t.ticket_type,sum(rt.quantity) sold from tickets t join registration_tickets rt on t.ticket_id=rt.ticket_id join events e on e.event_id=t.event_id where e.organizer_id=? group by t.ticket_id";
@@ -174,13 +198,16 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	    }
         return list;
     }
-
+	@Override
     public double getRevenueSummary(int organizerId) throws DataAccessException {
-        String sql = "select sum(p.amount) from payments p join registrations r on p.registration_id=r.registration_id join events e on e.event_id=r.event_id where e.organizer_id=?";
+        String sql = "select sum(p.amount) from payments p join registrations "
+        		+ "r on p.registration_id=r.registration_id join events e "
+        		+ "on e.event_id=r.event_id where e.organizer_id=? and p.payment_status = ?";
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, organizerId);
+            ps.setString(2, PaymentStatus.SUCCESS.toString());
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble(1) : 0;
         } catch (Exception e) {
@@ -188,8 +215,11 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	    }
     }
 
-    @Override
-    public Registration getById(int registrationId) throws DataAccessException {
+	@Override
+	public Registration getById(int registrationId)
+	        throws DataAccessException {
+
+	    // Fetches core registration details without ticket breakdown
 
         String sql = "SELECT registration_id, user_id, event_id, registration_date, status "
                    + "FROM registrations "
@@ -203,14 +233,16 @@ public class RegistrationDaoImpl implements RegistrationDao {
             try (ResultSet rs = ps.executeQuery()) {
 
                 if (!rs.next()) {
-                    return null; // or throw custom NotFoundException
+                	throw new DataAccessException("Data not found");
                 }
 
                 return new Registration(
                     rs.getInt("registration_id"),
                     rs.getInt("user_id"),
                     rs.getInt("event_id"),
-                    rs.getTimestamp("registration_date").toLocalDateTime(),
+                    DateTimeUtil.convertUtcToLocalDateTime(
+                    	    rs.getTimestamp("registration_date").toInstant()
+                    	),
                     rs.getString("status")
                 );
             }
@@ -241,6 +273,8 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	@Override
 	public List<RegistrationTicket> getRegistrationTickets(int registrationId)
 	        throws DataAccessException {
+
+	    // Used during cancellation or refund processing
 
 	    String sql = "select ticket_id, quantity " +
 	                 "from registration_tickets " +

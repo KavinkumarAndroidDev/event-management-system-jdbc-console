@@ -28,7 +28,7 @@ public class AdminOfferManagementAction {
         return offerService.getAllOffers();
     }
 
-    public int createOffer(int eventId, String code, int discount, LocalDateTime from, LocalDateTime to) {
+    public boolean createOffer(int eventId, String code, int discount, LocalDateTime from, LocalDateTime to) {
         return offerService.createOffer(eventId, code, discount, from, to);
     }
 
@@ -204,8 +204,12 @@ public class AdminOfferManagementAction {
 		    }
 		}
 
-		int offerId = createOffer(event.getEventId(), code, discount, from, to);
+		boolean isCreated = createOffer(event.getEventId(), code, discount, from, to);
 
-		System.out.println("Offer created successfully. Offer ID: " + offerId);
+		if(isCreated) {
+			System.out.println("Offer created successfully. Offer: " + code);
+		}else {
+			System.out.println("Offer creation failed");
+		}
 	}
 }

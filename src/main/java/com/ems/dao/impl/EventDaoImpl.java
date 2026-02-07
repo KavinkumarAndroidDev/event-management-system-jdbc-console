@@ -32,11 +32,11 @@ import com.ems.util.DateTimeUtil;
  * - Persist event creation and updates
  * - Manage event status transitions and approvals
  * - Fetch registration, booking, and revenue related data
- */
+ */ 
 public class EventDaoImpl implements EventDao {
 
 
-	// lists all future published events with available tickets
+	// Lists future published events that still have ticket availability
 	@Override
 	public List<Event> listAvailableEvents() throws DataAccessException {
 		List<Event> events = new ArrayList<>();
@@ -145,15 +145,25 @@ public class EventDaoImpl implements EventDao {
 				event.setEventId(rs.getInt("event_id"));
 				event.setOrganizerId(rs.getInt("organizer_id"));
 				event.setTitle(rs.getString("title"));
-				if ( rs.getString("description") == null || rs.getString("description").isEmpty()) {
-					event.setDescription(rs.getString("description"));
+				String desc = rs.getString("description");
+				if (desc != null && !desc.isEmpty()) {
+				    event.setDescription(desc);
 				}
+
 				event.setCategoryId(rs.getInt("category_id"));
 				event.setVenueId(rs.getInt("venue_id"));
-				Instant startDateTime = rs.getTimestamp("start_datetime").toInstant();
-				event.setStartDateTime(DateTimeUtil.convertUtcToLocal(startDateTime).toLocalDateTime());
-				Instant endDateTime = rs.getTimestamp("end_datetime").toInstant();
-				event.setEndDateTime(DateTimeUtil.convertUtcToLocal(endDateTime).toLocalDateTime());
+				event.setStartDateTime(
+					    DateTimeUtil.convertUtcToLocalDateTime(
+					        rs.getTimestamp("start_datetime").toInstant()
+					    )
+					);
+
+				event.setEndDateTime(
+					    DateTimeUtil.convertUtcToLocalDateTime(
+						        rs.getTimestamp("end_datetime").toInstant()
+						    )
+						);
+
 
 				event.setCapacity(rs.getInt("capacity"));
 				event.setStatus(rs.getString("status"));
@@ -163,16 +173,28 @@ public class EventDaoImpl implements EventDao {
 				}
 
 				if (rs.getTimestamp("updated_at") != null) {
-					Instant updated_at = rs.getTimestamp("updated_at").toInstant();
-					event.setUpdatedAt(DateTimeUtil.convertUtcToLocal(updated_at).toLocalDateTime());
+					event.setUpdatedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("updated_at").toInstant()
+							    )
+							);
+
 				}
 				if (rs.getTimestamp("approved_at") != null) {
-					Instant approved_at = rs.getTimestamp("approved_at").toInstant();
-					event.setApprovedAt(DateTimeUtil.convertUtcToLocal(approved_at).toLocalDateTime());
+					event.setApprovedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("approved_at").toInstant()
+							    )
+							);
+
 				}
 				if (rs.getTimestamp("created_at") != null) {
-					Instant created_at = rs.getTimestamp("created_at").toInstant();
-					event.setCreatedAt(DateTimeUtil.convertUtcToLocal(created_at).toLocalDateTime());
+					event.setCreatedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("created_at").toInstant()
+							    )
+							);
+
 				}
 				return event;
 			}
@@ -181,26 +203,11 @@ public class EventDaoImpl implements EventDao {
 		} catch (SQLException e) {
 			throw new DataAccessException("Error while fetching events: " + e.getMessage());
 		}
-		return null;
+		throw new DataAccessException("Event not found");
 	}
 
-	@Override
-	public String getEventName(int eventId) throws DataAccessException {
-		String sql = "select title from events where event_id = ?";
-		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setInt(1, eventId);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				String eventName = rs.getString("title");
-				rs.close();
-				return eventName;
-			}
-		} catch (SQLException e) {
-			throw new DataAccessException("Error while fetching event details");
-		}
-		return null;
-	}
 
+	// Converts payment rows into aggregated user registration view
 	@Override
 	public List<UserEventRegistration> getUserRegistrations(int userId)
         throws DataAccessException {
@@ -258,13 +265,24 @@ public class EventDaoImpl implements EventDao {
 	            UserEventRegistration uer = new UserEventRegistration();
 	
 	            uer.setRegistrationId(rs.getInt("registration_id"));
-	            uer.setRegistrationDate(rs.getTimestamp("registration_date").toLocalDateTime());
+	            uer.setRegistrationDate(
+	            	    DateTimeUtil
+	            	        .convertUtcToLocal(rs.getTimestamp("registration_date").toInstant())
+	            	        .toLocalDateTime()
+	            	);
 	            uer.setRegistrationStatus(rs.getString("registration_status"));
 	            uer.setEventId(rs.getInt("event_id"));
 	            uer.setTitle(rs.getString("title"));
 	            uer.setCategory(rs.getString("category_name"));
-	            uer.setStartDateTime(rs.getTimestamp("start_datetime").toLocalDateTime());
-	            uer.setEndDateTime(rs.getTimestamp("end_datetime").toLocalDateTime());
+	            uer.setStartDateTime(
+	            		DateTimeUtil
+	            	    .convertUtcToLocal(rs.getTimestamp("start_datetime").toInstant())
+	            	    .toLocalDateTime()
+	            	    );
+	            uer.setEndDateTime(
+	            		DateTimeUtil
+	            	    .convertUtcToLocal(rs.getTimestamp("end_datetime").toInstant())
+	            	    .toLocalDateTime());
 	            uer.setTicketsPurchased(rs.getInt("tickets_purchased"));
 	            uer.setAmountPaid(rs.getDouble("amount_paid"));
 	            uer.setTicketType(rs.getString("ticket_type"));
@@ -304,9 +322,17 @@ public class EventDaoImpl implements EventDao {
 			ResultSet rs = ps.executeQuery();
 
 			while (rs.next()) {
-				bookings.add(new BookingDetail(rs.getString("title"),
-						rs.getTimestamp("start_datetime").toLocalDateTime(), rs.getString("name"), rs.getString("city"),
-						rs.getString("ticket_type"), rs.getInt("quantity"), rs.getDouble("total_cost")));
+				bookings.add(new BookingDetail(
+						rs.getString("title"),
+						DateTimeUtil.convertUtcToLocalDateTime(
+							    rs.getTimestamp("start_datetime").toInstant()
+							),
+						rs.getString("name"), 
+						rs.getString("city"),
+						rs.getString("ticket_type"), 
+						rs.getInt("quantity"),
+						rs.getDouble("total_cost"))
+						);
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -316,30 +342,35 @@ public class EventDaoImpl implements EventDao {
 		return bookings;
 	}
 
-	// approves an event
-	//TODO: LOGIC CHANGE 
-	//OLD LOGIC - APPROVE EVENT SET THE STATUS TO DRAFT AND ONLY UPDATE THE APPROVED_AT AND APPROVED_BY
-	//NEW LOGIC - APPROVE EVENT MUST SET THE STATUS TO APPROVED AND OTHER STATES TO NEED TO BE UPDATED
-	//THIS LOGIC SHIFT MUST CHANGE THE APPROVE EVENT, CANCEL EVENT IN ADMIN MENU. PUBLISH EVENT IN ORGANIZR MENU
+	// Approves an event only if it has not started and was not approved earlier
 	@Override
 	public boolean approveEvent(int eventId, int userId) throws DataAccessException {
-		String sql = "update events set status = ? ,approved_by = ?, updated_at = ?, approved_at = ? where event_id = ? and start_datetime > ?";
+	    String sql =
+	        "UPDATE events " +
+	        "SET status = ?, approved_by = ?, updated_at = ?, approved_at = ? " +
+	        "WHERE event_id = ? " +
+	        "AND start_datetime > ? " +
+	        "AND approved_by IS NULL";
 
-		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, EventStatus.APPROVED.toString());
-			ps.setInt(2, userId);
-			ps.setTimestamp(3, Timestamp.from(DateTimeUtil.getCurrentUtc()));
-			ps.setTimestamp(4, Timestamp.from(DateTimeUtil.getCurrentUtc()));
-			ps.setInt(5, eventId);
-			ps.setTimestamp(6, Timestamp.from(DateTimeUtil.getCurrentUtc()));
-			int rowsUpdated = ps.executeUpdate();
-			
-			return rowsUpdated > 0;
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("Error while updating events");
-		}
+	    Instant now = DateTimeUtil.getCurrentUtc();
+
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setString(1, EventStatus.APPROVED.toString());
+	        ps.setInt(2, userId);
+	        ps.setTimestamp(3, Timestamp.from(now));
+	        ps.setTimestamp(4, Timestamp.from(now));
+	        ps.setInt(5, eventId);
+	        ps.setTimestamp(6, Timestamp.from(now));
+
+	        return ps.executeUpdate() > 0;
+
+	    } catch (SQLException e) {
+	        throw new DataAccessException("Failed to approve event with id " + eventId, e);
+	    }
 	}
+
 
 	@Override
 	public boolean cancelEvent(int eventId) throws DataAccessException {
@@ -361,9 +392,10 @@ public class EventDaoImpl implements EventDao {
 		}
 	}
 
+	// Marks past approved or published events as completed
 	@Override
 	public void completeEvents() throws DataAccessException {
-		String sql = "update events set status = ? where status = ? or status = ? " + "and end_datetime <= CURRENT_TIMESTAMP";
+		String sql = "update events set status = ? where (status = ? or status = ?) " + "and end_datetime <= UTC_TIMESTAMP()";
 		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 			ps.setString(1, EventStatus.COMPLETED.toString());
 			ps.setString(2, EventStatus.APPROVED.toString());
@@ -374,6 +406,7 @@ public class EventDaoImpl implements EventDao {
 		}
 	}
 
+	// Shared mapper to convert ResultSet into Event objects
 	public List<Event> getEventList(ResultSet rs) throws DataAccessException {
 		List<Event> events = new ArrayList<>();
 		try {
@@ -388,10 +421,18 @@ public class EventDaoImpl implements EventDao {
 				}
 				event.setCategoryId(rs.getInt("category_id"));
 				event.setVenueId(rs.getInt("venue_id"));
-				Instant startDateTime = rs.getTimestamp("start_datetime").toInstant();
-				event.setStartDateTime(DateTimeUtil.convertUtcToLocal(startDateTime).toLocalDateTime());
-				Instant endDateTime = rs.getTimestamp("end_datetime").toInstant();
-				event.setEndDateTime(DateTimeUtil.convertUtcToLocal(endDateTime).toLocalDateTime());
+				event.setStartDateTime(
+					    DateTimeUtil.convertUtcToLocalDateTime(
+						        rs.getTimestamp("start_datetime").toInstant()
+						    )
+						);
+
+				event.setEndDateTime(
+					    DateTimeUtil.convertUtcToLocalDateTime(
+						        rs.getTimestamp("end_datetime").toInstant()
+						    )
+						);
+
 
 				event.setCapacity(rs.getInt("capacity"));
 				event.setStatus(rs.getString("status"));
@@ -401,16 +442,28 @@ public class EventDaoImpl implements EventDao {
 				}
 
 				if (rs.getTimestamp("updated_at") != null) {
-					Instant updated_at = rs.getTimestamp("updated_at").toInstant();
-					event.setUpdatedAt(DateTimeUtil.convertUtcToLocal(updated_at).toLocalDateTime());
+					event.setUpdatedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("updated_at").toInstant()
+							    )
+							);
+
 				}
 				if (rs.getTimestamp("approved_at") != null) {
-					Instant approved_at = rs.getTimestamp("approved_at").toInstant();
-					event.setApprovedAt(DateTimeUtil.convertUtcToLocal(approved_at).toLocalDateTime());
+					event.setApprovedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("approved_at").toInstant()
+							    )
+							);
+
 				}
 				if (rs.getTimestamp("created_at") != null) {
-					Instant created_at = rs.getTimestamp("created_at").toInstant();
-					event.setCreatedAt(DateTimeUtil.convertUtcToLocal(created_at).toLocalDateTime());
+					event.setCreatedAt(
+						    DateTimeUtil.convertUtcToLocalDateTime(
+							        rs.getTimestamp("created_at").toInstant()
+							    )
+							);
+
 				}
 
 				events.add(event);
@@ -499,7 +552,7 @@ public class EventDaoImpl implements EventDao {
 	
 	
 	
-	//organizer functions:
+	//organizer functions
 	@Override
     public int createEvent(Event event) throws DataAccessException {
         String sql = "insert into events (organizer_id,title,description,category_id,venue_id,start_datetime,end_datetime,capacity,status,created_at) values (?,?,?,?,?,?,?,?,?,?)";
@@ -511,11 +564,19 @@ public class EventDaoImpl implements EventDao {
             ps.setString(3, event.getDescription());
             ps.setInt(4, event.getCategoryId());
             ps.setInt(5, event.getVenueId());
-            ps.setTimestamp(6, Timestamp.valueOf(event.getStartDateTime()));
-            ps.setTimestamp(7, Timestamp.valueOf(event.getEndDateTime()));
+            Instant now = DateTimeUtil.getCurrentUtc();
+
+            ps.setTimestamp(6, Timestamp.from(
+                DateTimeUtil.convertLocalToUtc(event.getStartDateTime())
+            ));
+            ps.setTimestamp(7, Timestamp.from(
+                DateTimeUtil.convertLocalToUtc(event.getEndDateTime())
+            ));
             ps.setInt(8, event.getCapacity());
             ps.setString(9, event.getStatus());
-            ps.setTimestamp(10, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setTimestamp(10, Timestamp.from(now));
+
+
 
             ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
@@ -524,6 +585,7 @@ public class EventDaoImpl implements EventDao {
 			throw new DataAccessException("Failed to create event");
 		}
     }
+	
 	@Override
     public boolean updateEventDetails(int eventId, String title, String description, int categoryId, int venueId) throws DataAccessException {
         String sql = "update events set title=?, description=?, category_id=?, venue_id=?, updated_at=? where event_id=?";
@@ -534,28 +596,34 @@ public class EventDaoImpl implements EventDao {
             ps.setString(2, description);
             ps.setInt(3, categoryId);
             ps.setInt(4, venueId);
-            ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            Instant now = DateTimeUtil.getCurrentUtc();
+            ps.setTimestamp(5, Timestamp.from(now));
             ps.setInt(6, eventId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
 			throw new DataAccessException("Failed to update event details");
 		}
     }
+	
 	@Override
     public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) throws DataAccessException {
         String sql = "update events set start_datetime=?, end_datetime=?, updated_at=? where event_id=?";
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setTimestamp(1, Timestamp.valueOf(start));
-            ps.setTimestamp(2, Timestamp.valueOf(end));
-            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setTimestamp(1, Timestamp.from(DateTimeUtil.convertLocalToUtc(start)));
+            ps.setTimestamp(2, Timestamp.from(DateTimeUtil.convertLocalToUtc(end)));
+
+            Instant now = DateTimeUtil.getCurrentUtc();
+            ps.setTimestamp(3, Timestamp.from(now));
+
             ps.setInt(4, eventId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
 			throw new DataAccessException("Failed to update the event schedule");
 		}
     }
+	
 	@Override
     public boolean updateEventCapacity(int eventId, int capacity) throws DataAccessException {
         String sql = "update events set capacity=?, updated_at=? where event_id=?";
@@ -563,13 +631,16 @@ public class EventDaoImpl implements EventDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, capacity);
-            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            Instant now = DateTimeUtil.getCurrentUtc();
+            ps.setTimestamp(2, Timestamp.from(now));
+
             ps.setInt(3, eventId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
 			throw new DataAccessException("Failed to update event capacity");
 		}
     }
+	
 	@Override
     public boolean updateEventStatus(int eventId, String status) throws DataAccessException {
         String sql = "update events set status=?, updated_at=? where event_id=?";
@@ -577,14 +648,17 @@ public class EventDaoImpl implements EventDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, status);
-            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            Instant now = DateTimeUtil.getCurrentUtc();
+            ps.setTimestamp(2, Timestamp.from(now));
+
             ps.setInt(3, eventId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
 			throw new DataAccessException("Failed to update event status");
 		}
     }
-
+	
+	@Override
     public List<Event> getEventsByOrganizer(int organizerId) throws DataAccessException {
         String sql = "select * from events where organizer_id=?";
         try (Connection con = DBConnectionUtil.getConnection();
@@ -598,8 +672,9 @@ public class EventDaoImpl implements EventDao {
 		}
     }
 
-	@Override
-	public List<OrganizerEventSummary> getEventSummaryByOrganizer(int organizerId) throws DataAccessException {
+    // Organizer facing summary showing ticket allocation vs usage
+    @Override
+    public List<OrganizerEventSummary> getEventSummaryByOrganizer(int organizerId) throws DataAccessException {
 		String sql = "SELECT "
 		        + "    e.event_id, "
 		        + "    e.title, "
