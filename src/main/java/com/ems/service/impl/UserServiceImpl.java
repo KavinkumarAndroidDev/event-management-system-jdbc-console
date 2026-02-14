@@ -78,27 +78,33 @@ public class UserServiceImpl implements UserService {
 
 	            int attempts = user.getFailedAttempts() + 1;
 				userDao.incrementFailedAttempts(user.getUserId());
-				
 				if (attempts >= 3) {
-					try {
-					    userDao.updateUserStatus(user.getUserId(), "SUSPENDED");
-					} catch (DataAccessException ex) {
-					    throw new AuthorizationException("Account locked. Contact admin@ems.com");
-					}
-				    systemLogService.log(
-				        user.getUserId(),
-				        "ACCOUNT_SUSPENDED",
-				        "USER",
-				        user.getUserId(),
-				        "Account suspended due to multiple failed login attempts"
-				    );
-				    throw new AuthorizationException(
-				        "Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info"
-				    );
+
+				    if (!"admin".equalsIgnoreCase(userDao.getRole(user).name().toString())) {
+				    	try {
+						    userDao.updateUserStatus(user.getUserId(), "SUSPENDED");
+						} catch (DataAccessException ex) {
+						    throw new AuthorizationException("Account locked. Contact admin@ems.com");
+						}
+					    systemLogService.log(
+					        user.getUserId(),
+					        "ACCOUNT_SUSPENDED",
+					        "USER",
+					        user.getUserId(),
+					        "Account suspended due to multiple failed login attempts"
+					    );
+					    throw new AuthorizationException(
+					        "Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info"
+					    );
+				    }
+
+				    throw new AuthorizationException("Account locked.");
 				}
 
-
-	            throw new AuthenticationException("Invalid credentials");
+				
+				throw new AuthenticationException(
+				        "Invalid password. Attempt " + attempts + " of 3"
+				    );
 	        }
 
 	        userDao.resetFailedAttempts(user.getUserId());
@@ -119,7 +125,7 @@ public class UserServiceImpl implements UserService {
 	 * requirements before hashing
 	 */
 	@Override
-	public void createAccount(String fullName, String email, String phone, String password, String gender,
+	public boolean createAccount(String fullName, String email, String phone, String password, String gender,
 			UserRole role) {
 
 		try {
@@ -131,8 +137,9 @@ public class UserServiceImpl implements UserService {
 
 				String hashedPassword = PasswordUtil.hashPassword(password);
 
-				userDao.createUser(fullName, email, phone, hashedPassword, selectedRole.getRoleId(), "ACTIVE",
+				boolean isUserCreated = userDao.createUser(fullName, email, phone, hashedPassword, selectedRole.getRoleId(), "ACTIVE",
 						LocalDateTime.now(), null, gender);
+				return isUserCreated;
 
 			} else {
 				System.out.println("Error: The role '" + role.toString() + "' was not found in the database.");
@@ -142,6 +149,7 @@ public class UserServiceImpl implements UserService {
 		} catch (InvalidPasswordFormatException e) {
 			System.out.println(e.getMessage());
 		}
+		return false;
 	}
 
 	/*

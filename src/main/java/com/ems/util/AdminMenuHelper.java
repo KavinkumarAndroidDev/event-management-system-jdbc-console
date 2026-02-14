@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.ems.model.Category;
 import com.ems.model.Event;
 import com.ems.model.EventRegistrationReport;
 import com.ems.model.EventRevenueReport;
@@ -18,7 +19,7 @@ import com.ems.service.EventService;
 public class AdminMenuHelper {
 
     private static final EventService eventService = ApplicationUtil.eventService();
-
+    
     private static final int TABLE_WIDTH = 110;
     private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
     private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
@@ -146,9 +147,6 @@ public class AdminMenuHelper {
 
         System.out.println(SEPARATOR);
     }
-
-
-
     
     /**
      * Print the summary of sold and available tickets
@@ -171,24 +169,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
 
-    public static List<Offer> filterActiveOffers(List<Offer> offers) {
-        LocalDateTime now = LocalDateTime.now();
-        return offers.stream()
-                .filter(o -> o.getValidTo() != null && o.getValidTo().isAfter(now))
-                .toList();
-    }
-
-    public static List<Offer> filterExpiredOffers(List<Offer> offers) {
-        LocalDateTime now = LocalDateTime.now();
-        return offers.stream()
-                .filter(o -> o.getEventId() != 0
-                        && o.getValidTo() != null
-                        && o.getValidTo().isBefore(now))
-                .toList();
-    }
-    
-    
-    
+    /**
+     * Print the venue details in table format
+     * 
+     * @param venues
+     */
     public static void printVenues(List<Venue> venues) {
         if (venues == null || venues.isEmpty()) {
             System.out.println("No venues found.");
@@ -225,7 +210,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
 
-
+    /**
+     * Print a venue details
+     * 
+     * @param v
+     */
     public static void printVenueDetails(Venue v) {
         if (v == null) {
             System.out.println("Venue not found.");
@@ -245,6 +234,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
     
+    /**
+     * Print the event registration report
+     * 
+     * @param reports list of event registration report
+     */
     public static void printEventRegistrationReport(List<EventRegistrationReport> reports) {
         if (reports == null || reports.isEmpty()) {
             System.out.println("No registration records found.");
@@ -277,6 +271,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
     
+    /**
+     * Print offer codes' usage report
+     * 
+     * @param report list of offers and its usage
+     */
     public static void printOfferUsageReport(Map<String, Integer> report) {
         if (report == null || report.isEmpty()) {
             System.out.println("No offer usage data found.");
@@ -306,7 +305,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
 
-    
+    /**
+     * Print all offers
+     * 
+     * @param offers
+     */
     public static void printOffers(List<Offer> offers) {
         if (offers == null || offers.isEmpty()) {
             System.out.println("No offers found.");
@@ -364,8 +367,11 @@ public class AdminMenuHelper {
         System.out.println(SEPARATOR);
     }
     
-    
-    
+    /**
+     * Print event revenue reports
+     * 
+     * @param reports ,list of event revenue report
+     */
     public static void printEventRevenueReport(List<EventRevenueReport> reports) {
 
         if (reports == null || reports.isEmpty()) {
@@ -410,6 +416,11 @@ public class AdminMenuHelper {
         System.out.printf("TOTAL REVENUE: ₹%.2f%n", grandTotal);
     }
     
+    /**
+     * Print the system generated logs
+     * 
+     * @param logs
+     */
 	public static void printSystemLogs(List<SystemLog> logs) {
 	
 	    if (logs == null || logs.isEmpty()) {
@@ -444,11 +455,67 @@ public class AdminMenuHelper {
 	    System.out.println(SEPARATOR);
 	}
 
+	/**
+	 * Print categories and its status
+	 * 
+	 * @param categories
+	 */
+	public static void printCategories(List<Category> categories) {
 
+	    if (categories == null || categories.isEmpty()) {
+	        System.out.println("No categories found.");
+	        return;
+	    }
 
+	    System.out.println("\nAVAILABLE CATEGORIES");
+	    System.out.println(SEPARATOR);
 
+	    System.out.printf(
+	            "%-5s %-30s %-12s%n",
+	            "NO", "CATEGORY NAME", "STATUS"
+	    );
 
-    
+	    System.out.println(SUB_SEPARATOR);
+
+	    int index = 1;
+	    for (Category c : categories) {
+
+	        String status = c.getIsActive() == 1 ? "ACTIVE" : "INACTIVE";
+
+	        System.out.printf(
+	                "%-5d %-30s %-12s%n",
+	                index++,
+	                truncate(c.getName(), 29),
+	                status
+	        );
+	    }
+
+	    System.out.println(SEPARATOR);
+	}
+	
+	/* ===================== HELPER FUNCTIONS ===================== */
+    public static List<Offer> filterActiveOffers(List<Offer> offers) {
+        LocalDateTime now = LocalDateTime.now();
+        return offers.stream()
+                .filter(o -> o.getValidTo() != null && o.getValidTo().isAfter(now))
+                .toList();
+    }
+
+    public static List<Offer> filterExpiredOffers(List<Offer> offers) {
+        LocalDateTime now = LocalDateTime.now();
+        return offers.stream()
+                .filter(o -> o.getEventId() != 0
+                        && o.getValidTo() != null
+                        && o.getValidTo().isBefore(now))
+                .toList();
+    }
+    /**
+     * Truncate the given string, followed by three trailing dots
+     * 
+     * @param value
+     * @param max
+     * @return Truncated string
+     */
     private static String truncate(String value, int max) {
         if (value == null || value.length() <= max) {
             return value;

@@ -183,11 +183,12 @@ public class AdminMenu extends BaseMenu {
 			System.out.println(
 				    "\nEvent management\n" +
 				    "1 View all events\n" +
-				    "2 View event details\n" +
-				    "3 View ticket options\n" +
-				    "4 Approve event\n" +
-				    "5 Cancel event\n" +
-				    "6 Back\n\n" +
+				    "2 View available events\n"+
+				    "3 View event details\n" +
+				    "4 View ticket options\n" +
+				    "5 Approve event\n" +
+				    "6 Cancel event\n" +
+				    "7 Back\n\n" +
 				    "Choice:"
 				);
 
@@ -200,28 +201,33 @@ public class AdminMenu extends BaseMenu {
 				eventManagementAction.listAllEvents();
 				break;
 			}
-
+			
 			case 2: {
-				eventManagementAction.printEventDetails();
+				eventManagementAction.listAvailableEvents();
 				break;
 			}
 
 			case 3: {
-				eventManagementAction.listTicketsForEvent();
+				eventManagementAction.printEventDetails();
 				break;
 			}
 
 			case 4: {
-				eventManagementAction.approveEvent(loggedInUser.getUserId());
+				eventManagementAction.listTicketsForEvent();
 				break;
 			}
 
 			case 5: {
-				eventManagementAction.cancelEvent();
+				eventManagementAction.approveEvent(loggedInUser.getUserId());
 				break;
 			}
 
 			case 6: {
+				eventManagementAction.cancelEvent();
+				break;
+			}
+
+			case 7: {
 				return;
 			}
 

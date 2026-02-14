@@ -118,12 +118,13 @@ public class NotificationDaoImpl implements NotificationDao {
 				notifications.add(notification);
 			}
 			rs.close();
+			return notifications;
 			
 		} catch (SQLException e) {
 			throw new DataAccessException("Database error while reading notifications");
 		}
 		
-		return notifications;
+		
 	}	
 	
 	@Override

@@ -1,14 +1,20 @@
 package com.ems.util;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class PaginationUtil {
 
     private static final int PAGE_SIZE = 10;
-
+    /**
+     * 
+     * @param <T> 
+     * @param data List of any data items.
+     * @param printer A function that knows how to print one page of items.
+     */
     public static <T> void paginate(
             List<T> data,
-            java.util.function.Consumer<List<T>> printer
+            Consumer<List<T>> printer
     ) {
         if (data == null || data.isEmpty()) {
             System.out.println("No data found.");

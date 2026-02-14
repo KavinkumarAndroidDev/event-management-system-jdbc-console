@@ -22,9 +22,10 @@ public interface UserDao {
      * @param createdAt
      * @param updatedAt
      * @param gender
+     * @return 
      * @throws DataAccessException
      */
-    void createUser(
+    boolean createUser(
             String fullName,
             String email,
             String phone,

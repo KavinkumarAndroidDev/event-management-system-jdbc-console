@@ -48,7 +48,7 @@ public class AdminNotificationManagementAction {
 			return;
 		}
 
-		System.out.println("\nSelect notification type\n" + "1. SYSTEM\n" + "2. EVENT\n" + "3. PAYMENT\n>");
+		System.out.println("\nSelect notification type\n" + "1. SYSTEM\n" + "2. EVENT\n>");
 
 		int typeChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
@@ -58,8 +58,6 @@ public class AdminNotificationManagementAction {
 			type = NotificationType.SYSTEM;
 		} else if (typeChoice == 2) {
 			type = NotificationType.EVENT;
-		} else if (typeChoice == 3) {
-			type = NotificationType.PAYMENT;
 		} else {
 			System.out.println("Invalid notification type selected.");
 			return;

@@ -27,7 +27,6 @@ public class Offer {
 		this.validTo = validTo;
 	}
 	public Offer() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getOfferId() {
 		return offerId;

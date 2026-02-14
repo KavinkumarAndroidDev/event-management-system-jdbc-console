@@ -52,7 +52,6 @@ public class Event {
 		this.updatedAt = updatedAt;
 	}
 	public Event() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getEventId() {
 		return eventId;

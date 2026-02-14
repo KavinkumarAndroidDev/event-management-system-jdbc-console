@@ -531,57 +531,111 @@ public class OrganizerEventManagementAction {
      */
 	public void cancelEvent(int userId) {
 
-		List<Event> events = organizerService.getOrganizerEvents(userId);
+	    List<Event> events = organizerService.getOrganizerEvents(userId);
 
-		if (events.isEmpty()) {
-			System.out.println("No events found.");
-			return;
-		}
+	    if (events.isEmpty()) {
+	        System.out.println("No events found.");
+	        return;
+	    }
 
-		List<Event> cancellableEvents = events.stream()
+		List<Event> actionableEvents = events.stream()
 				.filter(e -> EventStatus.DRAFT.toString().equals(e.getStatus())
 						|| EventStatus.PUBLISHED.toString().equals(e.getStatus()))
 				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
 
-		if (cancellableEvents.isEmpty()) {
-			System.out.println("No events available for cancellation");
-			return;
-		}
+	    if (actionableEvents.isEmpty()) {
+	        System.out.println("No events available for cancellation.");
+	        return;
+	    }
 
-        AdminMenuHelper.printAllEventsWithStatus(cancellableEvents);
+	    AdminMenuHelper.printAllEventsWithStatus(actionableEvents);
 
+	    int choice = MenuHelper.selectFromList(actionableEvents.size(), "Select an event");
+	    Event selectedEvent = actionableEvents.get(choice - 1);
 
-		int choice = MenuHelper.selectFromList(cancellableEvents.size(), "Select an event");
+	    char confirm = InputValidationUtil.readChar(
+	        ScannerUtil.getScanner(),
+	        "Are you sure you want to cancel this event (Y/N): "
+	    );
 
-		Event selectedEvent = cancellableEvents.get(choice - 1);
+	    if (Character.toUpperCase(confirm) != 'Y') {
+	        System.out.println("Event cancellation aborted.\n");
+	        return;
+	    }
 
-		char confirm = InputValidationUtil.readChar(ScannerUtil.getScanner(),
-				"Are you sure you want to cancel this event (Y/N): ");
+	    if (EventStatus.PUBLISHED.toString().equals(selectedEvent.getStatus())) {
+	        System.out.println("Published events require admin approval for cancellation.");
+	        String message = InputValidationUtil.readNonEmptyString(
+	            ScannerUtil.getScanner(),
+	            "Enter a detailed message requesting event cancellation from the admin:\n"
+	        );
+	        organizerService.sendCancellationRequest(selectedEvent, message);
+	        System.out.println("Event cancellation request sent!");
+	    } else {
+	        boolean result = organizerService.cancelEvent(selectedEvent.getEventId());
 
-		if (Character.toUpperCase(confirm) != 'Y') {
-			System.out.println("Event cancellation cancelled.\n");
-			return;
-		}
-		if(selectedEvent.getStatus().equals(EventStatus.PUBLISHED.toString())) {
-			System.out.println("The events which are already published cannot be cancelled by the organizer");
-			String message = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), 
-					"Enter the message detaily requesting the event cancellation to the admin\n"
-					+ "Event only cancelled if the admin decided:\n");
-			organizerService.sendCancellationRequest(selectedEvent, message);
-			System.out.println("Event cancellation request sent!");
-			
-		}else {
-			boolean result = organizerService.cancelEvent(selectedEvent.getEventId());
+	        if (!result) {
+	            System.out.println("Event cancellation failed.");
+	            return;
+	        }
 
-			if (!result) {
-				System.out.println("Cancel failed");
-				return;
-			}
-
-			System.out.println("Event cancelled successfully");
-		}
-
+	        System.out.println("Event cancelled successfully.");
+	    }
 	}
+
+//	public void cancelEvent(int userId) {
+//
+//		List<Event> events = organizerService.getOrganizerEvents(userId);
+//
+//		if (events.isEmpty()) {
+//			System.out.println("No events found.");
+//			return;
+//		}
+//
+//		List<Event> cancellableEvents = events.stream()
+//				.filter(e -> EventStatus.DRAFT.toString().equals(e.getStatus())
+//						|| EventStatus.PUBLISHED.toString().equals(e.getStatus()))
+//				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
+//
+//		if (cancellableEvents.isEmpty()) {
+//			System.out.println("No events available for cancellation");
+//			return;
+//		}
+//
+//        AdminMenuHelper.printAllEventsWithStatus(cancellableEvents);
+//
+//
+//		int choice = MenuHelper.selectFromList(cancellableEvents.size(), "Select an event");
+//
+//		Event selectedEvent = cancellableEvents.get(choice - 1);
+//
+//		char confirm = InputValidationUtil.readChar(ScannerUtil.getScanner(),
+//				"Are you sure you want to cancel this event (Y/N): ");
+//
+//		if (Character.toUpperCase(confirm) != 'Y') {
+//			System.out.println("Event cancellation cancelled.\n");
+//			return;
+//		}
+//		if(selectedEvent.getStatus().equals(EventStatus.PUBLISHED.toString())) {
+//			System.out.println("The events which are already published cannot be cancelled by the organizer");
+//			String message = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), 
+//					"Enter the message detaily requesting the event cancellation to the admin\n"
+//					+ "Event only cancelled if the admin decided:\n");
+//			organizerService.sendCancellationRequest(selectedEvent, message);
+//			System.out.println("Event cancellation request sent!");
+//			
+//		}else {
+//			boolean result = organizerService.cancelEvent(selectedEvent.getEventId());
+//
+//			if (!result) {
+//				System.out.println("Cancel failed");
+//				return;
+//			}
+//
+//			System.out.println("Event cancelled successfully");
+//		}
+//
+//	}
 	
 	/* ===================== DATA RETRIVAL METHODS ===================== */
 

@@ -30,7 +30,7 @@ public class UserDaoImpl implements UserDao {
 
 	
 	@Override
-	public void createUser(String fullName, String email, String phone, String passwordHash, int roleId, 
+	public boolean createUser(String fullName, String email, String phone, String passwordHash, int roleId, 
 			String status, LocalDateTime createdAt, LocalDateTime updatedAt, String gender) 
 			throws DataAccessException {
 		
@@ -52,6 +52,7 @@ public class UserDaoImpl implements UserDao {
 			ps.setTimestamp(8, null);
 			ps.setString(9, gender);
 			ps.executeUpdate();
+			return true;
 
 		} catch (SQLException e) {
 			throw new DataAccessException("Error while creating user account");
@@ -107,39 +108,46 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public boolean updateUserStatus(int userId, String status)
 	        throws DataAccessException {
-
-	    // Prevents status changes on admin accounts
-
-		String adminCheck = "select r.role_name from roles r inner join users u on r.role_id = u.role_id where u.user_id = ?";
-		String sql = "update users set status = ? where user_id = ?";
-		
-		try (Connection con = DBConnectionUtil.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql);
-				PreparedStatement ps1 = con.prepareStatement(adminCheck)) {
-			
-			ps1.setInt(1, userId);
-			ResultSet rs = ps1.executeQuery();
-			String role = "";
-			
-			if (rs.next()) {
-				role = rs.getString("role_name");
-			}
-			
-			if (role.trim().equalsIgnoreCase("admin")) {
-				throw new DataAccessException("Admin accounts status cannot be modified");
-			}
-			
+	
+	    String adminCheck = "select r.role_name from roles r inner join users u on r.role_id = u.role_id where u.user_id = ?";
+	    String sql = "update users set status = ?, failed_attempts = ? where user_id = ?";
+	
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps1 = con.prepareStatement(adminCheck);
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	
+	        ps1.setInt(1, userId);
+	        ResultSet rs = ps1.executeQuery();
+	        String role = "";
+	
+	        if (rs.next()) {
+	            role = rs.getString("role_name");
+	        }
+	
+	        if (role.trim().equalsIgnoreCase("admin")) {
+	            throw new DataAccessException("Admin accounts status cannot be modified");
+	        }
+	
 	        ps.setString(1, status);
-	        ps.setInt(2, userId);
+	
+	        if ("ACTIVE".equalsIgnoreCase(status)) {
+	            ps.setInt(2, 0);   
+	        } else {
+	            ps.setInt(2, 3);  
+	        }
+	
+	        ps.setInt(3, userId);
+	
 	        int rowsUpdated = ps.executeUpdate();
-
+	
 	        rs.close();
 	        return rowsUpdated > 0;
-	        
+	
 	    } catch (SQLException e) {
-			throw new DataAccessException("Error while updating the user status");
-		}
+	        throw new DataAccessException("Error while updating the user status");
+	    }
 	}
+
 
 	@Override
 	public List<User> findAllUsers(String userType) throws DataAccessException {

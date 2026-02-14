@@ -131,7 +131,12 @@ public class UserAction {
 	            ? "Female"
 	            : "Opt-out";
 	
-	    userService.createAccount(fullName, email, phone, password, gender, role);
+	    boolean isUserCreated = userService.createAccount(fullName, email, phone, password, gender, role);
+	    if(isUserCreated) {
+	    	System.out.println("\nAccount has been created successfully!\n");
+	    }else {
+	    	System.out.println("\nAccount creation failed!, Retry");
+	    }
 	}
 
 	

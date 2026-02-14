@@ -16,4 +16,6 @@ public interface FeedbackDao {
      */
     boolean submitRating(int eventId, int userId, int rating, String comments)
             throws DataAccessException;
+
+	boolean isRatingAlreadySubmitted(int eventId, int userId) throws DataAccessException;
 }

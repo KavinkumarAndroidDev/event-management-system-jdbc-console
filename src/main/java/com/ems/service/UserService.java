@@ -12,7 +12,7 @@ public interface UserService {
             throws AuthorizationException, AuthenticationException;
 
     // account management
-    void createAccount(
+    boolean createAccount(
             String fullName,
             String email,
             String phone,

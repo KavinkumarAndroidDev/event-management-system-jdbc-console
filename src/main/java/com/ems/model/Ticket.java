@@ -26,7 +26,6 @@ public class Ticket {
 		this.availableQuantity = availableQuantity;
 	}
 	public Ticket() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getTicketId() {
 		return ticketId;

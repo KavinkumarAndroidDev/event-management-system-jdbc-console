@@ -6,6 +6,7 @@ import java.util.List;
 import com.ems.model.BookingDetail;
 import com.ems.model.Category;
 import com.ems.model.Event;
+import com.ems.model.Notification;
 import com.ems.model.Ticket;
 import com.ems.model.User;
 import com.ems.model.UserEventRegistration;
@@ -49,7 +50,7 @@ public class MenuHelper {
         List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
 
         System.out.println("\n==============================================");
-        System.out.println("Event ID        : " + event.getEventId());
+        //System.out.println("Event ID        : " + event.getEventId());
         System.out.println("Title           : " + event.getTitle());
 
         if (event.getDescription() != null) {
@@ -167,13 +168,25 @@ public class MenuHelper {
      * @param categories list of categories to display
      */
     public static void displayCategories(List<Category> categories) {
-        int index = 1;
-        System.out.println("\nAvailable categories:");
-        for (Category c : categories) {
-            System.out.println(index + ". " + c.getName());
-            index++;
+        if (categories == null || categories.isEmpty()) {
+            System.out.println("No categories found.");
+            return;
         }
+
+        System.out.println();
+        System.out.println("Select a Category");
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (Category c : categories) {
+            System.out.printf("  %2d) %s%n", index++, c.getName());
+        }
+
+        System.out.println(SUB_SEPARATOR);
     }
+
+    
+
 
     /**
      * Displays a numbered list of available venues.
@@ -181,13 +194,37 @@ public class MenuHelper {
      * @param venues list of venues to display
      */
     public static void displayVenues(List<Venue> venues) {
-        int index = 1;
-        System.out.println("\nAvailable venues:");
-        for (Venue venue : venues) {
-            System.out.println(index + ". " + venue.getName());
-            index++;
+        if (venues == null || venues.isEmpty()) {
+            System.out.println("No venues found.");
+            return;
         }
+
+        System.out.println();
+        System.out.println("AVAILABLE VENUES");
+        System.out.println(SEPARATOR);
+
+        System.out.printf(
+            "%-5s %-30s %-30s%n",
+            "NO", "VENUE NAME", "CITY"
+        );
+
+        System.out.println(SUB_SEPARATOR);
+
+        int index = 1;
+        for (Venue venue : venues) {
+            System.out.printf(
+                "%-5d %-30s %-30s%n",
+                index++,
+                truncate(venue.getName(), 29),
+                venue.getCity()
+            );
+        }
+
+        System.out.println(SEPARATOR);
     }
+
+
+    
     
     /**
      * Displays summarized ticket information for an event.
@@ -306,6 +343,37 @@ public class MenuHelper {
             System.out.println("Invalid selection. Please try again.");
         }
     }
+    
+    /**
+     * Displays a formatted list of notifications.
+     *
+     * @param notifications list of notifications to display
+     */
+    public static void displayNotifications(List<Notification> notifications) {
+        if (notifications == null || notifications.isEmpty()) {
+            System.out.println("\nNo notifications.");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("NOTIFICATIONS");
+        System.out.println(SEPARATOR);
+
+        int index = 1;
+        for (Notification n : notifications) {
+            System.out.println(SUB_SEPARATOR);
+            System.out.printf(
+                    "%2d) [%s] %s%n",
+                    index++,
+                    n.getType(),
+                    n.getMessage()
+            );
+            System.out.println("    Time : " + DateTimeUtil.formatDateTime(n.getCreatedAt()));
+        }
+
+        System.out.println(SEPARATOR);
+    }
+
     
     /**
      * Helper function used to truncate the long string and 

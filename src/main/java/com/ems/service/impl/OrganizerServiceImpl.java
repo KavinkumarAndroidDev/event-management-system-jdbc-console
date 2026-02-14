@@ -411,8 +411,23 @@ public class OrganizerServiceImpl implements OrganizerService {
 	}
 
 	@Override
-	public void sendCancellationRequest(Event selectedEvent, String message) {
-		notificationService.sendPersonalNotification(selectedEvent.getApprovedBy(), message, "CANCELLATION REQUEST");
+	public void sendCancellationRequest(Event event, String organizerMessage) {
+
+	    String notificationMessage =
+	        "CANCELLATION REQUEST\n\n" +
+	        "Event: " + event.getTitle() + "\n" +
+	        "Event ID: " + event.getEventId() + "\n" +
+	        "Start Time: " + event.getStartDateTime() + "\n\n" +
+	        "Requested by Organizer:\n" +
+	        event.getOrganizerId() + " (User ID: " + event.getOrganizerId() + ")\n\n" +
+	        "Organizer Message:\n" +
+	        organizerMessage;
+
+	    notificationService.sendPersonalNotification(
+	        event.getApprovedBy(),
+	        notificationMessage,
+	        "CANCELLATION REQUEST"
+	    );
 	}
 
 

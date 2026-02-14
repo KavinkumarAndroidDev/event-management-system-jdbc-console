@@ -1,12 +1,12 @@
 package com.ems.actions;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.ems.model.Category;
 import com.ems.model.Event;
+import com.ems.model.Venue;
 import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.DateTimeUtil;
@@ -122,39 +122,33 @@ public class EventSearchAction {
      * Displays available cities and validates user selection.
      */
     public void handleSearchByCity() {
-        Map<Integer, String> cities = getAllCities();
+        List<Venue> venues = eventService.getAllVenues();
 
-        if (cities.isEmpty()) {
-            System.out.println("No cities available.");
+        if (venues == null || venues.isEmpty()) {
+            System.out.println("No venues available.");
             return;
         }
 
-        List<Integer> ids = new ArrayList<>(cities.keySet());
-        ids.sort(Integer::compareTo);
+        MenuHelper.displayVenues(venues);
 
-        for (int i = 0; i < ids.size(); i++) {
-            System.out.println((i + 1) + ". " + cities.get(ids.get(i)));
-        }
-
-        int choice = InputValidationUtil.readInt(
-            ScannerUtil.getScanner(), "Select city: "
+        int choice = MenuHelper.selectFromList(
+            venues.size(),
+            "Select venue"
         );
 
-        if (choice < 1 || choice > ids.size()) {
-            System.out.println("Invalid city selection.");
-            return;
-        }
+        Venue selected = venues.get(choice - 1);
 
-        int cityId = ids.get(choice - 1);
-        List<Event> events = searchByCity(cityId);
+        List<Event> events = eventService.searchByCity(selected.getVenueId());
 
         if (events.isEmpty()) {
-            System.out.println("No events found in " + cities.get(cityId));
+            System.out.println("No events found at " + selected.getName());
             return;
         }
 
         MenuHelper.printEventSummaries(events);
     }
+
+    
 
     /**
      * Handles filtering events by price range.

@@ -37,6 +37,7 @@ public class NotificationAction {
     	notificationService.displayAllNotifications(userId);
     }
     
+    
     /**
      * Sends an event update notification to all registered attendees.
      * 

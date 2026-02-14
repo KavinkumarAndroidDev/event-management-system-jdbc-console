@@ -20,20 +20,30 @@ import com.ems.exception.DataAccessException;
  */
 public class DBConnectionUtil {
 
+    private DBConnectionUtil() {}
 
-	private DBConnectionUtil() {}
-	public static Connection getConnection() throws DataAccessException{
-		Properties prop = new Properties();
-		try(InputStream is = DBConnectionUtil.class.getClassLoader().getResourceAsStream("db.properties")){
-			prop.load(is);
-			return DriverManager.getConnection(
-					prop.getProperty("db.url"),
-					prop.getProperty("db.username"),
-					prop.getProperty("db.password")
-			);
-			
-		}catch (SQLException | IOException e) {
-		    throw new DataAccessException("Failed to get DB connection", e);
-		}
-	}
+    public static Connection getConnection() throws DataAccessException {
+        Properties prop = new Properties();
+
+        try (InputStream is = DBConnectionUtil.class
+                .getClassLoader()
+                .getResourceAsStream("db.properties")) {
+
+            if (is == null) {
+                throw new DataAccessException("db.properties not found on classpath");
+            }
+
+            prop.load(is);
+
+            return DriverManager.getConnection(
+                    prop.getProperty("db.url"),
+                    prop.getProperty("db.username"),
+                    prop.getProperty("db.password")
+            );
+
+        } catch (SQLException | IOException e) {
+            throw new DataAccessException("Failed to get DB connection", e);
+        }
+    }
 }
+

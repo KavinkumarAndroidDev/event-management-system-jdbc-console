@@ -1,9 +1,10 @@
 package com.ems.exception;
 
+/**
+ * Thrown when a user lacks permission to perform an action
+ */
 public class AuthorizationException extends Exception{
-	/**
-	 * Thrown when a user lacks permission to perform an action
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public AuthorizationException(String s){

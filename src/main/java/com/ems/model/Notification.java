@@ -29,7 +29,6 @@ public class Notification {
 		this.readStatus = readStatus;
 	}
 	public Notification() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getNotificationId() {
 		return notificationId;

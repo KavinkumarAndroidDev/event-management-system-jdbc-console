@@ -92,4 +92,6 @@ public interface EventService {
 
 	boolean cancelRegistration(int userId, int registrationId);
 
+	boolean isRatingAlreadySubmitted(int eventId, int userId);
+
 }

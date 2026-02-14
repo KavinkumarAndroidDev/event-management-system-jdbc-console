@@ -248,13 +248,10 @@ public class UserMenu extends BaseMenu {
         		    "2 Back\n\n" +
         		    "Choice:"
         		);
-
-
             int choice = InputValidationUtil.readInt(
                 ScannerUtil.getScanner(),
                 ""
             );
-
             switch (choice) {
             case 1:
                 feedbackAction.submitRating(

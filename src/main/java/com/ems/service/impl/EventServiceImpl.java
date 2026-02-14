@@ -271,13 +271,11 @@ public class EventServiceImpl implements EventService {
             if (registrations == null) {
                 return new ArrayList<>();
             }
-            
+         
             return registrations.stream()
-                .filter(r -> r.getStartDateTime() != null &&
-                           r.getStartDateTime().isBefore(LocalDateTime.now()) &&
-                           "CONFIRMED".equals(r.getRegistrationStatus()))
-                .collect(Collectors.toList());
-
+            	    .filter(r -> r.getEndDateTime() != null
+            	            && r.getEndDateTime().isBefore(LocalDateTime.now()))
+            	    .collect(Collectors.toList());
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "REGISTRATION", 0,
                 "Failed to get past events: " + e.getMessage());
@@ -303,6 +301,10 @@ public class EventServiceImpl implements EventService {
             String normalizedComments = (comments == null || comments.trim().isEmpty()) 
                 ? null 
                 : comments.trim();
+            boolean isFeedbackAlreadySubmitted = feedbackDao.isRatingAlreadySubmitted(eventId, userId);
+            if (isFeedbackAlreadySubmitted) {
+                return false;
+            }
 
             boolean isSuccess = feedbackDao.submitRating(eventId, userId, rating, normalizedComments);
             if(isSuccess) {
@@ -564,4 +566,13 @@ public class EventServiceImpl implements EventService {
             return false;
         }
     }
+
+	@Override
+	public boolean isRatingAlreadySubmitted(int eventId, int userId) {
+		try {
+			return feedbackDao.isRatingAlreadySubmitted(eventId, userId);
+		} catch (DataAccessException e) {
+			return false;
+		}
+	}
 }

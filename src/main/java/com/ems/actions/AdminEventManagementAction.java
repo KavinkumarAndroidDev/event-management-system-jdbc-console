@@ -162,8 +162,8 @@ public class AdminEventManagementAction {
     public int getAvailableTickets(int eventId) {
         return eventService.getAvailableTickets(eventId);
     }
-    //TODO: REMOVE THIS AND 
-	public Event selectAnyEvent() {
+
+    public Event selectAnyEvent() {
 
 		List<Event> events = getAllEvents();
 
@@ -182,6 +182,16 @@ public class AdminEventManagementAction {
 		}
 
 		return events.get(choice - 1);
+	}
+
+
+	public void listAvailableEvents() {
+		List<Event> events = eventService.listAvailableEvents();
+		if (events.isEmpty()) {
+			System.out.println("No events available at the moment.");
+		} else {
+			AdminMenuHelper.printAllEventsWithStatus(events);
+		}
 	}
 
 

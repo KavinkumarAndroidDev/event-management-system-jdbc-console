@@ -9,6 +9,7 @@ import com.ems.exception.DataAccessException;
 import com.ems.model.Notification;
 import com.ems.service.NotificationService;
 import com.ems.service.SystemLogService;
+import com.ems.util.MenuHelper;
 
 /*
  * Handles notification related business operations.
@@ -69,7 +70,7 @@ public class NotificationServiceImpl implements NotificationService {
 			if (!notifications.isEmpty()) {
 				System.out.println("\nYou have few unread notifications: ");
 				notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
-				notifications.forEach(System.out::println);
+				MenuHelper.displayNotifications(notifications);
 				// Mark notifications as read after viewing
 				notifications.forEach(n -> {
 					try {
@@ -91,20 +92,21 @@ public class NotificationServiceImpl implements NotificationService {
 	 */
 	@Override
 	public void displayAllNotifications(int userId) {
-		try {
-			List<Notification> notifications = notificationDao.getAllNotifications(userId);
-
-			if (!notifications.isEmpty()) {
-				System.out.println("\nNotifications: ");
-				notifications.forEach(System.out::println);
-				notificationDao.markAllAsRead(userId);
-			} else {
-				System.out.println("\nNo notifications");
-			}
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+	    try {
+	        List<Notification> notifications =
+	                notificationDao.getAllNotifications(userId);
+	
+	        MenuHelper.displayNotifications(notifications);
+	
+	        if (notifications != null && !notifications.isEmpty()) {
+	            notificationDao.markAllAsRead(userId);
+	        }
+	
+	    } catch (DataAccessException e) {
+	        System.out.println(e.getMessage());
+	    }
 	}
+
 
 	/*
 	 * Sends a notification to all users registered for a specific event.

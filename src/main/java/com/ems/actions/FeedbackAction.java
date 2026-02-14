@@ -1,6 +1,9 @@
 package com.ems.actions;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.ems.model.UserEventRegistration;
 import com.ems.service.EventService;
@@ -27,49 +30,77 @@ public class FeedbackAction {
      *
      * @param userId the ID of the user submitting feedback
      */
-    public void submitRating(int userId) {
-        List<UserEventRegistration> past = eventService.viewPastEvents(userId);
+	public void submitRating(int userId) {
+	
+	    List<UserEventRegistration> past = eventService.viewPastEvents(userId);
+	
+	    if (past == null || past.isEmpty()) {
+	        System.out.println("No past events to rate.");
+	        return;
+	    }
+	
+	    past = past.stream()
+	        // 1. Only finished events
+	        .filter(r -> r.getEndDateTime() != null
+	                && r.getEndDateTime().isBefore(LocalDateTime.now()))
+	        // 2. Remove duplicates by eventId
+	        .collect(Collectors.collectingAndThen(
+	            Collectors.toMap(
+	                UserEventRegistration::getEventId,
+	                r -> r,
+	                (existing, duplicate) -> existing
+	            ),
+	            map -> new ArrayList<>(map.values())
+	        ))
+	        // 3. Remove already reviewed events
+	        .stream()
+	        .filter(r -> {
+	        	return !eventService.isRatingAlreadySubmitted(r.getEventId(), userId);
+	        })
+	        .collect(Collectors.toList());
+	
+	    if (past.isEmpty()) {
+	        System.out.println("You have no events pending review.");
+	        return;
+	    }
+	
+	    MenuHelper.printEventsList(past);
+	
+	    int choice = MenuHelper.selectFromList(
+	        past.size(),
+	        "Select an event to rate"
+	    );
+	
+	    int eventId = past.get(choice - 1).getEventId();
+	
+	    int rating;
+	    do {
+	        rating = InputValidationUtil.readInt(
+	            ScannerUtil.getScanner(),
+	            "Rate the event (1-5): "
+	        );
+	
+	        if (rating < 1 || rating > 5) {
+	            System.out.println("Please enter a rating between 1 and 5.");
+	        }
+	    } while (rating < 1 || rating > 5);
+	
+	    String comments = InputValidationUtil.readString(
+	        ScannerUtil.getScanner(),
+	        "Enter feedback (optional, press Enter to skip):\n"
+	    );
+	
+	    comments = (comments == null || comments.trim().isEmpty())
+	        ? null
+	        : comments.trim();
+	
+	    boolean isSuccess = eventService.submitRating(userId, eventId, rating, comments);
+	
+	    if (isSuccess) {
+	        System.out.println("Thank you for your feedback!");
+	    } else {
+	        System.out.println("Failed to submit your rating!");
+	    }
+	}
 
-        if (past == null || past.isEmpty()) {
-            System.out.println("No past events to rate.");
-            return;
-        }
-
-        MenuHelper.printEventsList(past);
-
-        int choice = MenuHelper.selectFromList(
-            past.size(),
-            "Select an event to rate"
-        );
-
-        int eventId = past.get(choice - 1).getEventId();
-
-        int rating;
-        do {
-            rating = InputValidationUtil.readInt(
-                ScannerUtil.getScanner(),
-                "Rate the event (1-5): "
-            );
-
-            if (rating < 1 || rating > 5) {
-                System.out.println("Please enter a rating between 1 and 5.");
-            }
-        } while (rating < 1 || rating > 5);
-
-        String comments = InputValidationUtil.readString(
-            ScannerUtil.getScanner(),
-            "Enter feedback (optional, press Enter to skip):\n"
-        );
-
-        comments = (comments == null || comments.trim().isEmpty())
-            ? null
-            : comments.trim();
-
-        boolean isSuccess = eventService.submitRating(userId, eventId, rating, comments);
-        if(isSuccess) {
-        	System.out.println("Thank you for your feedback!");
-        }else {
-        	System.out.println("Failed to submit your rating!");
-        }
-    }
 }

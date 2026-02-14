@@ -29,7 +29,6 @@ public class Registration {
 		this.status = status;
 	}
 	public Registration() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getRegistrationId() {
 		return registrationId;

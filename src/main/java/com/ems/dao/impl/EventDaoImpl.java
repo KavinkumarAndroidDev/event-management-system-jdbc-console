@@ -243,8 +243,7 @@ public class EventDaoImpl implements EventDao {
 	            "JOIN tickets t ON rt.ticket_id = t.ticket_id " +
 	            "LEFT JOIN payments p ON p.registration_id = r.registration_id " +
 	            " " +
-	            "WHERE r.user_id = ? " +
-	            " " +
+	            "WHERE r.user_id = ? AND e.status <> 'CANCELLED' AND r.status = 'CONFIRMED' "+
 	            "GROUP BY " +
 	            "    r.registration_id, " +
 	            "    r.registration_date, " +

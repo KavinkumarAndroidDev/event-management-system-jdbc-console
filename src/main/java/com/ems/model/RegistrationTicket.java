@@ -18,7 +18,6 @@ public class RegistrationTicket {
 		this.quantity = quantity;
 	}
 	public RegistrationTicket() {
-		// TODO Auto-generated constructor stub
 	}
 	public int getId() {
 		return id;

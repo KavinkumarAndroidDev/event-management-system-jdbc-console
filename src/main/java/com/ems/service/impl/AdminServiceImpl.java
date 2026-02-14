@@ -81,6 +81,9 @@ public class AdminServiceImpl implements AdminService {
 	public boolean changeStatus(String status, int userId) {
 		try {
 			boolean updated = userDao.updateUserStatus(userId, status);
+			if (updated && "ACTIVE".equalsIgnoreCase(status)) {
+	            userDao.resetFailedAttempts(userId);  
+	        }
 			if (updated) {
 				systemLogService.log(
 					null,                     

@@ -9,9 +9,9 @@ public interface NotificationService {
 
 	// read notifications
 	void displayUnreadNotifications(int userId);
-
-	void displayAllNotifications(int userId);
 	
 	//
 	void sendPersonalNotification(int userId, String message, String type);
+
+	void displayAllNotifications(int userId);
 }

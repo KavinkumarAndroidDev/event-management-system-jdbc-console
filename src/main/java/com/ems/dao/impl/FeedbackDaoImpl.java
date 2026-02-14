@@ -19,10 +19,33 @@ import com.ems.util.DBConnectionUtil;
 public class FeedbackDaoImpl implements FeedbackDao {
 	
 	@Override
+	public boolean isRatingAlreadySubmitted(int eventId, int userId) throws DataAccessException {
+		String sql = "select count(*) from feedback"
+				+ " where event_id = ?"
+				+ " and user_id = ?";
+		try (Connection con = DBConnectionUtil.getConnection();
+		         PreparedStatement ps = con.prepareStatement(sql)) {
+		
+			ps.setInt(1, eventId);
+	        ps.setInt(2, userId);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt(1) > 0;
+	            }
+	        }
+
+	        return false;
+
+	    } catch (SQLException e) {
+	        throw new DataAccessException("Error while checking rating submission", e);
+	    }
+	}
+	
+	@Override
 	public boolean submitRating(int eventId, int userId, int rating, String comments)
 	        throws DataAccessException {
-
-	    // Ensures feedback is allowed only for confirmed registrations of completed events
+	
 	    String sql =
 	        "select count(*) from events e " +
 	        "join registrations r on e.event_id = r.event_id " +
@@ -30,40 +53,37 @@ public class FeedbackDaoImpl implements FeedbackDao {
 	        "and e.event_id = ? " +
 	        "and e.status = 'COMPLETED' " +
 	        "and r.status = 'CONFIRMED'";
-
-		try (Connection con = DBConnectionUtil.getConnection();
-			PreparedStatement ps = con.prepareStatement(sql)) {
-			
-		    ps.setInt(1, userId);
-		    ps.setInt(2, eventId);
-		    ResultSet rs = ps.executeQuery();
-		    
-		    if (rs.next() && rs.getInt(1) > 0) {
-		    	// Persists feedback only after eligibility check passes
-		    	String insertReview =
-		    	    "insert into feedback(event_id, user_id, rating, comments, submitted_at) " +
-		    	    "values(?, ?, ?, ?, utc_timestamp())";
-
-		        try (PreparedStatement ps1 = con.prepareStatement(insertReview)) {
-			        ps1.setInt(1, eventId);
-			        ps1.setInt(2, userId);
-			        ps1.setInt(3, rating);
-			        ps1.setString(4, comments);
-			        
-			        int affectedRows = ps1.executeUpdate();
-			        
-			        if (affectedRows > 0) {
-			            return true;  
-			        } else {
-			            return false;  
-			        }
-		        }
-		    } else {
-		        return false;  
-		    }
-		    
-		} catch (SQLException e) {
-			throw new DataAccessException("Error while submitting rating");
-		}
+	
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+	
+	        ps.setInt(1, userId);
+	        ps.setInt(2, eventId);
+	
+	        try (ResultSet rs = ps.executeQuery()) {
+	
+	            if (rs.next() && rs.getInt(1) > 0) {
+	
+	                String insertReview =
+	                    "insert into feedback(event_id, user_id, rating, comments, submitted_at) " +
+	                    "values(?, ?, ?, ?, utc_timestamp())";
+	
+	                try (PreparedStatement ps1 = con.prepareStatement(insertReview)) {
+	                    ps1.setInt(1, eventId);
+	                    ps1.setInt(2, userId);
+	                    ps1.setInt(3, rating);
+	                    ps1.setString(4, comments);
+	
+	                    return ps1.executeUpdate() > 0;
+	                }
+	            }
+	        }
+	
+	        return false;
+	
+	    } catch (SQLException e) {
+	        throw new DataAccessException("Error while submitting rating");
+	    }
 	}
+
 }
