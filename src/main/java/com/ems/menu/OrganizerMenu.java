@@ -1,6 +1,5 @@
 package com.ems.menu;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +12,7 @@ import com.ems.enums.EventStatus;
 import com.ems.model.Event;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.User;
+import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.ScannerUtil;
@@ -366,7 +366,7 @@ public class OrganizerMenu extends BaseMenu {
 				List<Event> filteredEvents = events.stream()
 					.filter(e ->
 						e.getStatus().equals(EventStatus.PUBLISHED.toString())
-						&& e.getStartDateTime().isAfter(LocalDateTime.now())
+						&& e.getStartDateTime().isAfter(DateTimeUtil.nowUtc())
 					)
 					.toList();
 

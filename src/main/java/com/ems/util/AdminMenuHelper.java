@@ -1,6 +1,6 @@
 package com.ems.util;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +59,7 @@ public class AdminMenuHelper {
                     index++,
                     truncate(event.getTitle(), 29),
                     category,
-                    DateTimeUtil.formatDateTime(event.getStartDateTime()),
+                    DateTimeUtil.formatForDisplay(event.getStartDateTime()),
                     available,
                     event.getStatus()
             );
@@ -193,7 +193,7 @@ public class AdminMenuHelper {
         int index = 1;
         for (Venue v : venues) {
 
-            String status = v.getStatus() ? "ACTIVE" : "INACTIVE";
+            String status = v.isStatus() ? "ACTIVE" : "INACTIVE";
 
             System.out.printf(
                     "%-5d %-22s %-18s %-15s %-12s %-10d %-12s%n",
@@ -264,7 +264,7 @@ public class AdminMenuHelper {
                     truncate(r.getUserName(), 19),
                     truncate(r.getTicketType(), 14),
                     r.getQuantity(),
-                    DateTimeUtil.formatDateTime(r.getRegistrationDate())
+                    DateTimeUtil.formatForDisplay(r.getRegistrationDate())
             );
         }
 
@@ -326,7 +326,6 @@ public class AdminMenuHelper {
 
         System.out.println(SUB_SEPARATOR);
 
-        LocalDateTime now = LocalDateTime.now();
         int index = 1;
 
         for (Offer o : offers) {
@@ -339,13 +338,14 @@ public class AdminMenuHelper {
 
             if (o.getValidFrom() != null && o.getValidTo() != null) {
 
-                if (now.isBefore(o.getValidFrom())) {
-                    status = "UPCOMING";
-                } else if (!now.isAfter(o.getValidTo())) {
-                    status = "ACTIVE";
-                } else {
-                    status = "EXPIRED";
-                }
+            	Instant now = DateTimeUtil.nowUtc();
+            	if (now.isBefore(o.getValidFrom())) {
+            	    status = "UPCOMING";
+            	} else if (!now.isAfter(o.getValidTo())) {
+            	    status = "ACTIVE";
+            	} else {
+            	    status = "EXPIRED";
+            	}
 
             } else {
                 status = "UNKNOWN";
@@ -358,8 +358,8 @@ public class AdminMenuHelper {
                     o.getOfferId(),
                     truncate(o.getCode(), 14),
                     discount,
-                    DateTimeUtil.formatDateTime(o.getValidFrom()),
-                    DateTimeUtil.formatDateTime(o.getValidTo()),
+                    DateTimeUtil.formatForDisplay(o.getValidFrom()),
+                    DateTimeUtil.formatForDisplay(o.getValidTo()),
                     status
             );
         }
@@ -444,7 +444,7 @@ public class AdminMenuHelper {
 	        System.out.printf(
 	            "%-5d %-20s %-10s %-22s %-15s %-40s%n",
 	            index++,
-	            DateTimeUtil.formatDateTime(log.getCreatedAt()),
+	            DateTimeUtil.formatForDisplay(log.getCreatedAt()),
 	            log.getUserId() == null ? "SYSTEM" : log.getUserId().toString(),
 	            truncate(log.getAction(), 21),
 	            truncate(log.getEntity(), 14),
@@ -495,14 +495,14 @@ public class AdminMenuHelper {
 	
 	/* ===================== HELPER FUNCTIONS ===================== */
     public static List<Offer> filterActiveOffers(List<Offer> offers) {
-        LocalDateTime now = LocalDateTime.now();
+    	Instant now = DateTimeUtil.nowUtc();
         return offers.stream()
-                .filter(o -> o.getValidTo() != null && o.getValidTo().isAfter(now))
+        		.filter(o -> o.getValidTo() != null && o.getValidTo().isAfter(now))
                 .toList();
     }
 
     public static List<Offer> filterExpiredOffers(List<Offer> offers) {
-        LocalDateTime now = LocalDateTime.now();
+    	Instant now = DateTimeUtil.nowUtc();
         return offers.stream()
                 .filter(o -> o.getEventId() != 0
                         && o.getValidTo() != null

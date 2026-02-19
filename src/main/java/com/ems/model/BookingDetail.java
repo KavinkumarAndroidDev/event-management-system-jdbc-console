@@ -1,19 +1,19 @@
 package com.ems.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class BookingDetail {
 
 	private String eventName;
-	private LocalDateTime startDateTime;
+	private Instant startDateTime;
 	private String venueName;
 	private String city;
 	private String ticketType;
 	private int quantity;
 	private double totalCost;
 
-	public BookingDetail(String eventName, LocalDateTime startDateTime, String venueName, String city,
-			String ticketType, int quantity, double totalCost) {
+	public BookingDetail(String eventName, Instant startDateTime, String venueName, String city, String ticketType,
+			int quantity, double totalCost) {
 		this.eventName = eventName;
 		this.startDateTime = startDateTime;
 		this.venueName = venueName;
@@ -27,7 +27,7 @@ public class BookingDetail {
 		return eventName;
 	}
 
-	public LocalDateTime getStartDateTime() {
+	public Instant getStartDateTime() {
 		return startDateTime;
 	}
 

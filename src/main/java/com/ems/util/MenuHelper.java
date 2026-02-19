@@ -1,6 +1,5 @@
 package com.ems.util;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.ems.model.BookingDetail;
@@ -59,9 +58,9 @@ public class MenuHelper {
 
         System.out.println("Category        : " + category);
         System.out.println("Duration        : "
-                + DateTimeUtil.formatDateTime(event.getStartDateTime())
+                + DateTimeUtil.formatForDisplay(event.getStartDateTime())
                 + " to "
-                + DateTimeUtil.formatDateTime(event.getEndDateTime()));
+                + DateTimeUtil.formatForDisplay(event.getEndDateTime()));
 
         System.out.println("Total Tickets   : " + totalAvailable);
 
@@ -116,7 +115,7 @@ public class MenuHelper {
 	                index++,
 	                truncate(event.getTitle(), 29),
 	                category,
-	                DateTimeUtil.formatDateTime(event.getStartDateTime()),
+	                DateTimeUtil.formatForDisplay(event.getStartDateTime()),
 	                available
 	        );
 	    }
@@ -303,7 +302,6 @@ public class MenuHelper {
         System.out.println(SUB_SEPARATOR);
 
         int i = 1;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
 
         for (UserEventRegistration r : events) {
 
@@ -313,7 +311,7 @@ public class MenuHelper {
                     truncate(r.getTitle(), 22),
                     truncate(r.getCategory(),12),
                     truncate(r.getTicketType(), 9),
-                    r.getStartDateTime().format(formatter),
+                    DateTimeUtil.formatForDisplay(r.getStartDateTime()),
                     r.getTicketsPurchased()
             );
         }
@@ -368,7 +366,7 @@ public class MenuHelper {
                     n.getType(),
                     n.getMessage()
             );
-            System.out.println("    Time : " + DateTimeUtil.formatDateTime(n.getCreatedAt()));
+            System.out.println("    Time : " + DateTimeUtil.formatForDisplay(n.getCreatedAt()));
         }
 
         System.out.println(SEPARATOR);

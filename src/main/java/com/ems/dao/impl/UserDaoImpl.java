@@ -4,8 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +28,11 @@ public class UserDaoImpl implements UserDao {
 
 	
 	@Override
-	public boolean createUser(String fullName, String email, String phone, String passwordHash, int roleId, 
-			String status, LocalDateTime createdAt, LocalDateTime updatedAt, String gender) 
+	public boolean createUser(String fullName, String email, String phone, String passwordHash,
+	        int roleId, String status, LocalDateTime createdAt, LocalDateTime updatedAt, String gender)
+
 			throws DataAccessException {
 		
-		// Stores user timestamps in UTC for consistency
 		String sql = "insert into users(full_name, email, phone, password_hash, role_id, created_at, status, " +
 		             "updated_at, gender) values (?,?,?,?,?,?,?,?,?)";
 		
@@ -46,8 +44,7 @@ public class UserDaoImpl implements UserDao {
 			ps.setString(3, phone);
 			ps.setString(4, passwordHash);
 			ps.setInt(5, roleId);
-			Instant utcInstant = DateTimeUtil.convertLocalDefaultToUtc(createdAt);
-			ps.setTimestamp(6, Timestamp.from(utcInstant));
+			ps.setTimestamp(6, DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(createdAt)));
 			ps.setString(7, status);
 			ps.setTimestamp(8, null);
 			ps.setString(9, gender);
@@ -83,17 +80,11 @@ public class UserDaoImpl implements UserDao {
 	        			    rs.getString("password_hash"),
 	        			    rs.getInt("role_id"),
 	        			    rs.getString("status"),
-	        			    DateTimeUtil.convertUtcToLocal(
-	        			        rs.getTimestamp("created_at").toInstant()
-	        			    ).toLocalDateTime(),
-	        			    rs.getTimestamp("updated_at") == null
-	        			    	? null: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at").toInstant()
-	        			      ),
+	        			    DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")),
+	        			    DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")),
 	        			    rs.getString("gender"),
 	        			    rs.getInt("failed_attempts"),
-							rs.getTimestamp("last_login") == null ? null
-									: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
-
+							DateTimeUtil.fromTimestamp(rs.getTimestamp("last_login"))
 	        			);
 	        	}
 	        }
@@ -170,16 +161,11 @@ public class UserDaoImpl implements UserDao {
 					    rs.getString("password_hash"),
 					    rs.getInt("role_id"),
 					    rs.getString("status"),
-					    DateTimeUtil.convertUtcToLocal(
-					        rs.getTimestamp("created_at").toInstant()
-					    ).toLocalDateTime(),
-						rs.getTimestamp("updated_at") == null ? null
-								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at").toInstant()),
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")),
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")),
 					    rs.getString("gender"),
 					    rs.getInt("failed_attempts"),
-						rs.getTimestamp("last_login") == null ? null
-								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
-
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("last_login"))
 					);
 	            users.add(user); 
 	        }
@@ -237,8 +223,8 @@ public class UserDaoImpl implements UserDao {
 			
 			ResultSet rs = ps.executeQuery();
 			
-			while (rs.next()) {
-				User user = new User(
+			while (rs.next()) { 
+	            User user = new User(
 					    rs.getInt("user_id"),
 					    rs.getString("full_name"),
 					    rs.getString("email"),
@@ -246,19 +232,13 @@ public class UserDaoImpl implements UserDao {
 					    rs.getString("password_hash"),
 					    rs.getInt("role_id"),
 					    rs.getString("status"),
-					    DateTimeUtil.convertUtcToLocal(
-					        rs.getTimestamp("created_at").toInstant()
-					    ).toLocalDateTime(),
-						rs.getTimestamp("updated_at") == null ? null
-								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("updated_at")
-										.toInstant()),
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")),
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")),
 					    rs.getString("gender"),
 					    rs.getInt("failed_attempts"),
-						rs.getTimestamp("last_login") == null ? null
-								: DateTimeUtil.convertUtcToLocalDateTime(rs.getTimestamp("last_login").toInstant())
-
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("last_login"))
 					);
-	            users.add(user); 
+	            users.add(user);
 	        }
 			rs.close();
             

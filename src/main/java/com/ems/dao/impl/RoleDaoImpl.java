@@ -34,12 +34,10 @@ public class RoleDaoImpl implements RoleDao {
 		     ResultSet rs = stmt.executeQuery(query)) {
 			
 			while (rs.next()) {                
-				Role role = new Role(
+				Role  role = new Role(
 					    rs.getInt("role_id"),
 					    rs.getString("role_name"),
-					    DateTimeUtil.convertUtcToLocalDateTime(
-					        rs.getTimestamp("created_at").toInstant()
-					    )
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at"))
 					);
 
 				roles.add(role);

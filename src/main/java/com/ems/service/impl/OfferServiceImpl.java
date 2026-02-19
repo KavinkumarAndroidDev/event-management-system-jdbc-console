@@ -62,8 +62,8 @@ public class OfferServiceImpl implements OfferService {
 		offer.setEventId(eventId);
 		offer.setCode(code);
 		offer.setDiscountPercentage(discount);
-		offer.setValidFrom(from);
-		offer.setValidTo(to);
+		offer.setValidFrom(DateTimeUtil.toUtcInstant(from));
+		offer.setValidTo(DateTimeUtil.toUtcInstant(to));
 
 		try {
 			int offerId = offerDao.createOffer(offer);
@@ -96,7 +96,7 @@ public class OfferServiceImpl implements OfferService {
 		try {
 			offerDao.updateOfferActiveStatus(
 				    offerId,
-				    DateTimeUtil.convertLocalDefaultToUtc(validDate)
+				    DateTimeUtil.toUtcInstant(validDate)
 				);
 
 				systemLogService.log(

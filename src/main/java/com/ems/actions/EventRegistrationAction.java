@@ -1,6 +1,6 @@
 package com.ems.actions;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import com.ems.enums.PaymentMethod;
@@ -11,6 +11,7 @@ import com.ems.model.UserEventRegistration;
 import com.ems.service.EventService;
 import com.ems.service.OfferService;
 import com.ems.util.ApplicationUtil;
+import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.ScannerUtil;
@@ -113,15 +114,15 @@ public class EventRegistrationAction {
             }
 
             offer = offerService.getOffer(eventId, offerCode.trim().toUpperCase());
-            LocalDateTime now = LocalDateTime.now();
-
+            Instant now = DateTimeUtil.nowUtc();
             // Offer does not exist
             if (offer == null) {
                 System.out.println("\nSorry, that offer code does not exist.");
             }
             // Offer exists but is expired or not yet active
+            
             else if (now.isBefore(offer.getValidFrom()) || now.isAfter(offer.getValidTo())) {
-                System.out.println("\nSorry, this offer code is no longer valid.");
+            	System.out.println("\nSorry, this offer code is no longer valid.");
             }
             // Offer already used by the user
             else if (offerService.hasUserUsedOfferCode(userId, offer.getOfferId())) {

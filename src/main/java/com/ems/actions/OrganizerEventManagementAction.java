@@ -1,6 +1,7 @@
 package com.ems.actions;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -121,14 +122,25 @@ public class OrganizerEventManagementAction {
         int venueId = selectedVenue.getVenueId();
 
         LocalDateTime startTime = null;
+
         while (startTime == null) {
             String input = InputValidationUtil.readString(
                 ScannerUtil.getScanner(),
                 "Enter event start date and time (dd-MM-yyyy HH:mm):\n"
             );
+
             startTime = DateTimeUtil.parseLocalDateTime(input);
+
             if (startTime == null) {
                 System.out.println("Invalid start date time. Please try again.");
+                continue;
+            }
+
+            LocalDateTime now = LocalDateTime.now();
+
+            if (!startTime.isAfter(now)) {
+                System.out.println("Start time must be in the future.");
+                startTime = null;
             }
         }
 
@@ -144,8 +156,12 @@ public class OrganizerEventManagementAction {
                 endTime = null;
             }
         }
+        while (true) {
 
-        while (!isVenueAvailable(venueId, startTime, endTime)) {
+            if (isVenueAvailable(venueId, startTime, endTime)) {
+                break;
+            }
+
             System.out.println(
                 "Selected venue is not available for this time.\n\n"
                 + "1. Choose a different venue\n"
@@ -166,18 +182,43 @@ public class OrganizerEventManagementAction {
                         );
                         defaultIndex++;
                 }
-                venueChoice = InputValidationUtil.readInt(
-                    ScannerUtil.getScanner(),
-                    "Select venue number: "
-                );
+				venueChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select venue number: ");
+
+				while (venueChoice < 1 || venueChoice > venues.size()) {
+					venueChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
+							"Please enter a valid number from the list: ");
+				}
                 selectedVenue = venues.get(venueChoice - 1);
                 venueId = selectedVenue.getVenueId();
                 break;
 
             case 2:
                 startTime = null;
+                while (startTime == null) {
+                    String input = InputValidationUtil.readString(
+                        ScannerUtil.getScanner(),
+                        "Enter event start date and time (dd-MM-yyyy HH:mm):\n"
+                    );
+                    startTime = DateTimeUtil.parseLocalDateTime(input);
+                    if (startTime == null) {
+                        System.out.println("Invalid start date time. Please try again.");
+                    }
+                }
+
                 endTime = null;
+                while (endTime == null) {
+                    String input = InputValidationUtil.readString(
+                        ScannerUtil.getScanner(),
+                        "Enter event end date and time (dd-MM-yyyy HH:mm):\n"
+                    );
+                    endTime = DateTimeUtil.parseLocalDateTime(input);
+                    if (endTime == null || endTime.isBefore(startTime)) {
+                        System.out.println("End date must be after start time. Try again.");
+                        endTime = null;
+                    }
+                }
                 break;
+
 
             case 3:
                 return;
@@ -206,8 +247,8 @@ public class OrganizerEventManagementAction {
         event.setTitle(title);
         event.setDescription(description);
         event.setVenueId(venueId);
-        event.setStartDateTime(startTime);
-        event.setEndDateTime(endTime);
+        event.setStartDateTime(DateTimeUtil.toUtcInstant(startTime));
+        event.setEndDateTime(DateTimeUtil.toUtcInstant(endTime));
         event.setCapacity(eventCapacity);
         event.setCategoryId(categoryId);
 
@@ -266,7 +307,7 @@ public class OrganizerEventManagementAction {
         List<Event> sortedEvents = events.stream()
             .filter(e ->
                 EventStatus.DRAFT.toString().equals(e.getStatus())
-                && e.getStartDateTime().isAfter(LocalDateTime.now())
+                && e.getStartDateTime().isAfter(DateTimeUtil.nowUtc())
             )
             .sorted(Comparator.comparing(Event::getStartDateTime))
             .toList();
@@ -362,7 +403,7 @@ public class OrganizerEventManagementAction {
         List<Event> sortedEvents = events.stream()
             .filter(e ->
                 (EventStatus.DRAFT.toString().equals(e.getStatus()))
-                && e.getStartDateTime().isAfter(LocalDateTime.now())
+                && e.getStartDateTime().isAfter(DateTimeUtil.nowUtc())
             )
             .sorted(Comparator.comparing(Event::getStartDateTime))
             .collect(Collectors.toList());
@@ -418,112 +459,149 @@ public class OrganizerEventManagementAction {
      */
 	public void publishEvent(int userId) {
 
-		List<Event> events = getOrganizerEvents(userId);
+	    List<Event> events = getOrganizerEvents(userId);
 
-		if (events.isEmpty()) {
-			System.out.println("No events found.");
-			return;
-		}
-		LocalDateTime now = LocalDateTime.now();
-
-		List<Event> eligibleEvents = events.stream()
-				.filter(e -> EventStatus.APPROVED.name().equals(e.getStatus())
-				        && e.getStartDateTime().isAfter(now)
-				        && e.getApprovedAt() != null)
-				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
-
-		if (eligibleEvents.isEmpty()) {
-			System.out.println("No approved upcoming events available for publishing.");
-			return;
-		}
-		System.out.println("\nApproved events ready for publishing:\n");
-        AdminMenuHelper.printAllEventsWithStatus(eligibleEvents);
+	    if (events.isEmpty()) {
+	        System.out.println("No events found.");
+	        return;
+	    }
 
 
-		int choice = MenuHelper.selectFromList(eligibleEvents.size(), "Select an event");
+	    List<Event> eligibleEvents = events.stream()
+	    	    .filter(e -> EventStatus.APPROVED.name().equals(e.getStatus())
+	    	            && e.getStartDateTime().isAfter(DateTimeUtil.nowUtc())
+	    	            && e.getApprovedAt() != null)
+	            .sorted(Comparator.comparing(Event::getStartDateTime))
+	            .collect(Collectors.toList());
 
-		Event selectedEvent = eligibleEvents.get(choice - 1);
+	    if (eligibleEvents.isEmpty()) {
+	        System.out.println("No approved upcoming events available for publishing.");
+	        return;
+	    }
 
-		int eventId = selectedEvent.getEventId();
-		int capacity = selectedEvent.getCapacity();
+	    AdminMenuHelper.printAllEventsWithStatus(eligibleEvents);
 
-		int remainingCapacity = capacity;
-		
-		System.out.println("\nYou are publishing the following event:");
-		System.out.println("Event: " + selectedEvent.getTitle());
-		System.out.println("Total Capacity: " + capacity);
-		System.out.println("You must allocate tickets equal to the total capacity.");
+	    int choice = MenuHelper.selectFromList(eligibleEvents.size(), "Select an event");
 
-		while (remainingCapacity > 0) {
+	    Event selectedEvent = eligibleEvents.get(choice - 1);
 
-//			System.out.println("\nEvent Capacity: " + capacity + "\nRemaining Capacity: " + remainingCapacity);
-			
-			System.out.println("\nChoose an action:");
-			System.out.println("1. Add a new ticket type");
-			System.out.println("2. Cancel and exit publishing");
-			System.out.print("> ");
+	    int eventId = selectedEvent.getEventId();
+	    int capacity = selectedEvent.getCapacity();
+	    int remainingCapacity = capacity;
 
-			int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
+	    List<Ticket> draftTickets = new ArrayList<>();
 
-			if (option == 2) {
-				return;
-			}
+	    System.out.println("\nYou must allocate tickets equal to total capacity.");
 
-			if (option != 1) {
-				System.out.println("Invalid option. Please select from the menu.");
-				continue;
-			}
-			
-			System.out.println("\nCreating a new ticket type for this event.");
-			System.out.println("Remaining capacity: " + remainingCapacity);
+	    while (remainingCapacity > 0) {
 
-			Ticket ticket = new Ticket();
-			ticket.setEventId(eventId);
-			String ticketType = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Ticket Type: ");
-			while(ticketType.length() < 3 || ticketType.length() > 30) {
-				ticketType = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Ticket Type (min 3 - 30 characters): ");
-			}
-			ticket.setTicketType(ticketType);
-			
-			double price;
-			do {
-			    price = InputValidationUtil.readDouble(ScannerUtil.getScanner(), "Ticket Price (₹): ");
-			} while (price <= 0);
+	        System.out.println("\n1. Add ticket type");
+	        System.out.println("2. Cancel and discard all entered tickets");
 
-			ticket.setPrice(price);
+	        int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "> ");
 
-			int qty = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-					"Ticket Quantity (max " + remainingCapacity + "): ");
+	        if (option == 2) {
 
-			while (qty <= 0 || qty > remainingCapacity) {
-				qty = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-						"Enter valid quantity (1-" + remainingCapacity + "): ");
-			}
+	            if (!draftTickets.isEmpty()) {
+	                System.out.println("\nWarning: All entered ticket data will be lost.");
+	                System.out.println("1. Confirm Cancel");
+	                System.out.println("2. Continue Editing");
 
-			ticket.setTotalQuantity(qty);
+	                int confirmCancel = InputValidationUtil.readInt(ScannerUtil.getScanner(), "> ");
 
-			organizerService.createTicket(ticket);
+	                if (confirmCancel == 1) {
+	                    System.out.println("Publishing cancelled. No tickets were saved.");
+	                    return;
+	                } else {
+	                    continue;
+	                }
+	            }
 
-			remainingCapacity -= qty;
-		}
-		
-		System.out.println("\nAll tickets created successfully."
-				+ "\nDo you want to publish this event now?"
-				+ "\n1. Yes, publish event"
-				+ "\n2. Cancel");
+	            return;
+	        }
 
-		int confirm = InputValidationUtil.readInt(ScannerUtil.getScanner(), "> ");
+	        if (option != 1) {
+	            System.out.println("Invalid option.");
+	            continue;
+	        }
 
-		if (confirm != 1) {
-		    System.out.println("Publishing cancelled.");
-		    return;
-		}
-		
-		boolean published = organizerService.publishEvent(eventId);
-		
-		System.out.println(published ? "Event published successfully" : "Publish failed");
+	        Ticket ticket = new Ticket();
+	        ticket.setEventId(eventId);
+
+	        String ticketType;
+
+	        while (true) {
+	            ticketType = InputValidationUtil.readNonEmptyString(
+	                    ScannerUtil.getScanner(), "Enter the ticket Type: ").trim();
+
+	            if (ticketType.length() < 3 || ticketType.length() > 30) {
+	                System.out.println("Ticket Type must be 3-30 characters.");
+	                continue;
+	            }
+
+	            final String normalizedType = ticketType;
+
+	            boolean exists = draftTickets.stream()
+	                    .anyMatch(t -> normalizedType.equalsIgnoreCase(
+	                            t.getTicketType() != null ? t.getTicketType().trim() : null));
+
+	            if (exists) {
+	                System.out.println("Ticket type already exists. Please enter a different type.");
+	                continue;
+	            }
+
+	            break;
+	        }
+
+	        ticketType = ticketType.trim();
+	        ticket.setTicketType(ticketType);
+
+	        double price;
+	        do {
+	            price = InputValidationUtil.readDouble(
+	                    ScannerUtil.getScanner(), "Enter the ticket Price (₹): ");
+	        } while (price <= 0);
+
+	        ticket.setPrice(price);
+
+	        int qty = InputValidationUtil.readInt(
+	                ScannerUtil.getScanner(),
+	                "Enter the ticket Quantity (max " + remainingCapacity + "): ");
+
+	        while (qty <= 0 || qty > remainingCapacity) {
+	            qty = InputValidationUtil.readInt(
+	                    ScannerUtil.getScanner(),
+	                    "Enter valid quantity (1-" + remainingCapacity + "): ");
+	        }
+
+	        ticket.setTotalQuantity(qty);
+	        ticket.setAvailableQuantity(qty);
+	        
+	        draftTickets.add(ticket);
+	        remainingCapacity -= qty;
+	    }
+	    MenuHelper.printTicketSummaries(draftTickets);
+	    System.out.println("\nAll tickets prepared successfully.");
+	    System.out.println("1. Confirm and Publish");
+	    System.out.println("2. Cancel and discard");
+
+	    int confirm = InputValidationUtil.readInt(ScannerUtil.getScanner(), "> ");
+
+	    if (confirm != 1) {
+	        System.out.println("Publishing cancelled. No tickets were saved.");
+	        return;
+	    }
+
+	    // Persist everything at once
+	    for (Ticket ticket : draftTickets) {
+	        organizerService.createTicket(ticket);
+	    }
+
+	    boolean published = organizerService.publishEvent(eventId);
+
+	    System.out.println(published ? "Event published successfully" : "Publish failed");
 	}
-	
+
 	/* ===================== EVENT CANCELLATION ===================== */
     /**
      * Cancels an event created by the organizer.

@@ -6,13 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.ems.dao.VenueDao;
+import com.ems.enums.EventStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Venue;
 import com.ems.util.DBConnectionUtil;
@@ -107,9 +107,10 @@ public class VenueDaoImpl implements VenueDao {
         		venue.setState(rs.getString("state"));
         		venue.setPincode(rs.getString("pincode"));
         		venue.setMaxCapacity(rs.getInt("max_capacity"));
-        		venue.setCreatedAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("created_at").toInstant()).toLocalDateTime());
+        		venue.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
+
         		if(rs.getTimestamp("updated_at") != null) {
-        			venue.setUpdateAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("updated_at").toInstant()).toLocalDateTime());
+            		venue.setUpdateAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")));
         		}
         		venue.setStatus(rs.getInt("is_active") == 1);
         		venues.add(venue);
@@ -130,7 +131,7 @@ public class VenueDaoImpl implements VenueDao {
 		        "SELECT COUNT(*) " +
 		        "FROM events " +
 		        "WHERE venue_id = ? " +
-		        "AND status IN ('DRAFT', 'PUBLISHED') " +
+		        "AND status IN (?, ?) " +
 		        "AND start_datetime < ? " +
 		        "AND end_datetime > ?";
 
@@ -138,8 +139,10 @@ public class VenueDaoImpl implements VenueDao {
 		         PreparedStatement ps = conn.prepareStatement(sql)) {
 
 		        ps.setInt(1, venueId);
-		        ps.setTimestamp(2, to);
-		        ps.setTimestamp(3, from);
+		        ps.setString(2, EventStatus.APPROVED.toString());
+		        ps.setString(3, EventStatus.PUBLISHED.toString());;
+		        ps.setTimestamp(4, to);
+		        ps.setTimestamp(5, from);
 
 		        try (ResultSet rs = ps.executeQuery()) {
 		            if (rs.next()) {
@@ -169,12 +172,10 @@ public class VenueDaoImpl implements VenueDao {
         		venue.setState(rs.getString("state"));
         		venue.setPincode(rs.getString("pincode"));
         		venue.setMaxCapacity(rs.getInt("max_capacity"));
-        		venue.setCreatedAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("created_at").toInstant()).toLocalDateTime());
+        		venue.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
         		Timestamp updatedTs = rs.getTimestamp("updated_at");
         		if (updatedTs != null) {
-        		    venue.setUpdateAt(
-        		        DateTimeUtil.convertUtcToLocalDateTime(updatedTs.toInstant())
-        		    );
+        			venue.setUpdateAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")));
         		}
 
         	}
@@ -203,7 +204,7 @@ public class VenueDaoImpl implements VenueDao {
 	        ps.setString(4, venue.getState());
 	        ps.setString(5, venue.getPincode());
 	        ps.setInt(6, venue.getMaxCapacity());
-	        ps.setTimestamp(7, Timestamp.from(DateTimeUtil.convertLocalDefaultToUtc(LocalDateTime.now())));
+	        ps.setTimestamp(7, DateTimeUtil.toTimestamp(DateTimeUtil.nowUtc()));
 	        ps.executeUpdate();
 	    } catch (Exception e) {
 	        throw new DataAccessException("Failed to add venue");
@@ -281,9 +282,9 @@ public class VenueDaoImpl implements VenueDao {
         		venue.setState(rs.getString("state"));
         		venue.setPincode(rs.getString("pincode"));
         		venue.setMaxCapacity(rs.getInt("max_capacity"));
-        		venue.setCreatedAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("created_at").toInstant()).toLocalDateTime());
+        		venue.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
         		if(rs.getTimestamp("updated_at") != null) {
-        			venue.setUpdateAt(DateTimeUtil.convertUtcToLocal(rs.getTimestamp("updated_at").toInstant()).toLocalDateTime());
+        			venue.setUpdateAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("updated_at")));
         		}
         		venues.add(venue);
         	}

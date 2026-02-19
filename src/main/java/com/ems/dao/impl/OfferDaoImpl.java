@@ -50,18 +50,9 @@ public class OfferDaoImpl implements OfferDao {
                 offer.setCode(rs.getString("code"));
                 offer.setDiscountPercentage(rs.getInt("discount_percentage"));
                 Timestamp fromTs = rs.getTimestamp("valid_from");
-                offer.setValidFrom(
-                    fromTs != null
-                        ? DateTimeUtil.convertUtcToLocalDateTime(fromTs.toInstant())
-                        : null
-                );
-                
                 Timestamp toTs = rs.getTimestamp("valid_to");
-                offer.setValidTo(
-                    toTs != null
-                        ? DateTimeUtil.convertUtcToLocalDateTime(toTs.toInstant())
-                        : null
-                );
+                offer.setValidFrom(DateTimeUtil.fromTimestamp(fromTs));
+                offer.setValidTo(DateTimeUtil.fromTimestamp(toTs));
                 offers.add(offer);
             }
         } catch (Exception e) {
@@ -85,16 +76,8 @@ public class OfferDaoImpl implements OfferDao {
 
             ps.setString(1, offer.getCode().trim().toUpperCase());
             ps.setObject(2, offer.getDiscountPercentage());
-            ps.setTimestamp(3,
-            	    offer.getValidFrom() != null
-            	        ? Timestamp.from(DateTimeUtil.convertLocalToUtc(offer.getValidFrom()))
-            	        : null
-            	);
-            ps.setTimestamp(4,
-            	    offer.getValidTo() != null
-            	        ? Timestamp.from(DateTimeUtil.convertLocalToUtc(offer.getValidTo()))
-            	        : null
-            	);
+            ps.setTimestamp(3, DateTimeUtil.toTimestamp(offer.getValidFrom()));
+            ps.setTimestamp(4, DateTimeUtil.toTimestamp(offer.getValidTo()));
 
             ps.setInt(5, offer.getEventId());
             ps.executeUpdate();
@@ -222,12 +205,8 @@ public class OfferDaoImpl implements OfferDao {
 	                Timestamp fromTs = rs.getTimestamp("valid_from");
 	                Timestamp toTs = rs.getTimestamp("valid_to");
 	                
-	                if (fromTs != null)
-	                    offer.setValidFrom(DateTimeUtil.convertUtcToLocalDateTime(fromTs.toInstant()));
-
-	                if (toTs != null)
-	                    offer.setValidTo(DateTimeUtil.convertUtcToLocalDateTime(toTs.toInstant()));
-
+	                offer.setValidFrom(DateTimeUtil.fromTimestamp(fromTs));
+	                offer.setValidTo(DateTimeUtil.fromTimestamp(toTs));
 	            }
 	        }
 	    } catch (SQLException e) {

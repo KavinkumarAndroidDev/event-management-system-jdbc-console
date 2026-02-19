@@ -1,6 +1,6 @@
 package com.ems.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class SystemLog {
 
@@ -10,7 +10,7 @@ public class SystemLog {
 	private String entity;
 	private Integer entityId;
 	private String message;
-	private LocalDateTime createdAt;
+	private Instant createdAt;
 
 	public int getLogId() {
 		return logId;
@@ -60,12 +60,11 @@ public class SystemLog {
 		this.message = message;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public Instant getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
 	}
-
 }

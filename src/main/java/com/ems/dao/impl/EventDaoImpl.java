@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -147,23 +146,25 @@ public class EventDaoImpl implements EventDao {
 				event.setTitle(rs.getString("title"));
 				String desc = rs.getString("description");
 				if (desc != null && !desc.isEmpty()) {
-				    event.setDescription(desc);
+					event.setDescription(desc);
 				}
 
 				event.setCategoryId(rs.getInt("category_id"));
 				event.setVenueId(rs.getInt("venue_id"));
-				event.setStartDateTime(
-					    DateTimeUtil.convertUtcToLocalDateTime(
-					        rs.getTimestamp("start_datetime").toInstant()
-					    )
-					);
+				event.setStartDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("start_datetime")));
+				event.setEndDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("end_datetime")));
 
-				event.setEndDateTime(
-					    DateTimeUtil.convertUtcToLocalDateTime(
-						        rs.getTimestamp("end_datetime").toInstant()
-						    )
-						);
+				Timestamp updatedAt = rs.getTimestamp("updated_at");
+				if (updatedAt != null)
+					event.setUpdatedAt(DateTimeUtil.fromTimestamp(updatedAt));
 
+				Timestamp approvedAt = rs.getTimestamp("approved_at");
+				if (approvedAt != null)
+					event.setApprovedAt(DateTimeUtil.fromTimestamp(approvedAt));
+
+				Timestamp createdAt = rs.getTimestamp("created_at");
+				if (createdAt != null)
+					event.setCreatedAt(DateTimeUtil.fromTimestamp(createdAt));
 
 				event.setCapacity(rs.getInt("capacity"));
 				event.setStatus(rs.getString("status"));
@@ -172,30 +173,6 @@ public class EventDaoImpl implements EventDao {
 					event.setApprovedBy(approvedBy);
 				}
 
-				if (rs.getTimestamp("updated_at") != null) {
-					event.setUpdatedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("updated_at").toInstant()
-							    )
-							);
-
-				}
-				if (rs.getTimestamp("approved_at") != null) {
-					event.setApprovedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("approved_at").toInstant()
-							    )
-							);
-
-				}
-				if (rs.getTimestamp("created_at") != null) {
-					event.setCreatedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("created_at").toInstant()
-							    )
-							);
-
-				}
 				return event;
 			}
 			rs.close();
@@ -264,24 +241,13 @@ public class EventDaoImpl implements EventDao {
 	            UserEventRegistration uer = new UserEventRegistration();
 	
 	            uer.setRegistrationId(rs.getInt("registration_id"));
-	            uer.setRegistrationDate(
-	            	    DateTimeUtil
-	            	        .convertUtcToLocal(rs.getTimestamp("registration_date").toInstant())
-	            	        .toLocalDateTime()
-	            	);
 	            uer.setRegistrationStatus(rs.getString("registration_status"));
 	            uer.setEventId(rs.getInt("event_id"));
 	            uer.setTitle(rs.getString("title"));
 	            uer.setCategory(rs.getString("category_name"));
-	            uer.setStartDateTime(
-	            		DateTimeUtil
-	            	    .convertUtcToLocal(rs.getTimestamp("start_datetime").toInstant())
-	            	    .toLocalDateTime()
-	            	    );
-	            uer.setEndDateTime(
-	            		DateTimeUtil
-	            	    .convertUtcToLocal(rs.getTimestamp("end_datetime").toInstant())
-	            	    .toLocalDateTime());
+	            uer.setRegistrationDate(DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")));
+	            uer.setStartDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("start_datetime")));
+	            uer.setEndDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("end_datetime")));
 	            uer.setTicketsPurchased(rs.getInt("tickets_purchased"));
 	            uer.setAmountPaid(rs.getDouble("amount_paid"));
 	            uer.setTicketType(rs.getString("ticket_type"));
@@ -322,16 +288,14 @@ public class EventDaoImpl implements EventDao {
 
 			while (rs.next()) {
 				bookings.add(new BookingDetail(
-						rs.getString("title"),
-						DateTimeUtil.convertUtcToLocalDateTime(
-							    rs.getTimestamp("start_datetime").toInstant()
-							),
-						rs.getString("name"), 
-						rs.getString("city"),
-						rs.getString("ticket_type"), 
-						rs.getInt("quantity"),
-						rs.getDouble("total_cost"))
-						);
+					    rs.getString("title"),
+					    DateTimeUtil.fromTimestamp(rs.getTimestamp("start_datetime")),
+					    rs.getString("name"),
+					    rs.getString("city"),
+					    rs.getString("ticket_type"),
+					    rs.getInt("quantity"),
+					    rs.getDouble("total_cost")
+					));
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -351,7 +315,7 @@ public class EventDaoImpl implements EventDao {
 	        "AND start_datetime > ? " +
 	        "AND approved_by IS NULL";
 
-	    Instant now = DateTimeUtil.getCurrentUtc();
+	    Instant now = DateTimeUtil.nowUtc();
 
 	    try (Connection con = DBConnectionUtil.getConnection();
 	         PreparedStatement ps = con.prepareStatement(sql)) {
@@ -379,9 +343,9 @@ public class EventDaoImpl implements EventDao {
 		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
 			ps.setString(1, "CANCELLED");
-			ps.setTimestamp(2, Timestamp.from(DateTimeUtil.getCurrentUtc()));
+			ps.setTimestamp(2, Timestamp.from(DateTimeUtil.nowUtc()));
 			ps.setInt(3, eventId);
-			ps.setTimestamp(4, Timestamp.from(DateTimeUtil.getCurrentUtc()));
+			ps.setTimestamp(4, Timestamp.from(DateTimeUtil.nowUtc()));
 			int rowsUpdated = ps.executeUpdate();
 			
 			return rowsUpdated > 0;
@@ -394,16 +358,25 @@ public class EventDaoImpl implements EventDao {
 	// Marks past approved or published events as completed
 	@Override
 	public void completeEvents() throws DataAccessException {
-		String sql = "update events set status = ? where (status = ? or status = ?) " + "and end_datetime <= UTC_TIMESTAMP()";
-		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, EventStatus.COMPLETED.toString());
-			ps.setString(2, EventStatus.APPROVED.toString());
-			ps.setString(3, EventStatus.PUBLISHED.toString());
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			throw new DataAccessException("Error while updating events");
-		}
+
+	    String sql = "update events " +
+	                 "set status = ? " +
+	                 "where status = ? " +
+	                 "and end_datetime <= UTC_TIMESTAMP()";
+
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setString(1, EventStatus.COMPLETED.name());
+	        ps.setString(2, EventStatus.PUBLISHED.name());
+
+	        ps.executeUpdate();
+
+	    } catch (SQLException e) {
+	        throw new DataAccessException("Error while updating events", e);
+	    }
 	}
+
 
 	// Shared mapper to convert ResultSet into Event objects
 	public List<Event> getEventList(ResultSet rs) throws DataAccessException {
@@ -420,49 +393,26 @@ public class EventDaoImpl implements EventDao {
 				}
 				event.setCategoryId(rs.getInt("category_id"));
 				event.setVenueId(rs.getInt("venue_id"));
-				event.setStartDateTime(
-					    DateTimeUtil.convertUtcToLocalDateTime(
-						        rs.getTimestamp("start_datetime").toInstant()
-						    )
-						);
+				event.setStartDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("start_datetime")));
+				event.setEndDateTime(DateTimeUtil.fromTimestamp(rs.getTimestamp("end_datetime")));
 
-				event.setEndDateTime(
-					    DateTimeUtil.convertUtcToLocalDateTime(
-						        rs.getTimestamp("end_datetime").toInstant()
-						    )
-						);
+				Timestamp updatedAt = rs.getTimestamp("updated_at");
+				if (updatedAt != null)
+					event.setUpdatedAt(DateTimeUtil.fromTimestamp(updatedAt));
 
+				Timestamp approvedAt = rs.getTimestamp("approved_at");
+				if (approvedAt != null)
+					event.setApprovedAt(DateTimeUtil.fromTimestamp(approvedAt));
+
+				Timestamp createdAt = rs.getTimestamp("created_at");
+				if (createdAt != null)
+					event.setCreatedAt(DateTimeUtil.fromTimestamp(createdAt));
 
 				event.setCapacity(rs.getInt("capacity"));
 				event.setStatus(rs.getString("status"));
 				Integer approvedBy = rs.getInt("approved_by");
 				if (approvedBy != 0) {
 					event.setApprovedBy(approvedBy);
-				}
-
-				if (rs.getTimestamp("updated_at") != null) {
-					event.setUpdatedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("updated_at").toInstant()
-							    )
-							);
-
-				}
-				if (rs.getTimestamp("approved_at") != null) {
-					event.setApprovedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("approved_at").toInstant()
-							    )
-							);
-
-				}
-				if (rs.getTimestamp("created_at") != null) {
-					event.setCreatedAt(
-						    DateTimeUtil.convertUtcToLocalDateTime(
-							        rs.getTimestamp("created_at").toInstant()
-							    )
-							);
-
 				}
 
 				events.add(event);
@@ -563,23 +513,21 @@ public class EventDaoImpl implements EventDao {
             ps.setString(3, event.getDescription());
             ps.setInt(4, event.getCategoryId());
             ps.setInt(5, event.getVenueId());
-            Instant now = DateTimeUtil.getCurrentUtc();
+            ps.setTimestamp(6, DateTimeUtil.toTimestamp(event.getStartDateTime()));
 
-            ps.setTimestamp(6, Timestamp.from(
-                DateTimeUtil.convertLocalToUtc(event.getStartDateTime())
-            ));
-            ps.setTimestamp(7, Timestamp.from(
-                DateTimeUtil.convertLocalToUtc(event.getEndDateTime())
-            ));
+            ps.setTimestamp(7, DateTimeUtil.toTimestamp(event.getEndDateTime()));
             ps.setInt(8, event.getCapacity());
-            ps.setString(9, event.getStatus());
-            ps.setTimestamp(10, Timestamp.from(now));
-
-
-
+            ps.setString(9, EventStatus.DRAFT.toString());
+            ps.setTimestamp(10, DateTimeUtil.toTimestamp(DateTimeUtil.nowUtc()));
             ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            return rs.next() ? rs.getInt(1) : 0;
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                } else {
+                    throw new DataAccessException("Event creation failed");
+                }
+            }
+
         } catch (Exception e) {
 			throw new DataAccessException("Failed to create event");
 		}
@@ -595,7 +543,7 @@ public class EventDaoImpl implements EventDao {
             ps.setString(2, description);
             ps.setInt(3, categoryId);
             ps.setInt(4, venueId);
-            Instant now = DateTimeUtil.getCurrentUtc();
+            Instant now = DateTimeUtil.nowUtc();
             ps.setTimestamp(5, Timestamp.from(now));
             ps.setInt(6, eventId);
             return ps.executeUpdate() > 0;
@@ -605,15 +553,14 @@ public class EventDaoImpl implements EventDao {
     }
 	
 	@Override
-    public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) throws DataAccessException {
+    public boolean updateEventSchedule(int eventId, Instant start, Instant end) throws DataAccessException {
         String sql = "update events set start_datetime=?, end_datetime=?, updated_at=? where event_id=?";
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setTimestamp(1, Timestamp.from(DateTimeUtil.convertLocalToUtc(start)));
-            ps.setTimestamp(2, Timestamp.from(DateTimeUtil.convertLocalToUtc(end)));
-
-            Instant now = DateTimeUtil.getCurrentUtc();
+        	
+        	ps.setTimestamp(1, DateTimeUtil.toTimestamp(start));
+        	ps.setTimestamp(2, DateTimeUtil.toTimestamp(end));
+            Instant now = DateTimeUtil.nowUtc();
             ps.setTimestamp(3, Timestamp.from(now));
 
             ps.setInt(4, eventId);
@@ -630,7 +577,7 @@ public class EventDaoImpl implements EventDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, capacity);
-            Instant now = DateTimeUtil.getCurrentUtc();
+            Instant now = DateTimeUtil.nowUtc();
             ps.setTimestamp(2, Timestamp.from(now));
 
             ps.setInt(3, eventId);
@@ -647,7 +594,7 @@ public class EventDaoImpl implements EventDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, status);
-            Instant now = DateTimeUtil.getCurrentUtc();
+            Instant now = DateTimeUtil.nowUtc();
             ps.setTimestamp(2, Timestamp.from(now));
 
             ps.setInt(3, eventId);
@@ -714,5 +661,4 @@ public class EventDaoImpl implements EventDao {
 			}
 		return eventSummaries;
 	}
-
 }

@@ -1,31 +1,30 @@
 package com.ems.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class UserEventRegistration {
     private int registrationId;
-    private LocalDateTime registrationDate;
+    private Instant registrationDate;
     private String registrationStatus;
     private int eventId;
     private String title;
     private String category;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    private Instant startDateTime;
+    private Instant endDateTime;
     private int ticketsPurchased;
     private double amountPaid;
     private String ticketType;
-    
-    
+
 	public int getRegistrationId() {
 		return registrationId;
 	}
 	public void setRegistrationId(int registrationId) {
 		this.registrationId = registrationId;
 	}
-	public LocalDateTime getRegistrationDate() {
+	public Instant getRegistrationDate() {
 		return registrationDate;
 	}
-	public void setRegistrationDate(LocalDateTime registrationDate) {
+	public void setRegistrationDate(Instant registrationDate) {
 		this.registrationDate = registrationDate;
 	}
 	public String getRegistrationStatus() {
@@ -52,16 +51,16 @@ public class UserEventRegistration {
 	public void setCategory(String category) {
 		this.category = category;
 	}
-	public LocalDateTime getStartDateTime() {
+	public Instant getStartDateTime() {
 		return startDateTime;
 	}
-	public void setStartDateTime(LocalDateTime startDateTime) {
+	public void setStartDateTime(Instant startDateTime) {
 		this.startDateTime = startDateTime;
 	}
-	public LocalDateTime getEndDateTime() {
+	public Instant getEndDateTime() {
 		return endDateTime;
 	}
-	public void setEndDateTime(LocalDateTime endDateTime) {
+	public void setEndDateTime(Instant endDateTime) {
 		this.endDateTime = endDateTime;
 	}
 	public int getTicketsPurchased() {

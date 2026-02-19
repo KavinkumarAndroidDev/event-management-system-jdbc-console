@@ -52,6 +52,7 @@ public class UserAction {
 		        ScannerUtil.getScanner(),
 		        "Enter Full Name (max 30 chars): "
 		    );
+		    //TODO: First name
 		    if (fullName.length() >= 30) {
 		        System.out.println("Error: Name must be under 30 characters.");
 		    }

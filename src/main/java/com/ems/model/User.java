@@ -1,8 +1,8 @@
 package com.ems.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-public class User implements Comparable<User>{
+public class User implements Comparable<User> {
 
 	private final int userId;
 	private final String fullName;
@@ -11,15 +11,14 @@ public class User implements Comparable<User>{
 	private final String passwordHash;
 	private final int roleId;
 	private final String status;
-	private final LocalDateTime createdAt;
-	private final LocalDateTime updatedAt;
+	private final Instant createdAt;
+	private final Instant updatedAt;
 	private final String gender;
 	private final int failedAttempts;
-	private final LocalDateTime lastLogin;
+	private final Instant lastLogin;
 
 	public User(int userId, String fullName, String email, String phone, String passwordHash, int roleId, String status,
-			LocalDateTime createdAt, LocalDateTime updatedAt, String gender, int failedAttempts,
-			LocalDateTime lastLogin) {
+			Instant createdAt, Instant updatedAt, String gender, int failedAttempts, Instant lastLogin) {
 		this.userId = userId;
 		this.fullName = fullName;
 		this.email = email;
@@ -62,11 +61,11 @@ public class User implements Comparable<User>{
 		return status;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public Instant getCreatedAt() {
 		return createdAt;
 	}
 
-	public LocalDateTime getUpdatedAt() {
+	public Instant getUpdatedAt() {
 		return updatedAt;
 	}
 
@@ -78,18 +77,12 @@ public class User implements Comparable<User>{
 		return failedAttempts;
 	}
 
-	public LocalDateTime getLastLogin() {
+	public Instant getLastLogin() {
 		return lastLogin;
 	}
 
 	@Override
-	public String toString() {
-		return "User{" + "id=" + userId + ", name='" + fullName + '\'' + ", gender='" + gender + '\'' + ", email='"
-				+ email + '\'' + ", phone='" + phone + '\'' + ", status='" + status + '\'' + '}';
-	}
-
-	@Override
-	public int compareTo(User o) {
-		return 0;
+	public int compareTo(User other) {
+		return Integer.compare(this.userId, other.userId);
 	}
 }

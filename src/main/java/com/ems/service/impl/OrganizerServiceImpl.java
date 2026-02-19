@@ -8,6 +8,7 @@ import java.util.Map;
 import com.ems.dao.EventDao;
 import com.ems.dao.RegistrationDao;
 import com.ems.dao.TicketDao;
+import com.ems.enums.EventStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Event;
 import com.ems.model.OrganizerEventSummary;
@@ -15,6 +16,7 @@ import com.ems.model.Ticket;
 import com.ems.service.NotificationService;
 import com.ems.service.OrganizerService;
 import com.ems.service.SystemLogService;
+import com.ems.util.DateTimeUtil;
 
 /*
  * Handles organizer related business operations.
@@ -48,7 +50,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * Rule: - Newly created events are always saved as DRAFT
 	 */
 	public int createEvent(Event event) {
-		event.setStatus("DRAFT");
+		event.setStatus(EventStatus.DRAFT.toString());
 		try {
 
 			int eventId = eventDao.createEvent(event);
@@ -102,8 +104,12 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * Used for rescheduling upcoming events.
 	 */
 	public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) {
-		try {
-			boolean updated = eventDao.updateEventSchedule(eventId, start, end);
+	    try {
+	        boolean updated = eventDao.updateEventSchedule(
+	            eventId,
+	            DateTimeUtil.toUtcInstant(start),
+	            DateTimeUtil.toUtcInstant(end)
+	        );
 
 			if (updated) {
 			    systemLogService.log(
@@ -153,7 +159,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 */
 	public boolean publishEvent(int eventId) {
 		try {
-			boolean published = eventDao.updateEventStatus(eventId, "PUBLISHED");
+			boolean published = eventDao.updateEventStatus(eventId, EventStatus.PUBLISHED.toString());
 
 			if (published) {
 			    systemLogService.log(
@@ -180,7 +186,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 */
 	public boolean cancelEvent(int eventId) {
 		try {
-			boolean cancelled = eventDao.updateEventStatus(eventId, "CANCELLED");
+			boolean cancelled = eventDao.updateEventStatus(eventId, EventStatus.CANCELLED.toString());
 
 			if (cancelled) {
 			    systemLogService.log(
@@ -417,7 +423,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	        "CANCELLATION REQUEST\n\n" +
 	        "Event: " + event.getTitle() + "\n" +
 	        "Event ID: " + event.getEventId() + "\n" +
-	        "Start Time: " + event.getStartDateTime() + "\n\n" +
+	        "Start Time: " + DateTimeUtil.formatForDisplay(event.getStartDateTime()) + "\n\n" +
 	        "Requested by Organizer:\n" +
 	        event.getOrganizerId() + " (User ID: " + event.getOrganizerId() + ")\n\n" +
 	        "Organizer Message:\n" +

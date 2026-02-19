@@ -4,8 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,10 +62,7 @@ public class NotificationDaoImpl implements NotificationDao {
 				notification.setUserId(rs.getInt("user_id"));
 				notification.setMessage(rs.getString("message"));
 				notification.setType(rs.getString("type"));
-				Instant created_at = rs.getTimestamp("created_at").toInstant();
-				notification.setCreatedAt(
-				    DateTimeUtil.convertUtcToLocalDateTime(created_at)
-				);
+				notification.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
 				notification.setReadStatus(rs.getBoolean("read_status"));
 				notifications.add(notification);
 			}
@@ -110,10 +105,7 @@ public class NotificationDaoImpl implements NotificationDao {
 				notification.setUserId(rs.getInt("user_id"));
 				notification.setMessage(rs.getString("message"));
 				notification.setType(rs.getString("type"));
-				Instant created_at = rs.getTimestamp("created_at").toInstant();
-				notification.setCreatedAt(
-				    DateTimeUtil.convertUtcToLocalDateTime(created_at)
-				);
+				notification.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
 				notification.setReadStatus(rs.getBoolean("read_status"));
 				notifications.add(notification);
 			}
@@ -157,7 +149,7 @@ public class NotificationDaoImpl implements NotificationDao {
 			ps.setInt(1, userId);
 			ps.setString(2, message);
 			ps.setString(3, notificationType);
-			ps.setTimestamp(4, Timestamp.from(DateTimeUtil.getCurrentUtc()));
+			ps.setTimestamp(4, DateTimeUtil.toTimestamp(DateTimeUtil.nowUtc()));
 			ps.setBoolean(5, false);
 			
 			int affectedRows = ps.executeUpdate();

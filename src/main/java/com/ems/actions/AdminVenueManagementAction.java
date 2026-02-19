@@ -82,10 +82,15 @@ public class AdminVenueManagementAction {
 	        System.out.println("Pincode must be between 5 and 10 characters.");
 	    }
 
-	    venue.setMaxCapacity(
-	            InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the maximum capacity: ")
-	    );
-
+	    int maxCapacity;
+	    while(true) {
+	    	maxCapacity = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the maximum capacity: ");
+	    	if(maxCapacity > 0) {
+	    		venue.setMaxCapacity(maxCapacity);
+	    		break;
+	    	}
+	    	System.out.println("Venue capacity must be greater than 0");
+	    }
 	    adminService.addVenue(venue);
 	    System.out.println("Venue added successfully.");
 	}
@@ -97,7 +102,7 @@ public class AdminVenueManagementAction {
             return;
         }
         
-        if(selectedVenue.getStatus() == false) {
+        if(selectedVenue.isStatus() == false) {
         	char choice = InputValidationUtil.readChar(ScannerUtil.getScanner(), 
         			"The selected venue is inactive\nDo you need activate the venue (Y/N): ");
         	if(choice == 'Y' || choice == 'y') {

@@ -6,7 +6,7 @@ CREATE TABLE `categories` (
   `name` VARCHAR(50) NOT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`category_id`),
-  UNIQUE INDEX `name` (`name` ASC) VISIBLE
+  UNIQUE INDEX `unique_category_name` (`name` ASC)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `roles` (
@@ -15,7 +15,7 @@ CREATE TABLE `roles` (
   `is_active` TINYINT(1) NOT NULL DEFAULT '1',
   `created_at` DATETIME NOT NULL,
   PRIMARY KEY (`role_id`),
-  UNIQUE INDEX `role_name` (`role_name` ASC) VISIBLE
+  UNIQUE INDEX `role_name` (`role_name` ASC)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `users` (
@@ -32,11 +32,10 @@ CREATE TABLE `users` (
   `failed_attempts` INT DEFAULT '0',
   `last_login` DATETIME DEFAULT NULL,
   PRIMARY KEY (`user_id`),
-  UNIQUE INDEX `email` (`email` ASC) VISIBLE,
-  INDEX `role_id` (`role_id` ASC) VISIBLE,
+  UNIQUE INDEX `email` (`email` ASC),
+  INDEX `role_id` (`role_id` ASC),
   CONSTRAINT `users_ibfk_1`
-    FOREIGN KEY (`role_id`)
-    REFERENCES `roles` (`role_id`)
+    FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `venues` (
@@ -63,16 +62,16 @@ CREATE TABLE `events` (
   `start_datetime` DATETIME NOT NULL,
   `end_datetime` DATETIME NOT NULL,
   `capacity` INT NOT NULL,
-  `status` ENUM('DRAFT','PUBLISHED','CANCELLED','COMPLETED') NOT NULL,
+  `status` ENUM('DRAFT','PUBLISHED','APPROVED','CANCELLED','COMPLETED') NOT NULL,
   `approved_by` INT DEFAULT NULL,
   `approved_at` DATETIME DEFAULT NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`event_id`),
-  INDEX `organizer_id` (`organizer_id` ASC) VISIBLE,
-  INDEX `category_id` (`category_id` ASC) VISIBLE,
-  INDEX `venue_id` (`venue_id` ASC) VISIBLE,
-  INDEX `approved_by` (`approved_by` ASC) VISIBLE,
+  INDEX `organizer_id` (`organizer_id` ASC),
+  INDEX `category_id` (`category_id` ASC),
+  INDEX `venue_id` (`venue_id` ASC),
+  INDEX `approved_by` (`approved_by` ASC),
   CONSTRAINT `events_ibfk_1`
     FOREIGN KEY (`organizer_id`) REFERENCES `users` (`user_id`),
   CONSTRAINT `events_ibfk_2`
@@ -91,8 +90,9 @@ CREATE TABLE `feedback` (
   `comments` TEXT DEFAULT NULL,
   `submitted_at` DATETIME NOT NULL,
   PRIMARY KEY (`feedback_id`),
-  INDEX `event_id` (`event_id` ASC) VISIBLE,
-  INDEX `user_id` (`user_id` ASC) VISIBLE,
+  UNIQUE INDEX `unique_user_event` (`event_id`,`user_id`),
+  INDEX `event_id` (`event_id` ASC),
+  INDEX `user_id` (`user_id` ASC),
   CONSTRAINT `feedback_ibfk_1`
     FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`),
   CONSTRAINT `feedback_ibfk_2`
@@ -107,7 +107,7 @@ CREATE TABLE `notifications` (
   `created_at` DATETIME NOT NULL,
   `read_status` TINYINT(1) NOT NULL,
   PRIMARY KEY (`notification_id`),
-  INDEX `user_id` (`user_id` ASC) VISIBLE,
+  INDEX `user_id` (`user_id` ASC),
   CONSTRAINT `notifications_ibfk_1`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB;
@@ -120,8 +120,8 @@ CREATE TABLE `offers` (
   `valid_from` DATETIME DEFAULT NULL,
   `valid_to` DATETIME DEFAULT NULL,
   PRIMARY KEY (`offer_id`),
-  UNIQUE INDEX `code` (`code` ASC) VISIBLE,
-  INDEX `event_id` (`event_id` ASC) VISIBLE,
+  UNIQUE INDEX `code` (`code` ASC),
+  INDEX `event_id` (`event_id` ASC),
   CONSTRAINT `offers_ibfk_1`
     FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`)
 ) ENGINE=InnoDB;
@@ -133,8 +133,8 @@ CREATE TABLE `registrations` (
   `registration_date` DATETIME NOT NULL,
   `status` ENUM('CONFIRMED','CANCELLED') NOT NULL,
   PRIMARY KEY (`registration_id`),
-  INDEX `user_id` (`user_id` ASC) VISIBLE,
-  INDEX `event_id` (`event_id` ASC) VISIBLE,
+  INDEX `user_id` (`user_id` ASC),
+  INDEX `event_id` (`event_id` ASC),
   CONSTRAINT `registrations_ibfk_1`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   CONSTRAINT `registrations_ibfk_2`
@@ -148,9 +148,9 @@ CREATE TABLE `offer_usages` (
   `registration_id` INT NOT NULL,
   `used_at` DATETIME NOT NULL,
   PRIMARY KEY (`offer_usage_id`),
-  UNIQUE INDEX `offer_id` (`offer_id` ASC, `user_id` ASC) VISIBLE,
-  INDEX `user_id` (`user_id` ASC) VISIBLE,
-  INDEX `registration_id` (`registration_id` ASC) VISIBLE,
+  UNIQUE INDEX `offer_id` (`offer_id`,`user_id`),
+  INDEX `user_id` (`user_id` ASC),
+  INDEX `registration_id` (`registration_id` ASC),
   CONSTRAINT `offer_usages_ibfk_1`
     FOREIGN KEY (`offer_id`) REFERENCES `offers` (`offer_id`),
   CONSTRAINT `offer_usages_ibfk_2`
@@ -168,11 +168,10 @@ CREATE TABLE `payments` (
   `created_at` DATETIME NOT NULL,
   `offer_id` INT DEFAULT NULL,
   PRIMARY KEY (`payment_id`),
-  INDEX `registration_id` (`registration_id` ASC) VISIBLE,
+  INDEX `registration_id` (`registration_id` ASC),
   CONSTRAINT `payments_ibfk_1`
     FOREIGN KEY (`registration_id`) REFERENCES `registrations` (`registration_id`)
 ) ENGINE=InnoDB;
-
 
 CREATE TABLE `tickets` (
   `ticket_id` INT NOT NULL AUTO_INCREMENT,
@@ -182,7 +181,7 @@ CREATE TABLE `tickets` (
   `total_quantity` INT NOT NULL,
   `available_quantity` INT NOT NULL,
   PRIMARY KEY (`ticket_id`),
-  INDEX `event_id` (`event_id` ASC) VISIBLE,
+  INDEX `event_id` (`event_id` ASC),
   CONSTRAINT `tickets_ibfk_1`
     FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`)
 ) ENGINE=InnoDB;
@@ -193,8 +192,8 @@ CREATE TABLE `registration_tickets` (
   `ticket_id` INT NOT NULL,
   `quantity` INT NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `registration_id` (`registration_id` ASC) VISIBLE,
-  INDEX `ticket_id` (`ticket_id` ASC) VISIBLE,
+  INDEX `registration_id` (`registration_id` ASC),
+  INDEX `ticket_id` (`ticket_id` ASC),
   CONSTRAINT `registration_tickets_ibfk_1`
     FOREIGN KEY (`registration_id`) REFERENCES `registrations` (`registration_id`),
   CONSTRAINT `registration_tickets_ibfk_2`

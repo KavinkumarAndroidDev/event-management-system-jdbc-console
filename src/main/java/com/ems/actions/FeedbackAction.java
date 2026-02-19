@@ -1,6 +1,5 @@
 package com.ems.actions;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,6 +7,7 @@ import java.util.stream.Collectors;
 import com.ems.model.UserEventRegistration;
 import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
+import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.ScannerUtil;
@@ -42,7 +42,7 @@ public class FeedbackAction {
 	    past = past.stream()
 	        // 1. Only finished events
 	        .filter(r -> r.getEndDateTime() != null
-	                && r.getEndDateTime().isBefore(LocalDateTime.now()))
+	                && r.getEndDateTime().isBefore(DateTimeUtil.nowUtc()))
 	        // 2. Remove duplicates by eventId
 	        .collect(Collectors.collectingAndThen(
 	            Collectors.toMap(

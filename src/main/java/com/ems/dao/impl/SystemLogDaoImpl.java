@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,13 +91,7 @@ public class SystemLogDaoImpl implements SystemLogDao {
 	
 	            log.setMessage(rs.getString("message"));
 	
-	            Timestamp ts = rs.getTimestamp("created_at");
-	            if (ts != null) {
-	                log.setCreatedAt(
-	                    DateTimeUtil.convertUtcToLocalDateTime(ts.toInstant())
-	                );
-	            }
-	            
+	            log.setCreatedAt(DateTimeUtil.fromTimestamp(rs.getTimestamp("created_at")));
 	            logs.add(log);
 	        }
 	    } catch (SQLException e) {

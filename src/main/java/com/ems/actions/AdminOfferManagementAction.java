@@ -103,14 +103,14 @@ public class AdminOfferManagementAction {
 			String dateInput = InputValidationUtil.readString(ScannerUtil.getScanner(),"Activate until (dd-MM-yyyy HH:mm): ");
 			newValidTo = DateTimeUtil.parseLocalDateTime(dateInput);
 		} else {
-			newValidTo = LocalDateTime.now();
+		    newValidTo = DateTimeUtil.toLocalDateTime(DateTimeUtil.nowUtc());
 		}
 		Event event = eventService.getEventById(selectedOffer.getEventId());
 		if (event == null) {
 			System.out.println("No event found for the offer!");
 			return;
 		}
-		if (newValidTo.isAfter(event.getStartDateTime())) {
+		if (DateTimeUtil.toUtcInstant(newValidTo).isAfter(event.getStartDateTime())) {
 			System.out.println("Offer validity must end before the event starts.");
 			return;
 		}
@@ -169,8 +169,8 @@ public class AdminOfferManagementAction {
 		    from = DateTimeUtil.parseLocalDateTime(input);
 
 		    if (from == null
-		            || from.isBefore(LocalDateTime.now())
-		            || from.isAfter(event.getStartDateTime())) {
+		    		|| DateTimeUtil.toUtcInstant(from).isBefore(DateTimeUtil.nowUtc())
+		            || DateTimeUtil.toUtcInstant(from).isAfter(event.getStartDateTime())) {
 
 		        System.out.println("Invalid 'from' date time. Please try again.");
 		        from = null;
@@ -195,9 +195,9 @@ public class AdminOfferManagementAction {
 		    to = DateTimeUtil.parseLocalDateTime(input);
 
 		    if (to == null
-		            || to.isBefore(LocalDateTime.now())
+		    		|| DateTimeUtil.toUtcInstant(to).isBefore(DateTimeUtil.nowUtc())
 		            || to.isBefore(from)
-		            || to.isAfter(event.getStartDateTime())) {
+		            || DateTimeUtil.toUtcInstant(to).isAfter(event.getStartDateTime())) {
 
 		        System.out.println("Invalid 'to' date time. Please try again.");
 		        to = null;

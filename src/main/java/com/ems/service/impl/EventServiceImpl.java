@@ -1,6 +1,5 @@
 package com.ems.service.impl;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -144,8 +143,8 @@ public class EventServiceImpl implements EventService {
             }
             
             return allEvents.stream()
-                .filter(e -> e.getStartDateTime() != null && 
-                           e.getStartDateTime().toLocalDate().isEqual(localDate))
+                .filter(e -> e.getStartDateTime() != null &&
+                        DateTimeUtil.toLocalDateTime(e.getStartDateTime()).toLocalDate().isEqual(localDate))
                 .collect(Collectors.toList());
 
         } catch (DataAccessException e) {
@@ -175,7 +174,7 @@ public class EventServiceImpl implements EventService {
                 if (e.getStartDateTime() == null) {
                     return false;
                 }
-                LocalDate eventDate = e.getStartDateTime().toLocalDate();
+                LocalDate eventDate = DateTimeUtil.toLocalDateTime(e.getStartDateTime()).toLocalDate();
                 return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
             }).collect(Collectors.toList());
 
@@ -252,8 +251,8 @@ public class EventServiceImpl implements EventService {
 
             return registrations.stream()
                 .filter(r -> r.getStartDateTime() != null &&
-                           r.getStartDateTime().isAfter(LocalDateTime.now()) &&
-                           "CONFIRMED".equals(r.getRegistrationStatus()))
+                        r.getStartDateTime().isAfter(DateTimeUtil.nowUtc()) &&
+                        "CONFIRMED".equals(r.getRegistrationStatus()))
                 .collect(Collectors.toList());
 
         } catch (DataAccessException e) {
@@ -274,7 +273,7 @@ public class EventServiceImpl implements EventService {
          
             return registrations.stream()
             	    .filter(r -> r.getEndDateTime() != null
-            	            && r.getEndDateTime().isBefore(LocalDateTime.now()))
+            	            && r.getEndDateTime().isBefore(DateTimeUtil.nowUtc()))
             	    .collect(Collectors.toList());
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "REGISTRATION", 0,
@@ -464,8 +463,8 @@ public class EventServiceImpl implements EventService {
         try {
             return venueDao.isVenueAvailable(
                 venueId,
-                Timestamp.from(DateTimeUtil.convertLocalDefaultToUtc(startTime)),
-                Timestamp.from(DateTimeUtil.convertLocalDefaultToUtc(endTime))
+                DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(startTime)),
+                DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(endTime))
             );
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,

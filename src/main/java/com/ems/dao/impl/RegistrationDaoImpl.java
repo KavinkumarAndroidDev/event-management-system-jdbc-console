@@ -60,15 +60,7 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	            report.setUserName(rs.getString("full_name"));
 	            report.setTicketType(rs.getString("ticket_type"));
 	            report.setQuantity(rs.getInt("quantity"));
-	            report.setRegistrationDate(
-	            	    DateTimeUtil.convertUtcToLocalDateTime(
-	            	        rs.getTimestamp("registration_date").toInstant()
-	            	    )
-	            	);
-
-	            
-
-	
+	            report.setRegistrationDate(DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")));
 	            reports.add(report);
 	        }
 	        rs.close();
@@ -237,14 +229,12 @@ public class RegistrationDaoImpl implements RegistrationDao {
                 }
 
                 return new Registration(
-                    rs.getInt("registration_id"),
-                    rs.getInt("user_id"),
-                    rs.getInt("event_id"),
-                    DateTimeUtil.convertUtcToLocalDateTime(
-                    	    rs.getTimestamp("registration_date").toInstant()
-                    	),
-                    rs.getString("status")
-                );
+                	    rs.getInt("registration_id"),
+                	    rs.getInt("user_id"),
+                	    rs.getInt("event_id"),
+                	    DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")),
+                	    rs.getString("status")
+                	);
             }
 
         } catch (SQLException e) {
