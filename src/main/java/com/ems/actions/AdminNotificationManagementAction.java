@@ -9,6 +9,7 @@ import com.ems.service.AdminService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminNotificationManagementAction {
@@ -79,7 +80,7 @@ public class AdminNotificationManagementAction {
 			return;
 		}
 
-		MenuHelper.displayUsers(users);
+		PaginationUtil.paginate(users, MenuHelper::displayUsers);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select a user (1-" + users.size() + "): ");
 

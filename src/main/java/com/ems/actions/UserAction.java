@@ -1,12 +1,16 @@
 package com.ems.actions;
 
+import java.time.Instant;
+
 import com.ems.enums.UserRole;
 import com.ems.exception.AuthenticationException;
 import com.ems.exception.AuthorizationException;
+import com.ems.exception.InvalidPasswordFormatException;
 import com.ems.model.User;
 import com.ems.service.UserService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
+import com.ems.util.PasswordUtil;
 import com.ems.util.ScannerUtil;
 
 public class UserAction {
@@ -52,9 +56,8 @@ public class UserAction {
 		        ScannerUtil.getScanner(),
 		        "Enter Full Name (max 30 chars): "
 		    );
-		    //TODO: First name
-		    if (fullName.length() >= 30) {
-		        System.out.println("Error: Name must be under 30 characters.");
+		    if (fullName.length()<2 ||fullName.length() >= 30) {
+		        System.out.println("Error: Name must be minimum of 2 characters and a maximum of 30 characters.");
 		    }
 		} while (fullName.length() >= 30);
 
@@ -139,7 +142,123 @@ public class UserAction {
 	    	System.out.println("\nAccount creation failed!, Retry");
 	    }
 	}
+	
+	public void updateProfile(User loggedInUser){
+	
+	    System.out.println("\nUpdate Profile");
+	    System.out.println("Press Enter to keep current value.\n");
+	
+	    String fullName = loggedInUser.getFullName();
+	    String phone = loggedInUser.getPhone();
+	    String passwordHash = loggedInUser.getPasswordHash();
+	
+	    /* ================= FULL NAME ================= */
+	
+	    String newName = InputValidationUtil.readString(
+	            ScannerUtil.getScanner(),
+	            "Full Name (" + fullName + "): "
+	    );
+	
+	    if (newName != null && !newName.trim().isEmpty()) {
+	
+	        while (newName.length() >= 30) {
+	            newName = InputValidationUtil.readString(
+	                    ScannerUtil.getScanner(),
+	                    "Name must be under 30 characters: "
+	            );
+	        }
+	
+	        fullName = newName;
+	    }
+	
+	    /* ================= PHONE ================= */
+	
+	    String currentPhone = phone == null ? "Not Set" : phone;
+	
+	    String newPhone = InputValidationUtil.readString(
+	            ScannerUtil.getScanner(),
+	            "Phone (" + currentPhone + "): "
+	    );
+	
+	    if (newPhone != null && !newPhone.trim().isEmpty()) {
+	
+	        newPhone = newPhone.replaceAll("\\D", "");
+	
+	        while (!newPhone.matches("^[6-9][0-9]{9}$")) {
+	            newPhone = InputValidationUtil.readString(
+	                    ScannerUtil.getScanner(),
+	                    "Enter valid 10-digit phone starting with 6-9: "
+	            ).replaceAll("\\D", "");
+	        }
+	
+	        phone = newPhone;
+	    }
 
+	    /* ================= PASSWORD ================= */
+
+	    char changePassword = InputValidationUtil.readChar(
+	            ScannerUtil.getScanner(),
+	            "Do you want to change password? (Y/N): "
+	    );
+
+	    if (Character.toUpperCase(changePassword) == 'Y') {
+
+	        String passwordPrompt =
+	                "New password:\n" +
+	                "Minimum 8 characters\n" +
+	                "At least 1 uppercase, 1 lowercase, 1 number, 1 special character\n";
+
+	        while (true) {
+
+	            String newPassword = InputValidationUtil.readNonEmptyString(
+	                    ScannerUtil.getScanner(),
+	                    passwordPrompt
+	            );
+
+	            if (!newPassword.matches(
+	                    "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$")) {
+
+	                System.out.println("Password does not meet required format.");
+	                continue;
+	            }
+
+	            try {
+	                passwordHash = PasswordUtil.hashPassword(newPassword);
+	                break;  // success, exit loop
+
+	            } catch (InvalidPasswordFormatException e) {
+	                System.out.println("Password format invalid. Please try again.");
+	            }
+	        }
+	    }	
+	    /* ================= CREATE NEW USER OBJECT ================= */
+	
+	    User updatedUser = new User(
+	            loggedInUser.getUserId(),
+	            fullName,
+	            loggedInUser.getEmail(),
+	            phone,
+	            passwordHash,
+	            loggedInUser.getRoleId(),
+	            loggedInUser.getStatus(),
+	            loggedInUser.getCreatedAt(),
+	            Instant.now(),
+	            loggedInUser.getGender(),
+	            loggedInUser.getFailedAttempts(),
+	            loggedInUser.getLastLogin()
+	    );
+	
+	    /* ================= SAVE ================= */
+	
+	    boolean updated = userService.updateUserProfile(updatedUser);
+	
+	    if (updated) {
+	        System.out.println("\nProfile updated successfully.\n");
+	        loggedInUser = updatedUser;
+	    } else {
+	        System.out.println("\nProfile update failed.\n");
+	    }
+	}
 	
     public boolean userExists(String email) {
         return userService.checkUserExists(email);

@@ -7,6 +7,7 @@ import com.ems.service.AdminService;
 import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /**
@@ -28,7 +29,7 @@ public class AdminCategoryManagementAction {
             System.out.println("No categories found.");
             return;
         }
-        AdminMenuHelper.printCategories(categories);
+        PaginationUtil.paginate(categories, AdminMenuHelper::printCategories);
     }
     
     /**
@@ -119,7 +120,7 @@ public class AdminCategoryManagementAction {
 	        return null;
 	    }
 	
-	    AdminMenuHelper.printCategories(categories);
+	    PaginationUtil.paginate(categories, AdminMenuHelper::printCategories);
 	
 	    int choice = InputValidationUtil.readInt(
 	            ScannerUtil.getScanner(),

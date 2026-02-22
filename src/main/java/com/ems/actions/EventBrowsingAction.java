@@ -7,6 +7,7 @@ import com.ems.model.Ticket;
 import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 
 /*
  * Handles read-only event browsing operations.
@@ -51,7 +52,7 @@ public class EventBrowsingAction {
             return;
         }
 
-        MenuHelper.printEventSummaries(filteredEvents);
+        PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
     }
 
     /**
@@ -66,7 +67,7 @@ public class EventBrowsingAction {
             return;
         }
 
-        MenuHelper.printEventSummaries(events);
+        PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
         int choice = MenuHelper.selectFromList(
             events.size(),
@@ -89,7 +90,7 @@ public class EventBrowsingAction {
             return;
         }
 
-        MenuHelper.printEventSummaries(events);
+        PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
         int choice = MenuHelper.selectFromList(
             events.size(),

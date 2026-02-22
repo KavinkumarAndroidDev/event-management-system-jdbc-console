@@ -301,4 +301,34 @@ public class UserDaoImpl implements UserDao {
 	    }
 	}
 
+	@Override
+	public boolean updateUser(User user) throws DataAccessException {
+
+	    String sql = "UPDATE users SET full_name = ?, phone = ?, password_hash = ?, " +
+	                 "updated_at = ? WHERE user_id = ?";
+
+	    try (Connection con = DBConnectionUtil.getConnection();
+	         PreparedStatement ps = con.prepareStatement(sql)) {
+
+	        ps.setString(1, user.getFullName());
+	        ps.setString(2, user.getPhone());
+
+	        ps.setString(3, user.getPasswordHash());
+
+	        ps.setTimestamp(
+	                4,
+	                DateTimeUtil.toTimestamp(
+	                        DateTimeUtil.toUtcInstant(LocalDateTime.now())
+	                )
+	        );
+
+	        ps.setInt(5, user.getUserId());
+
+	        return ps.executeUpdate() > 0;
+
+	    } catch (SQLException e) {
+	        throw new DataAccessException("Error while updating user profile");
+	    }
+	}
+
 }

@@ -8,6 +8,7 @@ import com.ems.service.AdminService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminUserManagementAction {
@@ -26,7 +27,7 @@ public class AdminUserManagementAction {
 		if (users.isEmpty()) {
 			System.out.println("No "+role+" found at the moment.");
 		} else {
-			MenuHelper.displayUsers(users);
+			PaginationUtil.paginate(users, MenuHelper::displayUsers);
 		}
     }
     public List<User> getAllUsers() {
@@ -43,7 +44,7 @@ public class AdminUserManagementAction {
 		}
 
 		users.sort(Comparator.comparing(User::getFullName));
-		MenuHelper.displayUsers(users);
+		PaginationUtil.paginate(users, MenuHelper::displayUsers);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select a user (1-" + users.size() + "): ");
 

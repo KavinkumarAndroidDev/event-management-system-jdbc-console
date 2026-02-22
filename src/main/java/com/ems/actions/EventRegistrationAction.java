@@ -14,6 +14,7 @@ import com.ems.util.ApplicationUtil;
 import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /*
@@ -54,7 +55,7 @@ public class EventRegistrationAction {
      * @param events list of available events
      */
     private void performRegistration(int userId, List<Event> events) {
-        MenuHelper.printEventSummaries(events);
+        PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
         int eventChoice = MenuHelper.selectFromList(events.size(), "\nSelect an event");
 
@@ -202,7 +203,7 @@ public class EventRegistrationAction {
             return;
         }
 
-        MenuHelper.printEventsList(upcoming);
+        PaginationUtil.paginate(upcoming, MenuHelper::printEventsList);
 
         int choice = MenuHelper.selectFromList(
             upcoming.size(),

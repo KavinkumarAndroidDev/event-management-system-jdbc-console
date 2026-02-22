@@ -1,56 +1,66 @@
 package com.ems.util;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class PaginationUtil {
 
     private static final int PAGE_SIZE = 10;
-    /**
-     * 
-     * @param <T> 
-     * @param data List of any data items.
-     * @param printer A function that knows how to print one page of items.
-     */
-    public static <T> void paginate(
-            List<T> data,
-            Consumer<List<T>> printer
-    ) {
+
+    // Splits a list into pages and prints one page at a time
+    public static <T> void paginate(List<T> data, BiConsumer<List<T>, Integer> printer) {
+
         if (data == null || data.isEmpty()) {
             System.out.println("No data found.");
             return;
         }
 
         int totalItems = data.size();
+
+        // If everything fits on one page, just print once
+        if (totalItems <= PAGE_SIZE) {
+            printer.accept(data, 1);
+            return;
+        }
+
         int totalPages = (int) Math.ceil((double) totalItems / PAGE_SIZE);
         int currentPage = 1;
 
         while (true) {
-
             int start = (currentPage - 1) * PAGE_SIZE;
             int end = Math.min(start + PAGE_SIZE, totalItems);
+            int startIndex = start + 1;
 
             System.out.println("\nPage " + currentPage + " of " + totalPages);
-
-            printer.accept(data.subList(start, end));
+            printer.accept(data.subList(start, end), startIndex);
 
             System.out.println("\nN - Next | P - Previous | Q - Quit");
+            String choice = InputValidationUtil
+                    .readNonEmptyString(ScannerUtil.getScanner(), "Choice: ")
+                    .toUpperCase();
 
-            String choice = InputValidationUtil.readNonEmptyString(
-                    ScannerUtil.getScanner(),
-                    "Choice: "
-            ).toUpperCase();
+            switch (choice) {
+                case "N":
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                    } else {
+                        System.out.println("Already at the last page.");
+                    }
+                    break;
 
-            if ("N".equals(choice)) {
-                if (currentPage < totalPages) currentPage++;
-                else System.out.println("Already at last page.");
-            } else if ("P".equals(choice)) {
-                if (currentPage > 1) currentPage--;
-                else System.out.println("Already at first page.");
-            } else if ("Q".equals(choice)) {
-                break;
-            } else {
-                System.out.println("Invalid option.");
+                case "P":
+                    if (currentPage > 1) {
+                        currentPage--;
+                    } else {
+                        System.out.println("Already at the first page.");
+                    }
+                    break;
+
+                case "Q":
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Enter N, P, or Q.");
             }
         }
     }

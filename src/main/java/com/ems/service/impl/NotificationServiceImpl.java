@@ -10,6 +10,7 @@ import com.ems.model.Notification;
 import com.ems.service.NotificationService;
 import com.ems.service.SystemLogService;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 
 /*
  * Handles notification related business operations.
@@ -21,127 +22,110 @@ import com.ems.util.MenuHelper;
  */
 public class NotificationServiceImpl implements NotificationService {
 
-	private final NotificationDao notificationDao;
-	private final RegistrationDao registrationDao;
-	private final SystemLogService systemLogService;
+    private final NotificationDao notificationDao;
+    private final RegistrationDao registrationDao;
+    private final SystemLogService systemLogService;
 
-	/*
-	 * Initializes notification service with required data access dependencies.
-	 */
-	public NotificationServiceImpl(NotificationDao notificationDao, RegistrationDao registrationDao, SystemLogService systemLogService) {
-		this.notificationDao = notificationDao;
-		this.registrationDao = registrationDao;
-		this.systemLogService = systemLogService;
-	}
+    /*
+     * Initializes notification service with required data access dependencies.
+     */
+    public NotificationServiceImpl(NotificationDao notificationDao,
+            RegistrationDao registrationDao, SystemLogService systemLogService) {
+        this.notificationDao  = notificationDao;
+        this.registrationDao  = registrationDao;
+        this.systemLogService = systemLogService;
+    }
 
-	/*
-	 * Sends a notification to all users in the system.
-	 *
-	 * Used for system level or promotional announcements.
-	 */
-	@Override
-	public void sendSystemWideNotification(String message, String notificationType) {
-		try {
-			notificationDao.sendSystemWideNotification(message, notificationType);
-			
-			systemLogService.log(
-				    null,
-				    "SEND_NOTIFICATION",
-				    "SYSTEM",
-				    null,
-				    "System-wide notification sent"
-				);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		System.out.println("The message has been sent to all users");
-	}
+    /*
+     * Sends a notification to all users in the system.
+     * Used for system-level or promotional announcements.
+     */
+    @Override
+    public void sendSystemWideNotification(String message, String notificationType) {
+        try {
+            notificationDao.sendSystemWideNotification(message, notificationType);
+            systemLogService.log(null, "SEND_NOTIFICATION", "SYSTEM", null,
+                    "System-wide notification sent");
+        } catch (DataAccessException e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println("The message has been sent to all users.");
+    }
 
-	/*
-	 * Displays unread notifications for a user.
-	 *
-	 * Rule: - Notifications are automatically marked as read after display
-	 */
-	@Override
-	public void displayUnreadNotifications(int userId) {
-		try {
-			List<Notification> notifications = notificationDao.getUnreadNotifications(userId);
+    /*
+     * Displays unread notifications for a user.
+     * Notifications are automatically marked as read after display.
+     */
+    @Override
+    public void displayUnreadNotifications(int userId) {
+        try {
+            List<Notification> notifications = notificationDao.getUnreadNotifications(userId);
 
-			if (!notifications.isEmpty()) {
-				System.out.println("\nYou have few unread notifications: ");
-				notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
-				MenuHelper.displayNotifications(notifications);
-				// Mark notifications as read after viewing
-				notifications.forEach(n -> {
-					try {
-						notificationDao.markAsRead(n.getNotificationId());
-					} catch (DataAccessException e) {
-						System.out.println(e.getMessage());
-					}
-				});
-			}
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-	}
+            if (!notifications.isEmpty()) {
+                System.out.println("\nYou have unread notifications:");
+                notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
 
-	/*
-	 * Displays all notifications for a user.
-	 *
-	 * Rule: - All notifications are marked as read once displayed
-	 */
-	@Override
-	public void displayAllNotifications(int userId) {
-	    try {
-	        List<Notification> notifications =
-	                notificationDao.getAllNotifications(userId);
-	
-	        MenuHelper.displayNotifications(notifications);
-	
-	        if (notifications != null && !notifications.isEmpty()) {
-	            notificationDao.markAllAsRead(userId);
-	        }
-	
-	    } catch (DataAccessException e) {
-	        System.out.println(e.getMessage());
-	    }
-	}
+                PaginationUtil.paginate(notifications,
+                        (page, i) -> MenuHelper.displayNotifications(page));
 
+                // Mark all as read after viewing
+                notifications.forEach(n -> {
+                    try {
+                        notificationDao.markAsRead(n.getNotificationId());
+                    } catch (DataAccessException e) {
+                        System.out.println(e.getMessage());
+                    }
+                });
+            }
+        } catch (DataAccessException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
-	/*
-	 * Sends a notification to all users registered for a specific event.
-	 *
-	 * Used for event updates or schedule changes.
-	 */
-	@Override
-	public void sendEventNotification(int eventId, String message, String type) {
-		try {
-			List<Integer> userIds = registrationDao.getRegisteredUserIdsByEvent(eventId);
+    /*
+     * Displays all notifications for a user.
+     * All notifications are marked as read once displayed.
+     */
+    @Override
+    public void displayAllNotifications(int userId) {
+        try {
+            List<Notification> notifications = notificationDao.getAllNotifications(userId);
 
-			for (Integer userId : userIds) {
-				notificationDao.sendNotification(userId, message, type);
-			}
-			systemLogService.log(
-				    null,
-				    "SEND_NOTIFICATION",
-				    "EVENT",
-				    eventId,
-				    "Event notification sent to registered users"
-				);
+            PaginationUtil.paginate(notifications,
+                    (page, i) -> MenuHelper.displayNotifications(page));
 
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-	}
+            if (notifications != null && !notifications.isEmpty()) {
+                notificationDao.markAllAsRead(userId);
+            }
+        } catch (DataAccessException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
-	@Override
-	public void sendPersonalNotification(int userId, String message, String type) {
-		try {
-			notificationDao.sendNotification(userId, message, type);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		
-	}
+    /*
+     * Sends a notification to all users registered for a specific event.
+     * Used for event updates or schedule changes.
+     */
+    @Override
+    public void sendEventNotification(int eventId, String message, String type) {
+        try {
+            List<Integer> userIds = registrationDao.getRegisteredUserIdsByEvent(eventId);
+            for (Integer userId : userIds) {
+                notificationDao.sendNotification(userId, message, type);
+            }
+            systemLogService.log(null, "SEND_NOTIFICATION", "EVENT", eventId,
+                    "Event notification sent to registered users");
+        } catch (DataAccessException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
+    @Override
+    public void sendPersonalNotification(int userId, String message, String type) {
+        try {
+            notificationDao.sendNotification(userId, message, type);
+        } catch (DataAccessException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

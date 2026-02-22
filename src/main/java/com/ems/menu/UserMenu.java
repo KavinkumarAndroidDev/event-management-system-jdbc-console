@@ -5,6 +5,7 @@ import com.ems.actions.EventRegistrationAction;
 import com.ems.actions.EventSearchAction;
 import com.ems.actions.FeedbackAction;
 import com.ems.actions.NotificationAction;
+import com.ems.actions.UserAction;
 import com.ems.actions.UserRegistrationAction;
 import com.ems.model.User;
 import com.ems.util.InputValidationUtil;
@@ -22,6 +23,7 @@ public class UserMenu extends BaseMenu {
 	private final UserRegistrationAction userRegistrationAction;
 	private final EventSearchAction eventSearchAction;
 	private final FeedbackAction feedbackAction;
+	private final UserAction userAction;
 
 	public UserMenu(User user) {
 		super(user);
@@ -31,6 +33,7 @@ public class UserMenu extends BaseMenu {
 		this.userRegistrationAction = new UserRegistrationAction();
 		this.eventSearchAction = new EventSearchAction();
 		this.feedbackAction = new FeedbackAction();
+		this.userAction = new UserAction();
 	}
 
     /**
@@ -48,8 +51,9 @@ public class UserMenu extends BaseMenu {
         		    "2 Search and filter events\n" +
         		    "3 My registrations\n" +
         		    "4 Notifications\n" +
-        		    "5 Feedback\n" +
-        		    "6 Logout\n\n" +
+        		    "5 Feedback\n" + 
+        		    "6 Update profile\n" +
+        		    "7 Logout\n\n" +
         		    "Choice:"
         		);
 
@@ -77,6 +81,9 @@ public class UserMenu extends BaseMenu {
                 feedbackMenu();
                 break;
             case 6:
+            	userAction.updateProfile(loggedInUser);
+				break;
+            case 7:
                 if (confirmLogout()) {
                     System.out.println("Logging out...");
                     return;

@@ -13,6 +13,7 @@ import com.ems.util.ApplicationUtil;
 import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminOfferManagementAction {
@@ -45,7 +46,7 @@ public class AdminOfferManagementAction {
 		if (offers.isEmpty()) {
 			System.out.println("No offers found.");
 		} else {
-			AdminMenuHelper.printOffers(offers);
+			PaginationUtil.paginate(offers, AdminMenuHelper::printOffers);
 		}
     }
     
@@ -86,7 +87,7 @@ public class AdminOfferManagementAction {
 			return;
 		}
 
-		AdminMenuHelper.printOffers(filtered);
+		PaginationUtil.paginate(filtered, AdminMenuHelper::printOffers);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select offer (1-" + filtered.size() + "): ");
@@ -137,7 +138,7 @@ public class AdminOfferManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select event (1-" + events.size() + "): ");
 

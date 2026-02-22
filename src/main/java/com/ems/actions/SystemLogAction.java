@@ -6,6 +6,7 @@ import com.ems.model.SystemLog;
 import com.ems.service.SystemLogService;
 import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
+import com.ems.util.PaginationUtil;
 
 public class SystemLogAction {
     private final SystemLogService systemLogService;
@@ -16,7 +17,7 @@ public class SystemLogAction {
 
     public void printAllLogs() {
     	List<SystemLog> logs = systemLogService.getAllLogs();
-    	AdminMenuHelper.printSystemLogs(logs);
+    	PaginationUtil.paginate(logs, AdminMenuHelper::printSystemLogs);
 
     }
 }

@@ -661,4 +661,65 @@ public class EventDaoImpl implements EventDao {
 			}
 		return eventSummaries;
 	}
+    
+    @Override
+    public List<EventRevenueReport> getEventWiseRevenueReportByOrganizer(int organizerId)
+            throws DataAccessException {
+
+        List<EventRevenueReport> reports = new ArrayList<>();
+
+        String sql =
+                "select " +
+                "    e.event_id, " +
+                "    e.title, " +
+                "    count(distinct r.registration_id) as total_registrations, " +
+                "    sum(rt.quantity) as tickets_sold, " +
+                "    sum(p.amount) as total_revenue, " +
+                "    round(sum(p.amount) / nullif(sum(rt.quantity), 0), 2) as avg_ticket_price, " +
+                "    sum( " +
+                "        case " +
+                "            when p.offer_id is not null then (t.price * rt.quantity) - p.amount " +
+                "            else 0 " +
+                "        end " +
+                "    ) as total_discount_given " +
+                "from events e " +
+                "join registrations r on r.event_id = e.event_id " +
+                "join registration_tickets rt on rt.registration_id = r.registration_id " +
+                "join tickets t on t.ticket_id = rt.ticket_id " +
+                "join payments p on p.registration_id = r.registration_id " +
+                "where r.status = 'CONFIRMED' " +
+                "  and p.payment_status = 'SUCCESS' " +
+                "  and e.organizer_id = ? " +   // important filter
+                "group by e.event_id, e.title " +
+                "order by total_revenue desc";
+
+        try (Connection con = DBConnectionUtil.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, organizerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    EventRevenueReport report = new EventRevenueReport();
+
+                    report.setEventId(rs.getInt("event_id"));
+                    report.setEventTitle(rs.getString("title"));
+                    report.setTotalRegistrations(rs.getInt("total_registrations"));
+                    report.setTicketsSold(rs.getInt("tickets_sold"));
+                    report.setTotalRevenue(rs.getDouble("total_revenue"));
+                    report.setAvgTicketPrice(rs.getDouble("avg_ticket_price"));
+                    report.setTotalDiscountGiven(rs.getDouble("total_discount_given"));
+
+                    reports.add(report);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException(
+                "failed to fetch organizer revenue report", e);
+        }
+
+        return reports;
+    }
 }

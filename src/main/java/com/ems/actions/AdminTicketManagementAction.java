@@ -12,6 +12,7 @@ import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminTicketManagementAction {
@@ -29,7 +30,7 @@ public class AdminTicketManagementAction {
 			System.out.println("No events available at the moment.");
 			return;
 		}
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + events.size() + "): ");
@@ -56,7 +57,7 @@ public class AdminTicketManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + events.size() + "): ");
@@ -80,7 +81,7 @@ public class AdminTicketManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + events.size() + "): ");
@@ -95,7 +96,7 @@ public class AdminTicketManagementAction {
 			return;
 		}
 		reports.sort(Comparator.comparing(EventRegistrationReport::getRegistrationDate).reversed());
-		AdminMenuHelper.printEventRegistrationReport(reports);
+		PaginationUtil.paginate(reports, AdminMenuHelper::printEventRegistrationReport);
 		
 		
 	}

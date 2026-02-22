@@ -135,28 +135,6 @@ public class OfferDaoImpl implements OfferDao {
         return report;
     }
 
-    @Override
-    public void recordOfferUsage(int offerId, int userId, int registrationId)
-            throws DataAccessException {
-
-        // Records a single usage entry for audit and reporting
-        String sql =
-            "INSERT INTO offer_usages (offer_id, user_id, registration_id, used_at) " +
-            "VALUES (?, ?, ?, utc_timestamp())";
-
-	    try (Connection con = DBConnectionUtil.getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
-
-	        ps.setInt(1, offerId);
-	        ps.setInt(2, userId);
-	        ps.setInt(3, registrationId);
-
-	        ps.executeUpdate();
-
-	    } catch (SQLException e) {
-	        throw new DataAccessException("Failed to record offer usage");
-	    }
-	}
 
     @Override
     public boolean hasUserUsedOfferCode(int userId, int offerId)

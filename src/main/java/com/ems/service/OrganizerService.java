@@ -2,9 +2,10 @@ package com.ems.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import com.ems.model.Event;
+import com.ems.model.EventRegistrationReport;
+import com.ems.model.EventRevenueReport;
 import com.ems.model.OrganizerEventSummary;
 import com.ems.model.Ticket;
 
@@ -37,13 +38,7 @@ public interface OrganizerService {
     // registrations & reports
     int viewEventRegistrations(int eventId);
 
-    List<Map<String, Object>> viewRegisteredUsers(int eventId);
-
-    List<Map<String, Object>> getEventWiseRegistrations(int organizerId);
-
-    List<Map<String, Object>> getTicketSales(int organizerId);
-
-    double getRevenueSummary(int organizerId);
+    List<EventRevenueReport> getRevenueReport(int organizerId);
     
     List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId);
 
@@ -60,5 +55,7 @@ public interface OrganizerService {
     Event getOrganizerEventById(int organizerId, int eventId);
 
 	void sendCancellationRequest(Event selectedEvent, String message);
+	
+	List<EventRegistrationReport> getEventWiseRegistrations(int eventId);
 
 }

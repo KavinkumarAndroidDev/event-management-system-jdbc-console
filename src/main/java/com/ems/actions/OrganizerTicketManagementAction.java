@@ -1,5 +1,6 @@
 package com.ems.actions;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,8 +10,10 @@ import com.ems.model.Event;
 import com.ems.model.Ticket;
 import com.ems.service.OrganizerService;
 import com.ems.util.ApplicationUtil;
+import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /**
@@ -49,18 +52,22 @@ public class OrganizerTicketManagementAction {
 			System.out.println("No events found.");
 			return;
 		}
+		Instant now = DateTimeUtil.nowUtc();
 
 		List<Event> validEvents = events.stream()
-				.filter(e -> EventStatus.DRAFT.toString().equals(e.getStatus())
-						|| EventStatus.PUBLISHED.toString().equals(e.getStatus()))
-				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
-
+		        .filter(e ->
+		                (EventStatus.APPROVED.toString().equals(e.getStatus())
+		                 || EventStatus.PUBLISHED.toString().equals(e.getStatus()))
+		                && e.getStartDateTime().isAfter(now)
+		        )
+		        .sorted(Comparator.comparing(Event::getStartDateTime))
+		        .collect(Collectors.toList());
 		if (validEvents.isEmpty()) {
 			System.out.println("No events available");
 			return;
 		}
 
-		MenuHelper.printEventSummaries(validEvents);
+		PaginationUtil.paginate(validEvents, MenuHelper::printEventSummaries);
 
 		int eventChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event number (1-" + validEvents.size() + "): ");
@@ -70,7 +77,22 @@ public class OrganizerTicketManagementAction {
 		}
 
 		Event selectedEvent = validEvents.get(eventChoice - 1);
+		if (EventStatus.PUBLISHED.toString().equals(selectedEvent.getStatus())) {
 
+		    System.out.println("\nWarning: This event is already published.");
+		    System.out.println("Tickets may have already been sold.");
+		    System.out.println("Changing ticket price may affect customers and financial records.\n");
+
+		    char confirm = InputValidationUtil.readChar(
+		            ScannerUtil.getScanner(),
+		            "Do you still want to continue? (Y/N): "
+		    );
+
+		    if (Character.toUpperCase(confirm) != 'Y') {
+		        System.out.println("Price update cancelled.");
+		        return;
+		    }
+		}
 		List<Ticket> tickets = organizerService.viewTicketAvailability(selectedEvent.getEventId());
 
 		if (tickets.isEmpty()) {
@@ -78,7 +100,16 @@ public class OrganizerTicketManagementAction {
 			return;
 		}
 
-		Ticket selectedTicket = selectTicketFromList(tickets, false);
+		MenuHelper.printTicketSummaries(tickets);
+		int choice = InputValidationUtil.readInt(
+		        ScannerUtil.getScanner(),
+		        "Choose the ticket (1 - " + tickets.size() + "): ");
+		while(choice < 1 || choice > tickets.size()) {
+			choice = InputValidationUtil.readInt(
+			        ScannerUtil.getScanner(),
+			        "Choose the ticket (1 - " + tickets.size() + "): ");
+		}
+		Ticket selectedTicket = tickets.get(choice - 1);
 		if (selectedTicket == null) {
 		    return;
 		}
@@ -89,9 +120,36 @@ public class OrganizerTicketManagementAction {
 			newPrice = InputValidationUtil.readDouble(ScannerUtil.getScanner(), "Enter a valid price: ");
 		}
 
-		boolean result = organizerService.updateTicketPrice(selectedTicket.getTicketId(), newPrice);
+		// Show current ticket details before confirmation
+		System.out.println("\nSelected Ticket Details:");
+		List<Ticket> singleTicket = List.of(selectedTicket);
+		MenuHelper.printTicketSummaries(singleTicket);
 
-		System.out.println(result ? "Ticket price updated successfully" : "Unable to update ticket. Please try again.\n");
+		System.out.println("\nPRICE CHANGE SUMMARY");
+		System.out.println("--------------------------------------");
+		System.out.println("Ticket Type : " + selectedTicket.getTicketType());
+		System.out.println("Old Price   : ₹" + selectedTicket.getPrice());
+		System.out.println("New Price   : ₹" + newPrice);
+		System.out.println("--------------------------------------");
+
+		char finalConfirm = InputValidationUtil.readChar(
+		        ScannerUtil.getScanner(),
+		        "Confirm price update? (Y/N): "
+		);
+
+		if (Character.toUpperCase(finalConfirm) != 'Y') {
+		    System.out.println("Price update cancelled.");
+		    return;
+		}
+
+		boolean result = organizerService.updateTicketPrice(
+		        selectedTicket.getTicketId(),
+		        newPrice
+		);
+
+		System.out.println(result
+		        ? "Ticket price updated successfully."
+		        : "Unable to update ticket. Please try again.");
 	}
 	
 	/**
@@ -108,17 +166,23 @@ public class OrganizerTicketManagementAction {
 			System.out.println("No events found.");
 			return;
 		}
+		Instant now = DateTimeUtil.nowUtc();
 
 		List<Event> validEvents = events.stream()
-				.filter(e -> EventStatus.PUBLISHED.toString().equals(e.getStatus()))
-				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
+		        .filter(e ->
+		                (EventStatus.APPROVED.toString().equals(e.getStatus())
+		                 || EventStatus.PUBLISHED.toString().equals(e.getStatus()))
+		                && e.getStartDateTime().isAfter(now)
+		        )
+		        .sorted(Comparator.comparing(Event::getStartDateTime))
+		        .collect(Collectors.toList());
 
 		if (validEvents.isEmpty()) {
 			System.out.println("No events available");
 			return;
 		}
 
-		MenuHelper.printEventSummaries(validEvents);
+		PaginationUtil.paginate(validEvents, MenuHelper::printEventSummaries);
 		
 		int eventChoice = MenuHelper.selectFromList(validEvents.size(), "Select an event number");
 		Event selectedEvent = validEvents.get(eventChoice - 1);
@@ -138,10 +202,10 @@ public class OrganizerTicketManagementAction {
 		System.out.println("\nEvent Capacity: " + capacity + "\nCurrent Ticket Quantity: " + totalTickets
 				+ "\nRemaining Capacity: " + remaining);
 
-		System.out.println("\n1. Update existing ticket\n" + "2. Add new ticket\n\n>");
-
-		int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-
+		int option = InputValidationUtil.readInt(
+		        ScannerUtil.getScanner(),
+		        "\n1. Update existing ticket\n2. Add new ticket\nSelect an option: "
+		);
 		if (option == 2) {
 			createTicketForEvent(selectedEvent.getEventId(), remaining);
 			return;
@@ -157,7 +221,16 @@ public class OrganizerTicketManagementAction {
 			return;
 		}
 
-		Ticket selectedTicket = selectTicketFromList(tickets, false);
+		MenuHelper.printTicketSummaries(tickets);
+		int choice = InputValidationUtil.readInt(
+		        ScannerUtil.getScanner(),
+		        "Choose the ticket (1 - " + tickets.size() + "): ");
+		while(choice < 1 || choice > tickets.size()) {
+			choice = InputValidationUtil.readInt(
+			        ScannerUtil.getScanner(),
+			        "Choose the ticket (1 - " + tickets.size() + "): ");
+		}
+		Ticket selectedTicket = tickets.get(choice - 1);
 		if (selectedTicket == null) {
 		    return;
 		}
@@ -192,7 +265,7 @@ public class OrganizerTicketManagementAction {
 		}
 
 		List<Event> validEvents = events.stream()
-				.filter(e -> EventStatus.DRAFT.toString().equals(e.getStatus())
+				.filter(e -> EventStatus.APPROVED.toString().equals(e.getStatus())
 						|| EventStatus.PUBLISHED.toString().equals(e.getStatus()))
 				.sorted(Comparator.comparing(Event::getStartDateTime)).collect(Collectors.toList());
 
@@ -201,15 +274,14 @@ public class OrganizerTicketManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(validEvents);
+		PaginationUtil.paginate(validEvents, MenuHelper::printEventSummaries);
 
 		int eventChoice = MenuHelper.selectFromList(validEvents.size(), "Select a event");
 
 		Event selectedEvent = validEvents.get(eventChoice - 1);
 
 		List<Ticket> tickets = organizerService.viewTicketAvailability(selectedEvent.getEventId());
-		selectTicketFromList(tickets, true);
-
+		MenuHelper.printTicketSummaries(tickets);
 	}
 	
 	
@@ -238,32 +310,4 @@ public class OrganizerTicketManagementAction {
 
 		System.out.println("Ticket added successfully");
 	}
-	
-	private Ticket selectTicketFromList(List<Ticket> tickets, boolean showAvailability) {
-
-	    if (tickets == null || tickets.isEmpty()) {
-	        System.out.println("No tickets available");
-	        return null;
-	    }
-
-	    int index = 1;
-	    for (Ticket t : tickets) {
-	        if (showAvailability) {
-	            System.out.println(index + ". " + t.getTicketType()
-	                    + " | Total: " + t.getTotalQuantity()
-	                    + " | Available: " + t.getAvailableQuantity()
-	                    + " | Price: " + t.getPrice());
-	        } else {
-	            System.out.println(index + ". " + t.getTicketType()
-	                    + " | Price: " + t.getPrice()
-	                    + " | Quantity: " + t.getTotalQuantity());
-	        }
-	        index++;
-	    }
-
-	    int choice = MenuHelper.selectFromList(tickets.size(), "Select a ticket");
-	    return tickets.get(choice - 1);
-	}
-
-
 }

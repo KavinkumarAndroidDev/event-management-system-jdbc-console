@@ -10,6 +10,7 @@ import com.ems.actions.AdminUserManagementAction;
 import com.ems.actions.AdminVenueManagementAction;
 import com.ems.actions.NotificationAction;
 import com.ems.actions.SystemLogAction;
+import com.ems.actions.UserAction;
 import com.ems.enums.NotificationType;
 import com.ems.model.User;
 import com.ems.util.InputValidationUtil;
@@ -35,6 +36,7 @@ public class AdminMenu extends BaseMenu {
 	private final AdminTicketManagementAction ticketManagementAction;
 	private final NotificationAction notificationAction;
 	private final SystemLogAction systemLogAction;
+	private final UserAction userAction;
 
 	public AdminMenu(User user) {
 		super(user);
@@ -48,6 +50,7 @@ public class AdminMenu extends BaseMenu {
 		this.ticketManagementAction = new AdminTicketManagementAction();
 		this.notificationAction = new NotificationAction();
 		this.systemLogAction = new SystemLogAction();
+		this.userAction = new UserAction();
 	}
 
 	public void start() {
@@ -65,9 +68,10 @@ public class AdminMenu extends BaseMenu {
 				    "8 Reports and analytics\n" +
 				    "9 Notifications\n" +
 				    "10 Feedback moderation\n" +
-				    "11 Role management\n" +
-				    "12 System logs\n" +
-				    "13 Logout\n\n" +
+				    "11 Role management\n" + 
+				    "12 Update profile\n" +
+				    "13 System logs\n" +
+				    "14 Logout\n\n" +
 				    "Choice:"
 				);
 
@@ -109,9 +113,12 @@ public class AdminMenu extends BaseMenu {
 				roleManagementMenu();
 				break;
 			case 12:
-				systemLogAction.printAllLogs();
+				userAction.updateProfile(loggedInUser);
 				break;
 			case 13:
+				systemLogAction.printAllLogs();
+				break;
+			case 14:
 				eventManagementAction.markCompletedEvents();
 				if (confirmLogout()) {
 					System.out.println("Logging out...");

@@ -10,6 +10,7 @@ import com.ems.model.Event;
 import com.ems.model.Ticket;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /*
@@ -98,7 +99,7 @@ public class GuestMenu extends BaseMenu {
 			System.out.println("No events available at the moment.\n");
 			return;
 		}
-		MenuHelper.printEventSummaries(filteredEvents);
+		PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
 	}
 	
 	private void viewEventDetails() {
@@ -109,7 +110,7 @@ public class GuestMenu extends BaseMenu {
 	        return;
 	    }
 
-	    MenuHelper.printEventSummaries(events);
+	    PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 	    int choice = InputValidationUtil.readInt(
 	        ScannerUtil.getScanner(),
@@ -133,7 +134,7 @@ public class GuestMenu extends BaseMenu {
 	        return;
 	    }
 	
-	    MenuHelper.printEventSummaries(events);
+	    PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 	
 	    int choice = InputValidationUtil.readInt(
 	        ScannerUtil.getScanner(),

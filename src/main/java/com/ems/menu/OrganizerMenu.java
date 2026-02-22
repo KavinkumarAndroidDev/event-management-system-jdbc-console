@@ -1,20 +1,21 @@
 package com.ems.menu;
 
 import java.util.List;
-import java.util.Map;
 
 import com.ems.actions.OrganizerEventManagementAction;
+import com.ems.actions.OrganizerOfferManagementAction;
 import com.ems.actions.OrganizerTicketManagementAction;
+import com.ems.actions.UserAction;
 import com.ems.actions.OrganizerRegistrationAction;
 import com.ems.actions.OrganizerReportAction;
 import com.ems.actions.NotificationAction;
 import com.ems.enums.EventStatus;
 import com.ems.model.Event;
-import com.ems.model.OrganizerEventSummary;
 import com.ems.model.User;
 import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /*
@@ -24,12 +25,13 @@ import com.ems.util.ScannerUtil;
 public class OrganizerMenu extends BaseMenu {
 
 	/* ===================== ACTION DEPENDENCIES ===================== */
-
+	private final UserAction userAction = new UserAction();
 	private final OrganizerEventManagementAction eventManagementAction;
 	private final OrganizerTicketManagementAction ticketManagementAction;
 	private final OrganizerRegistrationAction registrationAction;
 	private final OrganizerReportAction reportAction;
 	private final NotificationAction notificationAction;
+	private final OrganizerOfferManagementAction offerManagementAction;
 
 	public OrganizerMenu(User user) {
 		super(user);
@@ -38,6 +40,7 @@ public class OrganizerMenu extends BaseMenu {
 		this.registrationAction = new OrganizerRegistrationAction();
 		this.reportAction = new OrganizerReportAction();
 		this.notificationAction = new NotificationAction();
+		this.offerManagementAction = new OrganizerOfferManagementAction();
 	}
 
 	/* ===================== ENTRY POINT ===================== */
@@ -53,8 +56,10 @@ public class OrganizerMenu extends BaseMenu {
 				    "2 Ticket management\n" +
 				    "3 Registrations\n" +
 				    "4 Reports\n" +
-				    "5 Notifications\n" +
-				    "6 Logout\n\n" +
+				    "5 Notifications\n"+
+				    "6 Offer management\n" +
+				    "7 Update profile\n" +
+				    "8 Logout\n\n" +
 				    "Choice:"
 				);
 
@@ -78,6 +83,12 @@ public class OrganizerMenu extends BaseMenu {
 				notificationMenu();
 				break;
 			case 6:
+				offerManagementMenu();
+				break;
+			case 7:
+				userAction.updateProfile(loggedInUser);
+				break;
+			case 8:
 				if (confirmLogout()) {
 					return;
 				}
@@ -177,8 +188,7 @@ public class OrganizerMenu extends BaseMenu {
 			System.out.println(
 				    "\nRegistrations and attendees\n" +
 				    "1 View event registrations\n" +
-				    "2 View registered users\n" +
-				    "3 Back\n\n" +
+				    "2 Back\n\n" +
 				    "Choice:"
 				);
 
@@ -188,59 +198,12 @@ public class OrganizerMenu extends BaseMenu {
 			switch (choice) {
 
 			case 1: {
-				List<Event> events =
-					eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
-
-				if (events.isEmpty()) {
-					System.out.println("No events available.");
-					break;
-				}
-
-				MenuHelper.printEventSummaries(events);
-
-				int eventChoice =
-					MenuHelper.selectFromList(events.size(), "Select an event: ");
-				Event selectedEvent = events.get(eventChoice - 1);
-
-				int count =
-					registrationAction.viewEventRegistrations(selectedEvent.getEventId());
-
-				System.out.println("Total Registrations: " + count);
+				registrationAction.viewEventRegistrations(loggedInUser.getUserId());
 				break;
+
 			}
-
-			case 2: {
-				List<Event> events =
-					eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
-
-				if (events.isEmpty()) {
-					System.out.println("No events available.");
-					break;
-				}
-
-				MenuHelper.printEventSummaries(events);
-
-				int eventChoice =
-					MenuHelper.selectFromList(events.size(), "Select an event: ");
-				Event selectedEvent = events.get(eventChoice - 1);
-
-				List<Map<String, Object>> users =
-					registrationAction.viewRegisteredUsers(selectedEvent.getEventId());
-
-				if (users != null && !users.isEmpty()) {
-					System.out.println("Registered Users\n");
-					users.forEach(
-						u -> System.out.println(
-							u.get("userId") + " | " + u.get("name") + " | " + u.get("email")
-						)
-					);
-				}
-				break;
-			}
-
-			case 3:
+			case 2:
 				return;
-
 			default:
 				System.out.println("Invalid choice. Please try again.");
 			}
@@ -254,11 +217,9 @@ public class OrganizerMenu extends BaseMenu {
 		while (true) {
 			System.out.println(
 				    "\nReports\n" +
-				    "1 Event registrations\n" +
-				    "2 Ticket sales\n" +
-				    "3 Revenue summary\n" +
-				    "4 My events summary\n" +
-				    "5 Back\n\n" +
+				    "1 Revenue summary\n" +
+				    "2 My events summary\n" +
+				    "3 Back\n\n" +
 				    "Choice:"
 				);
 
@@ -266,79 +227,22 @@ public class OrganizerMenu extends BaseMenu {
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-				reportAction.getEventWiseRegistrations(loggedInUser.getUserId())
-					.forEach(r ->
-						System.out.println(
-							"Event: " + r.get("event")
-							+ " | Registrations: " + r.get("count")
-						)
-					);
-				break;
-
-			case 2:
-				List<Map<String, Object>> list =
-					reportAction.getTicketSales(loggedInUser.getUserId());
-
-				if (list != null) {
-					list.forEach(r ->
-						System.out.println(
-							"Ticket Type: " + r.get("ticketType")
-							+ " | Tickets Sold: " + r.get("sold")
-						)
-					);
-				} else {
-					System.out.println("No ticket sales found.");
-				}
-				break;
-
+			case 1: {
+			    reportAction.getRevenueSummary(loggedInUser.getUserId());
+			    break;
+			}
+			case 2:{
+		        reportAction.getEventSummary(loggedInUser.getUserId());
+		        break;
+			}
 			case 3:
-				double revenue =
-					reportAction.getRevenueSummary(loggedInUser.getUserId());
-				System.out.println("Total revenue: ₹" + revenue);
-				break;
-
-			case 4:
-				viewMyEventsSummary();
-				break;
-
-			case 5:
 				return;
-
 			default:
 				System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
 
-	/* ===================== EVENTS SUMMARY ===================== */
-
-	private void viewMyEventsSummary() {
-
-		List<OrganizerEventSummary> list =
-			reportAction.getOrganizerEventSummary(loggedInUser.getUserId());
-
-		if (list.isEmpty()) {
-			System.out.println("You have not created any events yet.");
-			return;
-		}
-
-		String currentStatus = "";
-
-		for (OrganizerEventSummary s : list) {
-
-			if (!s.getStatus().equals(currentStatus)) {
-				currentStatus = s.getStatus();
-				System.out.println("\n[" + currentStatus + "]");
-			}
-
-			System.out.println(
-				s.getTitle()
-				+ " | Tickets Booked: " + s.getBookedTickets()
-				+ " out of " + s.getTotalTickets()
-			);
-		}
-	}
 
 	/* ===================== NOTIFICATIONS ===================== */
 
@@ -370,16 +274,16 @@ public class OrganizerMenu extends BaseMenu {
 					)
 					.toList();
 
-				MenuHelper.printEventSummaries(filteredEvents);
+				PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
 
 				int eventChoice =
 					MenuHelper.selectFromList(filteredEvents.size(), "Select an event");
-				Event selectedEvent = events.get(eventChoice - 1);
+				Event selectedEvent = filteredEvents.get(eventChoice - 1);
 
 				String msg =
 					InputValidationUtil.readString(
 						ScannerUtil.getScanner(),
-						"Message:\n"
+						"Enter the message to be send to all registered users:\n"
 					);
 
 				if (choice == 1) {
@@ -398,6 +302,41 @@ public class OrganizerMenu extends BaseMenu {
 
 			default:
 				System.out.println("Invalid choice. Please try again.");
+			}
+		}
+	}
+	
+	/* ===================== OFFER MANAGEMENT ===================== */
+	private void offerManagementMenu() {
+
+		while (true) {
+			System.out.println("\nOffer management\n" + "1 Create offer\n" + "2 View my offers\n" + "3 Activate offer\n"
+					+ "4 Deactivate offer\n" + "5 Back\n" + "Choice:");
+
+			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
+
+			switch (choice) {
+				case 1: {
+					offerManagementAction.createOffer(loggedInUser.getUserId());
+					break;
+				}
+				case 2: {
+				    offerManagementAction.viewAllOffers(loggedInUser.getUserId());
+				    break;
+				}
+				case 3: {
+				    offerManagementAction.activateOffer(loggedInUser.getUserId());
+				    break;
+				}
+				case 4: {
+				    offerManagementAction.deactivateOffer(loggedInUser.getUserId());
+				    break;
+				}
+				case 5:{
+					return;
+				}default:
+					System.out.println("Invalid choice. Please try again.");
+				
 			}
 		}
 	}

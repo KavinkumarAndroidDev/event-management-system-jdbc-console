@@ -45,17 +45,6 @@ public interface OfferDao {
     Map<String, Integer> getOfferUsageReport() throws DataAccessException;
 
     /**
-     * Records usage of an offer for a registration
-     *
-     * @param offerId
-     * @param userId
-     * @param registrationId
-     * @throws DataAccessException
-     */
-    void recordOfferUsage(int offerId, int userId, int registrationId)
-            throws DataAccessException;
-
-    /**
      * Checks whether a user has already used an offer
      *
      * @param userId

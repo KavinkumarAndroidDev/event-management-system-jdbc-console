@@ -106,4 +106,13 @@ public interface UserDao {
      * @throws DataAccessException
      */
     void resetFailedAttempts(int userId) throws DataAccessException;
+    
+    /**
+     * update the user details
+     * 
+     * @param user
+     * @return true is user updated
+     * @throws DataAccessException
+     */
+    boolean updateUser(User user) throws DataAccessException;
 }

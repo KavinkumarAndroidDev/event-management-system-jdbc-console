@@ -11,6 +11,7 @@ import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminEventManagementAction {
@@ -28,7 +29,7 @@ public class AdminEventManagementAction {
 		if (events.isEmpty()) {
 			System.out.println("No events available at the moment.");
 		} else {
-			AdminMenuHelper.printAllEventsWithStatus(events);
+			PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
 		}
     }
     
@@ -49,7 +50,7 @@ public class AdminEventManagementAction {
 			return;
 		}
 
-		AdminMenuHelper.printAllEventsWithStatus(filteredEvents);
+		PaginationUtil.paginate(filteredEvents, AdminMenuHelper::printAllEventsWithStatus);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + filteredEvents.size() + "): ");
@@ -94,7 +95,7 @@ public class AdminEventManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eventChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event to approve (1-" + events.size() + "): ");
@@ -133,7 +134,7 @@ public class AdminEventManagementAction {
 			return;
 		}
 
-		MenuHelper.printEventSummaries(events);
+		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
 		int eventChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event to cancel (1-" + events.size() + "): ");
@@ -172,7 +173,7 @@ public class AdminEventManagementAction {
 			return null;
 		}
 
-		AdminMenuHelper.printAllEventsWithStatus(events);
+		PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
 
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select an event (1-" + events.size() + "): ");
@@ -190,7 +191,7 @@ public class AdminEventManagementAction {
 		if (events.isEmpty()) {
 			System.out.println("No events available at the moment.");
 		} else {
-			AdminMenuHelper.printAllEventsWithStatus(events);
+			PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
 		}
 	}
 

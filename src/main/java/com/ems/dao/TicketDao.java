@@ -25,14 +25,6 @@ public interface TicketDao {
      */
     List<Ticket> getTicketTypes(int eventId) throws DataAccessException;
 
-    /**
-     * Retrieves ticket details by ticket id
-     *
-     * @param ticketId
-     * @return ticket details or null if not found
-     * @throws DataAccessException
-     */
-    Ticket getTicketById(int ticketId) throws DataAccessException;
 
     /**
      * Updates available quantity of a ticket

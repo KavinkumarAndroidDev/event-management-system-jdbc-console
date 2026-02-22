@@ -10,6 +10,7 @@ import com.ems.util.ApplicationUtil;
 import com.ems.util.DateTimeUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 /**
@@ -64,7 +65,7 @@ public class FeedbackAction {
 	        return;
 	    }
 	
-	    MenuHelper.printEventsList(past);
+	    PaginationUtil.paginate(past, MenuHelper::printEventsList);
 	
 	    int choice = MenuHelper.selectFromList(
 	        past.size(),

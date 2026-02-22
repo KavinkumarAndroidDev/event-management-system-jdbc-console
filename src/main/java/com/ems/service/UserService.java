@@ -25,4 +25,6 @@ public interface UserService {
 
     // role
     UserRole getRole(User user);
+    
+    boolean updateUserProfile(User user);
 }

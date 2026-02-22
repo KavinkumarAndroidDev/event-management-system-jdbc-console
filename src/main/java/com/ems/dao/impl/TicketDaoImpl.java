@@ -95,35 +95,7 @@ public class TicketDaoImpl implements TicketDao {
 		
 		return tickets;
 	}
-	
-	@Override
-	public Ticket getTicketById(int ticketId) throws DataAccessException {
-		String sql = "select * from tickets where ticket_id = ?";
-		
-		try (Connection con = DBConnectionUtil.getConnection();
-				PreparedStatement ps = con.prepareStatement(sql)) {
-			
-			ps.setInt(1, ticketId);
-			
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					Ticket ticket = new Ticket();
-					ticket.setTicketId(rs.getInt("ticket_id"));
-					ticket.setEventId(rs.getInt("event_id"));
-					ticket.setTicketType(rs.getString("ticket_type"));
-					ticket.setPrice(rs.getDouble("price"));
-					ticket.setTotalQuantity(rs.getInt("total_quantity"));
-					ticket.setAvailableQuantity(rs.getInt("available_quantity"));
-					return ticket;
-				}
-			}
-			
-		} catch (SQLException e) {
-			throw new DataAccessException("Error fetching ticket by ID");
-		}
-		
-		throw new DataAccessException("Ticket not found!");
-	}
+
 	
 	@Override
 	public boolean updateAvailableQuantity(int ticketId, int quantity)

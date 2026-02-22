@@ -177,5 +177,16 @@ public class UserServiceImpl implements UserService {
 		}
 		return false;
 	}
+	
+	
+	@Override
+	public boolean updateUserProfile(User user) {
+	    try {
+	        return userDao.updateUser(user);
+	    } catch (DataAccessException e) {
+	        System.out.println(e.getMessage());
+	    }
+	    return false;
+	}
 
 }

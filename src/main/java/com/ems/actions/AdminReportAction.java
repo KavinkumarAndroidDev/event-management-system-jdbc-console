@@ -13,60 +13,70 @@ import com.ems.service.EventService;
 import com.ems.service.OrganizerService;
 import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
-import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
-import com.ems.util.ScannerUtil;
 
 public class AdminReportAction {
+
     private final AdminService adminService;
     private final EventService eventService;
     private final OrganizerService organizerService;
-    
+
     public AdminReportAction() {
-        this.adminService = ApplicationUtil.adminService();
-        this.eventService = ApplicationUtil.eventService();
+        this.adminService    = ApplicationUtil.adminService();
+        this.eventService    = ApplicationUtil.eventService();
         this.organizerService = ApplicationUtil.organizerService();
     }
-    
-    
-    public void viewEventWiseRegistrations(){
-    	List<Event> events = eventService.getAllEvents();
-    	if(events.isEmpty()) {
-    		System.out.println("No events available at the moment");
-    		return;
-    	}
-    	AdminMenuHelper.printAllEventsWithStatus(events);
-    	int selectedChoice = MenuHelper.selectFromList(events.size(), "Select an event");
-    	Event selectedEvent = events.get(selectedChoice - 1);
-		if (selectedEvent == null)
-			return;
 
-		List<EventRegistrationReport> reports = getEventWiseRegistrations(selectedEvent.getEventId());
-		AdminMenuHelper.printEventRegistrationReport(reports);
+    public void viewEventWiseRegistrations() {
+        List<Event> events = eventService.getAllEvents();
+
+        if (events.isEmpty()) {
+            System.out.println("No events available at the moment.");
+            return;
+        }
+
+        PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
+
+        int selectedChoice = MenuHelper.selectFromList(events.size(), "Select an event");
+        Event selectedEvent = events.get(selectedChoice - 1);
+
+        List<EventRegistrationReport> reports = getEventWiseRegistrations(selectedEvent.getEventId());
+        PaginationUtil.paginate(reports, AdminMenuHelper::printEventRegistrationReport);
     }
-    
+
     public void viewOrganizerReport() {
-    	List<User> user = adminService.getUsersList(UserRole.ORGANIZER.toString());
-		MenuHelper.displayUsers(user);
-		int organizerChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the valid choice (1 - " + user.size() +"): ");
-		while(organizerChoice < 1 || organizerChoice > user.size()) {
-			organizerChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the valid choice (1 - " + user.size() +"): ");
-		}
-		List<OrganizerEventSummary> list =
-	            getOrganizerEventSummary(user.get(organizerChoice - 1).getUserId());
+        List<User> users = adminService.getUsersList(UserRole.ORGANIZER.toString());
 
-	    if (list.isEmpty()) {
-	        System.out.println("No event conducted by the organizer!");
-	        return;
-	    }
+        if (users.isEmpty()) {
+            System.out.println("No organizers found.");
+            return;
+        }
 
-//	    AdminMenuHelper.printOrganizerEventSummary(list);
-	    PaginationUtil.paginate(list, AdminMenuHelper::printOrganizerEventSummary);
+        PaginationUtil.paginate(users, MenuHelper::displayUsers);
 
+        int organizerChoice = MenuHelper.selectFromList(users.size(), "Select an organizer");
+        List<OrganizerEventSummary> summary =
+                getOrganizerEventSummary(users.get(organizerChoice - 1).getUserId());
+
+        if (summary.isEmpty()) {
+            System.out.println("No events conducted by this organizer.");
+            return;
+        }
+
+        PaginationUtil.paginate(summary, AdminMenuHelper::printOrganizerEventSummary);
     }
-    
-    public List<EventRegistrationReport>  getEventWiseRegistrations(int eventId) {
+
+    public void viewRevenueReport() {
+        List<EventRevenueReport> reports = getRevenueReport();
+        AdminMenuHelper.printEventRevenueReport(reports);
+    }
+
+    // -----------------------------------------------------------------------
+    // Data access helpers
+    // -----------------------------------------------------------------------
+
+    public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) {
         return adminService.getEventWiseRegistrations(eventId);
     }
 
@@ -77,13 +87,4 @@ public class AdminReportAction {
     public List<EventRevenueReport> getRevenueReport() {
         return adminService.getRevenueReport();
     }
-
-
-    public void viewRevenueReport() {
-
-        List<EventRevenueReport> reports = getRevenueReport();
-
-        AdminMenuHelper.printEventRevenueReport(reports);
-    }
-
 }

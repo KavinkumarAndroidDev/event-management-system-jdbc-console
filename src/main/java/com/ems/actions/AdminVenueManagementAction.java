@@ -10,6 +10,7 @@ import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
 
 public class AdminVenueManagementAction {
@@ -252,7 +253,7 @@ public class AdminVenueManagementAction {
 		if (events.isEmpty()) {
 			System.out.println("No events for this venue");
 		} else {
-			MenuHelper.printEventSummaries(events);
+			PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 		}
     }
 
@@ -262,7 +263,7 @@ public class AdminVenueManagementAction {
 		if (venues.isEmpty()) {
 			System.out.println("No venues found.");
 		} else {
-			AdminMenuHelper.printVenues(venues);
+			PaginationUtil.paginate(venues, AdminMenuHelper::printVenues);
 		}
 	}
 	
@@ -275,7 +276,7 @@ public class AdminVenueManagementAction {
 			return null;
 		}
 
-		AdminMenuHelper.printVenues(venues);
+		PaginationUtil.paginate(venues, AdminMenuHelper::printVenues);
 		
 		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
 				"Select a venue (1-" + venues.size() + "): ");

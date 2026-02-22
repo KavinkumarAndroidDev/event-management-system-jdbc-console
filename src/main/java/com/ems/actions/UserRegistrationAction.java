@@ -7,15 +7,15 @@ import com.ems.model.UserEventRegistration;
 import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.MenuHelper;
+import com.ems.util.PaginationUtil;
 
 /*
  * Handles viewing of user registration history and booking details.
  */
 public class UserRegistrationAction {
 
-    
     private final EventService eventService;
-    
+
     public UserRegistrationAction() {
         this.eventService = ApplicationUtil.eventService();
     }
@@ -33,7 +33,9 @@ public class UserRegistrationAction {
             return;
         }
 
-        MenuHelper.printEventsList(upcoming);
+        // printEventsList is display-only here; lambda discards startIndex
+        PaginationUtil.paginate(upcoming,
+                (page, i) -> MenuHelper.printEventsList(page));
     }
 
     /**
@@ -49,7 +51,9 @@ public class UserRegistrationAction {
             return;
         }
 
-        MenuHelper.printEventsList(past);
+        // printEventsList is display-only here; lambda discards startIndex
+        PaginationUtil.paginate(past,
+                (page, i) -> MenuHelper.printEventsList(page));
     }
 
     /**
@@ -65,7 +69,9 @@ public class UserRegistrationAction {
             return;
         }
 
-        MenuHelper.printBookingDetails(bookingDetails);
+        // printBookingDetails is display-only; lambda discards startIndex
+        PaginationUtil.paginate(bookingDetails,
+                (page, i) -> MenuHelper.printBookingDetails(page));
     }
 
     /* ===================== DATA RETRIEVAL METHODS ===================== */

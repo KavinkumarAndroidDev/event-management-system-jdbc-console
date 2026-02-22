@@ -197,4 +197,14 @@ public interface EventDao {
      * @throws DataAccessException
      */
 	boolean updateEventSchedule(int eventId, Instant start, Instant end) throws DataAccessException;
+	
+	/**
+	 * Returns revenue report of organizer events grouped by event
+	 * 
+	 * @param organizerId
+	 * @return list of event revenue report
+	 * @throws DataAccessException
+	 */
+	List<EventRevenueReport> getEventWiseRevenueReportByOrganizer(int organizerId)
+	        throws DataAccessException;
 }

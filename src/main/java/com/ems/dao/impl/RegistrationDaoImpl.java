@@ -5,12 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.ems.dao.RegistrationDao;
-import com.ems.enums.PaymentStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.EventRegistrationReport;
 import com.ems.model.Registration;
@@ -118,92 +115,6 @@ public class RegistrationDaoImpl implements RegistrationDao {
             return rs.next() ? rs.getInt(1) : 0;
         } catch (Exception e) {
 	        throw new DataAccessException("Unable to fetch registered count");
-	    }
-    }
-	
-	@Override
-    public List<Map<String, Object>> getRegisteredUsers(int eventId) throws DataAccessException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "select u.user_id,u.full_name,u.email from users u join registrations r on u.user_id=r.user_id where r.event_id=?";
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, eventId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Map<String, Object> m = new HashMap<>();
-                m.put("userId", rs.getInt("user_id"));
-                m.put("name", rs.getString("full_name"));
-                m.put("email", rs.getString("email"));
-                list.add(m);
-            }
-        } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch registered users");
-	    }
-        return list;
-    }
-	
-	@Override
-	public List<Map<String, Object>> getOrganizerWiseRegistrations(int organizerId)
-	        throws DataAccessException {
-	    // Aggregates registrations per event for organizer dashboard
-
-        List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "select e.title,count(r.registration_id) total from events e left join registrations r \r\n"
-        		+ "  on e.event_id = r.event_id "
-        		+ " and r.status = 'CONFIRMED' "
-        		+ " where e.organizer_id=? group by e.event_id";
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, organizerId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Map<String, Object> m = new HashMap<>();
-                m.put("event", rs.getString("title"));
-                m.put("count", rs.getInt("total"));
-                list.add(m);
-            }
-        } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch organizer wise registrations");
-	    }
-        return list;
-    }
-	
-	@Override
-    public List<Map<String, Object>> getTicketSales(int organizerId) throws DataAccessException {
-        List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "select t.ticket_type,sum(rt.quantity) sold from tickets t join registration_tickets rt on t.ticket_id=rt.ticket_id join events e on e.event_id=t.event_id where e.organizer_id=? group by t.ticket_id";
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, organizerId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Map<String, Object> m = new HashMap<>();
-                m.put("ticketType", rs.getString("ticket_type"));
-                m.put("sold", rs.getInt("sold"));
-                list.add(m);
-            }
-        } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch ticket sales");
-	    }
-        return list;
-    }
-	@Override
-    public double getRevenueSummary(int organizerId) throws DataAccessException {
-        String sql = "select sum(p.amount) from payments p join registrations "
-        		+ "r on p.registration_id=r.registration_id join events e "
-        		+ "on e.event_id=r.event_id where e.organizer_id=? and p.payment_status = ?";
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, organizerId);
-            ps.setString(2, PaymentStatus.SUCCESS.toString());
-            ResultSet rs = ps.executeQuery();
-            return rs.next() ? rs.getDouble(1) : 0;
-        } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch revenue summary");
 	    }
     }
 
