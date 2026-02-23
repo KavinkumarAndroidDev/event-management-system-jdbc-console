@@ -86,7 +86,10 @@ public class OrganizerMenu extends BaseMenu {
 				offerManagementMenu();
 				break;
 			case 7:
-				userAction.updateProfile(loggedInUser);
+				boolean updated = userAction.updateProfile(loggedInUser);
+				if(updated) {
+					return;
+				}
 				break;
 			case 8:
 				if (confirmLogout()) {

@@ -94,7 +94,7 @@ public class NotificationServiceImpl implements NotificationService {
             PaginationUtil.paginate(notifications,
                     (page, i) -> MenuHelper.displayNotifications(page));
 
-            if (notifications != null && !notifications.isEmpty()) {
+            if (!notifications.isEmpty()) {
                 notificationDao.markAllAsRead(userId);
             }
         } catch (DataAccessException e) {

@@ -57,7 +57,7 @@ public class EventServiceImpl implements EventService {
     public List<Ticket> getTicketTypes(int eventId) {
         try {
             List<Ticket> tickets = ticketDao.getTicketTypes(eventId);
-            return tickets != null ? tickets : new ArrayList<>();
+            return tickets;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "TICKET", eventId, "Failed to get ticket types: " + e.getMessage());
             return new ArrayList<>();
@@ -77,14 +77,14 @@ public class EventServiceImpl implements EventService {
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
             
-            if (allEvents == null || allEvents.isEmpty()) {
+            if (allEvents.isEmpty()) {
                 return new ArrayList<>();
             }
 
             return allEvents.stream().filter(event -> {
                 try {
                     List<Ticket> tickets = ticketDao.getTicketTypes(event.getEventId());
-                    if (tickets == null || tickets.isEmpty()) {
+                    if (tickets.isEmpty()) {
                         return false;
                     }
                     return tickets.stream()
@@ -115,10 +115,6 @@ public class EventServiceImpl implements EventService {
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
             
-            if (allEvents == null) {
-                return new ArrayList<>();
-            }
-            
             return allEvents.stream()
                 .filter(e -> e.getVenueId() == venueId)
                 .collect(Collectors.toList());
@@ -137,10 +133,6 @@ public class EventServiceImpl implements EventService {
 
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
-            
-            if (allEvents == null) {
-                return new ArrayList<>();
-            }
             
             return allEvents.stream()
                 .filter(e -> e.getStartDateTime() != null &&
@@ -165,10 +157,6 @@ public class EventServiceImpl implements EventService {
 
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
-            
-            if (allEvents == null) {
-                return new ArrayList<>();
-            }
 
             return allEvents.stream().filter(e -> {
                 if (e.getStartDateTime() == null) {
@@ -187,12 +175,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> searchBycategory(int selectedCategoryId) {
         try {
-            List<Event> allEvents = eventDao.listAvailableEvents();
-            
-            if (allEvents == null) {
-                return new ArrayList<>();
-            }
-            
+            List<Event> allEvents = eventDao.listAvailableEvents();            
             return allEvents.stream()
                 .filter(e -> e.getCategoryId() == selectedCategoryId)
                 .collect(Collectors.toList());
@@ -243,11 +226,6 @@ public class EventServiceImpl implements EventService {
     public List<UserEventRegistration> viewUpcomingEvents(int userId) {
         try {
             List<UserEventRegistration> registrations = eventDao.getUserRegistrations(userId);
-            
-            if (registrations == null) {
-                return new ArrayList<>();
-            }
-            
 
             return registrations.stream()
                 .filter(r -> r.getStartDateTime() != null &&
@@ -266,11 +244,6 @@ public class EventServiceImpl implements EventService {
     public List<UserEventRegistration> viewPastEvents(int userId) {
         try {
             List<UserEventRegistration> registrations = eventDao.getUserRegistrations(userId);
-            
-            if (registrations == null) {
-                return new ArrayList<>();
-            }
-         
             return registrations.stream()
             	    .filter(r -> r.getEndDateTime() != null
             	            && r.getEndDateTime().isBefore(DateTimeUtil.nowUtc()))
@@ -286,7 +259,7 @@ public class EventServiceImpl implements EventService {
     public List<BookingDetail> viewBookingDetails(int userId) {
         try {
             List<BookingDetail> bookings = eventDao.viewBookingDetails(userId);
-            return bookings != null ? bookings : new ArrayList<>();
+            return bookings;
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "BOOKING", 0,
                 "Failed to get booking details: " + e.getMessage());
@@ -327,7 +300,7 @@ public class EventServiceImpl implements EventService {
     public List<Event> getAllEvents() {
         try {
             List<Event> events = eventDao.listAllEvents();
-            return events != null ? events : new ArrayList<>();
+            return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
                 "Failed to get all events: " + e.getMessage());
@@ -361,7 +334,7 @@ public class EventServiceImpl implements EventService {
     public String getVenueName(int venueId) {
         try {
             String name = venueDao.getVenueName(venueId);
-            return name != null ? name : "";
+            return name;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
                 "Failed to get venue name: " + e.getMessage());
@@ -373,7 +346,7 @@ public class EventServiceImpl implements EventService {
     public String getVenueAddress(int venueId) {
         try {
             String address = venueDao.getVenueAddress(venueId);
-            return address != null ? address : "";
+            return address;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
                 "Failed to get venue address: " + e.getMessage());
@@ -385,7 +358,7 @@ public class EventServiceImpl implements EventService {
     public List<Category> getAllCategory() {
         try {
             List<Category> categories = categoryDao.getActiveCategories();
-            return categories != null ? categories : new ArrayList<>();
+            return categories;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "CATEGORY", 0,
                 "Failed to get categories: " + e.getMessage());
@@ -396,12 +369,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public Map<Integer, String> getAllCities() {
         try {
-            Map<Integer, String> cities = venueDao.getAllCities();
-            
-            if (cities == null) {
-                return new LinkedHashMap<>();
-            }
-            
+            Map<Integer, String> cities = venueDao.getAllCities();            
             if (!(cities instanceof LinkedHashMap)) {
                 Map<Integer, String> sortedCities = new LinkedHashMap<>();
                 cities.entrySet().stream()
@@ -423,7 +391,7 @@ public class EventServiceImpl implements EventService {
     public List<Event> listAvailableEvents() {
         try {
             List<Event> events = eventDao.listAvailableEvents();
-            return events != null ? events : new ArrayList<>();
+            return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
                 "Failed to list available events: " + e.getMessage());
@@ -435,7 +403,7 @@ public class EventServiceImpl implements EventService {
     public List<Venue> getActiveVenues() {
         try {
             List<Venue> venues = venueDao.getActiveVenues();
-            return venues != null ? venues : new ArrayList<>();
+            return venues;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", 0,
                 "Failed to get all venues: " + e.getMessage());
@@ -447,7 +415,7 @@ public class EventServiceImpl implements EventService {
     public List<Venue> getAllVenues() {
         try {
             List<Venue> venues = venueDao.getAllVenues();
-            return venues != null ? venues : new ArrayList<>();
+            return venues;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", 0,
                 "Failed to get all venues: " + e.getMessage());
@@ -488,7 +456,7 @@ public class EventServiceImpl implements EventService {
     public List<Event> listEventsYetToApprove() {
         try {
             List<Event> events = eventDao.listEventsYetToApprove();
-            return events != null ? events : new ArrayList<>();
+            return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
                 "Failed to list pending events: " + e.getMessage());
@@ -500,7 +468,7 @@ public class EventServiceImpl implements EventService {
     public List<Event> listAvailableAndDraftEvents() {
         try {
             List<Event> events = eventDao.listAvailableAndDraftEvents();
-            return events != null ? events : new ArrayList<>();
+            return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
                 "Failed to list available and draft events: " + e.getMessage());
@@ -535,10 +503,8 @@ public class EventServiceImpl implements EventService {
 
             List<RegistrationTicket> tickets = registrationDao.getRegistrationTickets(registrationId);
             
-            if (tickets != null) {
-                for (RegistrationTicket rt : tickets) {
-                    ticketDao.updateAvailableQuantity(rt.getTicketId(), rt.getQuantity());
-                }
+            for (RegistrationTicket rt : tickets) {
+                ticketDao.updateAvailableQuantity(rt.getTicketId(), rt.getQuantity());
             }
 
             paymentDao.updatePaymentStatus(registrationId);

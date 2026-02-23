@@ -25,7 +25,7 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public Category getCategory(int categoryId) throws DataAccessException {
         // Fetch a single active category by id
-        String sql = "select category_id, name from categories where category_id=? and is_active = 1";
+        String sql = "select category_id, name from categories where category_id=?";
 
         try (Connection con = DBConnectionUtil.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

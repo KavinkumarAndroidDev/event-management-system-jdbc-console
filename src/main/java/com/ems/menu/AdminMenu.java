@@ -113,7 +113,10 @@ public class AdminMenu extends BaseMenu {
 				roleManagementMenu();
 				break;
 			case 12:
-				userAction.updateProfile(loggedInUser);
+				boolean updated = userAction.updateProfile(loggedInUser);
+				if(updated) {
+					return;
+				}
 				break;
 			case 13:
 				systemLogAction.printAllLogs();

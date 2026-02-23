@@ -81,7 +81,10 @@ public class UserMenu extends BaseMenu {
                 feedbackMenu();
                 break;
             case 6:
-            	userAction.updateProfile(loggedInUser);
+            	boolean updated = userAction.updateProfile(loggedInUser);
+				if(updated) {
+					return;
+				}
 				break;
             case 7:
                 if (confirmLogout()) {

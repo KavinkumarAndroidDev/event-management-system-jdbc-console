@@ -59,7 +59,7 @@ public class UserAction {
 		    if (fullName.length()<2 ||fullName.length() >= 30) {
 		        System.out.println("Error: Name must be minimum of 2 characters and a maximum of 30 characters.");
 		    }
-		} while (fullName.length() >= 30);
+		} while (fullName.length() >= 30 || fullName.length()<2);
 
 	
 	    String email;
@@ -71,6 +71,7 @@ public class UserAction {
 
 	        if (email.length() > 100) {
 	        	System.out.println("Error: Email too long. Database limit is 100 characters.");
+	        	continue;
 	        	} 
 	        if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
 	            System.out.println("Invalid email format.\nExample: name@company.com");
@@ -143,7 +144,7 @@ public class UserAction {
 	    }
 	}
 	
-	public void updateProfile(User loggedInUser){
+	public boolean updateProfile(User loggedInUser){
 	
 	    System.out.println("\nUpdate Profile");
 	    System.out.println("Press Enter to keep current value.\n");
@@ -158,13 +159,13 @@ public class UserAction {
 	            ScannerUtil.getScanner(),
 	            "Full Name (" + fullName + "): "
 	    );
-	
+	    
 	    if (newName != null && !newName.trim().isEmpty()) {
 	
-	        while (newName.length() >= 30) {
+	        while (newName.length() >= 30 || newName.length()<2) {
 	            newName = InputValidationUtil.readString(
 	                    ScannerUtil.getScanner(),
-	                    "Name must be under 30 characters: "
+	                    "Name must be minimum of 2 characters and a maximum of 30 characters: "
 	            );
 	        }
 	
@@ -181,17 +182,27 @@ public class UserAction {
 	    );
 	
 	    if (newPhone != null && !newPhone.trim().isEmpty()) {
-	
-	        newPhone = newPhone.replaceAll("\\D", "");
-	
-	        while (!newPhone.matches("^[6-9][0-9]{9}$")) {
+
+	        while (true) {
+
+	            newPhone = newPhone.trim();
+
+	            if (newPhone.isEmpty()) {
+	                break; // user changed mind, keep old phone
+	            }
+
+	            String sanitized = newPhone.replaceAll("\\D", "");
+
+	            if (sanitized.matches("^[6-9][0-9]{9}$")) {
+	                phone = sanitized;
+	                break;
+	            }
+
 	            newPhone = InputValidationUtil.readString(
 	                    ScannerUtil.getScanner(),
-	                    "Enter valid 10-digit phone starting with 6-9: "
-	            ).replaceAll("\\D", "");
+	                    "Enter valid 10-digit phone starting with 6-9 (or press Enter to cancel): "
+	            );
 	        }
-	
-	        phone = newPhone;
 	    }
 
 	    /* ================= PASSWORD ================= */
@@ -231,6 +242,15 @@ public class UserAction {
 	            }
 	        }
 	    }	
+	    boolean isChanged = 
+	            !fullName.equals(loggedInUser.getFullName()) ||
+	            !java.util.Objects.equals(phone, loggedInUser.getPhone()) ||
+	            !passwordHash.equals(loggedInUser.getPasswordHash());
+
+	    if (!isChanged) {
+	        System.out.println("\nNo changes detected. Profile not updated.\n");
+	        return false;
+	    }
 	    /* ================= CREATE NEW USER OBJECT ================= */
 	
 	    User updatedUser = new User(
@@ -253,11 +273,12 @@ public class UserAction {
 	    boolean updated = userService.updateUserProfile(updatedUser);
 	
 	    if (updated) {
-	        System.out.println("\nProfile updated successfully.\n");
-	        loggedInUser = updatedUser;
+	        System.out.println("\nProfile updated successfully. \n");
+	        System.out.println("For security reasons, please log in again.\n");
 	    } else {
 	        System.out.println("\nProfile update failed.\n");
 	    }
+		return updated;
 	}
 	
     public boolean userExists(String email) {

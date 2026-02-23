@@ -18,17 +18,15 @@ public final class InputValidationUtil {
 	private InputValidationUtil() {
 		
 	}
+    
     public static int readInt(Scanner scanner, String message) {
         while (true) {
             System.out.print(message);
-            if (scanner.hasNextInt()) {
-                int value = scanner.nextInt();
-                scanner.nextLine();
-                
-                return value;
-            } else {
+            String input = scanner.nextLine().trim();
+            try {
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter an integer.");
-                scanner.nextLine();
             }
         }
     }

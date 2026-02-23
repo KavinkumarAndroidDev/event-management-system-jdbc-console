@@ -196,12 +196,12 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	                tickets.add(rt);
 	            }
 	        }
+	        return tickets;
 
 	    } catch (SQLException e) {
 	        throw new DataAccessException("Error fetching registration tickets");
 	    }
-
-	    return tickets;
+	    
 	}
 
 

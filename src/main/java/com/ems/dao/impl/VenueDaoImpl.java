@@ -45,7 +45,7 @@ public class VenueDaoImpl implements VenueDao {
         } catch (SQLException e) {
             throw new DataAccessException("Error fetching venue name");
         }
-        return null;
+        throw new DataAccessException("No venue found!");
     }
 
     @Override
@@ -67,7 +67,7 @@ public class VenueDaoImpl implements VenueDao {
         } catch (SQLException e) {
             throw new DataAccessException("Error fetching venue address");
         }
-        return null;
+        throw new DataAccessException("No venue found!");
     }
 
     @Override

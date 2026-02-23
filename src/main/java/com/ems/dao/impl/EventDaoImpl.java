@@ -53,7 +53,7 @@ public class EventDaoImpl implements EventDao {
 			events = getEventList(rs);
 			rs.close();
 		} catch (SQLException e) {
-			throw new DataAccessException("Error while fetching available events");
+			throw new DataAccessException("Error while fetching available events", e);
 		}
 		return events;
 	}
