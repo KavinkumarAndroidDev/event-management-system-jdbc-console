@@ -15,13 +15,14 @@ import com.ems.model.SystemLog;
 import com.ems.model.Ticket;
 import com.ems.model.Venue;
 import com.ems.service.EventService;
+import com.ems.exception.DataAccessException;
 
 public class AdminMenuHelper {
 
     private static final EventService eventService = ApplicationUtil.eventService();
 
-    private static final int TABLE_WIDTH    = 110;
-    private static final String SEPARATOR    = "=".repeat(TABLE_WIDTH);
+    private static final int TABLE_WIDTH = 110;
+    private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
     private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
 
     // -----------------------------------------------------------------------
@@ -38,7 +39,8 @@ public class AdminMenuHelper {
     }
 
     /**
-     * Prints events in a formatted table with numbering starting from the given index.
+     * Prints events in a formatted table with numbering starting from the given
+     * index.
      *
      * @param events     list of events to display
      * @param startIndex number to use for the first row
@@ -57,16 +59,21 @@ public class AdminMenuHelper {
 
         int index = startIndex;
         for (Event event : events) {
-            String category = eventService.getCategory(event.getCategoryId()).getName();
-            int available   = eventService.getAvailableTickets(event.getEventId());
+            try {
+                String category = eventService.getCategory(event.getCategoryId()).getName();
+                int available = eventService.getAvailableTickets(event.getEventId());
 
-            System.out.printf("%-5d %-30s %-20s %-20s %-10d %-10s%n",
-                    index++,
-                    truncate(event.getTitle(), 29),
-                    category,
-                    DateTimeUtil.formatForDisplay(event.getStartDateTime()),
-                    available,
-                    event.getStatus());
+                System.out.printf("%-5d %-30s %-20s %-20s %-10d %-10s%n",
+                        index++,
+                        truncate(event.getTitle(), 29),
+                        category,
+                        DateTimeUtil.formatForDisplay(event.getStartDateTime()),
+                        available,
+                        event.getStatus());
+            } catch (DataAccessException e) {
+                System.out.printf("%-5d %-30s %-50s%n", index++, truncate(event.getTitle(), 29),
+                        "[Error fetching details]");
+            }
         }
 
         System.out.println(SEPARATOR);
@@ -113,11 +120,11 @@ public class AdminMenuHelper {
      * @param tickets list of tickets
      */
     public static void printTicketCapacitySummary(List<Ticket> tickets) {
-        int total     = 0;
+        int total = 0;
         int available = 0;
 
         for (Ticket t : tickets) {
-            total     += t.getTotalQuantity();
+            total += t.getTotalQuantity();
             available += t.getAvailableQuantity();
         }
 
@@ -296,7 +303,8 @@ public class AdminMenuHelper {
 
     /**
      * Prints the offer usage report (offer code → times used).
-     * Map entries have no natural selection index; pagination offset is not applicable.
+     * Map entries have no natural selection index; pagination offset is not
+     * applicable.
      *
      * @param report map of offer code to usage count
      */
@@ -352,14 +360,18 @@ public class AdminMenuHelper {
         int index = startIndex;
         for (Offer o : offers) {
             String discount = o.getDiscountPercentage() != null
-                    ? o.getDiscountPercentage() + "%" : "NA";
+                    ? o.getDiscountPercentage() + "%"
+                    : "NA";
 
             String status;
             if (o.getValidFrom() != null && o.getValidTo() != null) {
                 Instant now = DateTimeUtil.nowUtc();
-                if (now.isBefore(o.getValidFrom()))       status = "UPCOMING";
-                else if (!now.isAfter(o.getValidTo()))    status = "ACTIVE";
-                else                                       status = "EXPIRED";
+                if (now.isBefore(o.getValidFrom()))
+                    status = "UPCOMING";
+                else if (!now.isAfter(o.getValidTo()))
+                    status = "ACTIVE";
+                else
+                    status = "EXPIRED";
             } else {
                 status = "UNKNOWN";
             }
@@ -379,7 +391,8 @@ public class AdminMenuHelper {
 
     /**
      * Prints the event-wise revenue report.
-     * Revenue totals are aggregated across the full list; pagination offset is not applicable.
+     * Revenue totals are aggregated across the full list; pagination offset is not
+     * applicable.
      *
      * @param reports list of event revenue reports
      */

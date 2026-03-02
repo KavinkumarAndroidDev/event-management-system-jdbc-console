@@ -1,113 +1,102 @@
 # Event Management System (EMS)
 
-A sophisticated, multi-tiered Java application designed for robust event orchestration. This project serves as a showcase for clean architecture, enterprise design patterns, and rigorous separation of concerns.
+A comprehensive, multi-tiered Java application designed for robust event orchestration, registration, and management. This project serves as a prime example of **Clean Architecture**, emphasizing a strict separation of concerns, scalable design patterns, and enterprise-grade exception handling.
 
 ---
 
-## �️ Architecture Overview
+## 🏗️ Architecture & Separation of Concerns
 
-The system is built on a **Modular Tiered Architecture**. Each tier is isolated and communicates only with adjacent tiers through well-defined interfaces.
+The system follows a **Modular Tiered Architecture**, ensuring that each layer has a single, well-defined responsibility. This decoupling makes the codebase maintainable, testable, and easy to extend.
 
-```mermaid
-graph TD
-    User((User/CLI)) --> Action[Action Layer]
-    Action --> Service[Service Layer]
-    Service --> DAO[DAO Layer]
-    DAO --> DB[(MySQL Database)]
-    
-    subgraph "Application Core"
-        Action
-        Service
-        DAO
-    end
-    
-    subgraph "Support"
-        Util[Utilities]
-        Models[Models/POJOs]
-        Enums[Enums]
-    end
-    
-    Action -.-> Util
-    Service -.-> Models
-    DAO -.-> Enums
-```
+### 🧱 The 3-Tier Layered Approach
 
-### 🧱 Separation of Concerns
-
-| Layer | Responsibility | Key Components |
+| Layer | Responsibility | Interaction Flow |
 | :--- | :--- | :--- |
-| **Action** | Flow Control & Input Validation | `AdminUserManagementAction`, `EventBrowsingAction` |
-| **Service** | Complex Business Logic & Rules | `EventServiceImpl`, `UserServiceImpl` |
-| **DAO** | Persistent Data Access (CRUD) | `UserDaoImpl`, `NotificationDaoImpl` |
-| **Model** | Data Transfer & Representation | `User`, `Event`, `Registration` |
-| **Util** | Cross-cutting Concerns | `DBConnectionUtil`, `DateTimeUtil`, `ApplicationUtil` |
+| **Action Layer** | **User Interaction & Flow Control**: Handles CLI menus, captures user input, and coordinates calls to the service layer. | `User` ↔ `Action` ↔ `Service` |
+| **Service Layer** | **Business Logic & Rules**: The "heart" of the application. Processes data, applies business rules (e.g., availability checks), and coordinates multiple DAO calls. | `Action` ↔ `Service` ↔ `DAO` |
+| **DAO Layer** | **Persistent Data Access**: Pure CRUD operations. Communicates directly with the MySQL database using JDBC. | `Service` ↔ `DAO` ↔ `Database` |
+
+### 🛠️ Core Components
+- **Models (POJOs)**: Plain Old Java Objects representing domain entities (User, Event, Ticket, etc.).
+- **Enums**: Strongly-typed constants for Statuses, Roles, and Types, ensuring data integrity across the stack.
+- **Utilities**: Cross-cutting concerns like Database connection, Date/Time formatting, and Input Validation.
 
 ---
 
-## 🛠️ Design Patterns & Coding Standards
+## 🧬 Design Patterns & Professional Standards
 
 ### 1. Data Access Object (DAO) Pattern
-Encapsulates all database-specific logic. By using interfaces (e.g., `UserDao`), the business logic remains decoupled from the underlying database implementation, allowing for seamless transitions between different storage solutions.
+Encapsulates all database-specific logic. By using interfaces (e.g., `EventDao`), business logic is insulated from the underlying database implementation, allowing for seamless shifts in storage technology.
 
-### 2. Service Layer Pattern
-Centralizes business rules. This prevents "Leaky Abstractions" where logic might traditionally spill into the UI or DB layers. Services coordinate multiple DAO calls within a single business operation.
+### 2. Service Layer Pattern (Thin DAO, Fat Service)
+We prioritize a "Thin DAO" approach where DAOs only execute queries, while the Service Layer handles the "Heavy Lifting" of business rules, validation, and complex data transformations.
 
-### 3. Singleton & Factory (via `ApplicationUtil`)
-The `ApplicationUtil` acts as a simplified **Dependency Injection (DI)** container. It ensures that DAO and Service instances are singletons, reducing memory overhead and maintaining a single source of truth for the application state.
+### 3. Singleton & Factory Pattern
+The `ApplicationUtil` acts as a simplified **Dependency Injection (DI)** container, ensuring that DAOs and Services are managed as Singletons. This reduces object overhead and provides a centralized registry for all core components.
 
 ### 4. Interface-Based Programming
-We "Program to an Interface, not an Implementation." This core OOP principle allows us to mock components during testing and ensures strict contracts between different modules.
+Strict adherence to "Program to an Interface, not an Implementation." This core OOP principle ensures flexibility and allows for mocking components during unit testing.
 
-### 5. Strongly Typed Enums
-To eliminate the "Magic String" anti-pattern, we use Enums (`UserStatus`, `RegistrationStatus`, `NotificationType`) throughout all layers. This guarantees type safety from the Database level up to the UI.
+### 5. Type-Safe Enum Logic
+Eliminates "Magic Strings." The system uses Enums for all status comparisons and role-based checks, preventing runtime errors caused by typos and ensuring consistency from the SQL schema to the Java UI.
+
+### 6. Centralized Exception Strategy
+The application employs a unified `DataAccessException` for all database-related failures.
+- **DAO**: Catches SQL exceptions and wraps them in a custom `DataAccessException`.
+- **Service**: Propagates exceptions or handles them if a business-level fallback exists.
+- **Action/Helper**: Provides graceful feedback to the user, ensuring the CLI never crashes due to unexpected DB states.
 
 ---
 
-## 📂 Detailed File Structure
+## 📂 Project Structure
 
 ```text
 src/main/java/com/ems/
-├── App.java                   # Main entry point; initializes menus
-├── actions/                   # Orchestrators; handle user-specific workflows
-├── dao/                       # Data Access interfaces (The "What")
-│   └── impl/                  # JDBC/SQL implementations (The "How")
-├── enums/                     # Domain constants (Status, Roles, Types)
-├── exception/                 # Business & Technical custom exceptions
-├── menu/                      # CLI navigation and rendering logic
-├── model/                     # Rich Domain Models (State-only POJOs)
+├── App.java                   # Application entry point & Main Menu
+├── actions/                   # Workflow orchestrators (Admin, Organizer, Attendee)
+├── dao/                       # Persistence interfaces
+│   └── impl/                  # JDBC-based implementations
+├── enums/                     # Type-safe constants (EventStatus, UserRole, etc.)
+├── exception/                 # Custom exception definitions
+├── menu/                      # Navigation and rendering logic
+├── model/                     # Domain Entities (Data holders)
 ├── service/                   # Business Logic definitions
-│   └── impl/                  # Core logic implementations
-└── util/                      # Reusable infrastructure code
+│   └── impl/                  # Business Rule implementations
+└── util/                      # Reusable utilities
+    ├── ApplicationUtil.java   # Singleton Registry (Service/DAO Factory)
+    ├── DBConnectionUtil.java  # Connection pooling/management
+    ├── PaginationUtil.java    # Robust, paginated data engine
+    └── ScannerUtil.java       # Centralized Input handling
 ```
 
 ---
 
-## � Key Implementation Details
+## 📏 Coding Standards & Best Practices
 
-### Database Integrity
-- **Stored Procedures**: High-criticality operations like `sp_register_for_event` are implemented as Stored Procedures to leverage database-level atomicity and prevent race conditions (overbooking).
-- **Relational Constraints**: Hard FK constraints across `users`, `events`, and `registrations` ensure data consistency even during manual interventions.
-
-### Security
-- **Password Hashing**: We utilize `BCrypt` (simulated in `PasswordUtil`) to ensure user credentials are never stored in plain text.
-- **Input Sanitization**: All CLI inputs pass through `InputValidationUtil` to prevent buffer overflows and malformed data entry.
+1.  **Naming Conventions**:
+    *   Classes: `PascalCase` (e.g., `AdminService`)
+    *   Methods/Variables: `camelCase` (e.g., `processPayment`)
+    *   Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRY_COUNT`)
+2.  **DRY (Don't Repeat Yourself)**: Reusable logic is extracted into static utilities or dedicated helper classes (e.g., `MenuHelper`).
+3.  **Input Integrity**: Every user input is validated via `InputValidationUtil` to prevent malformed data.
+4.  **Resource Management**: DB Connections and Scanners are handled carefully to prevent memory leaks.
+5.  **Refined Pagination**: Navigation through large datasets is managed by a centralized `PaginationUtil`, supporting flexible display formats via functional interfaces.
 
 ---
 
-## ⚙️ Setup & Development
+## 🚀 Setup & Execution
 
 ### Prerequisites
-- Java JDK 8+
-- MySQL Server 8.0+
-- JDBC Driver (MySQL Connector/J)
+- Java JDK 17+
+- MySQL Server 8.0
+- MySQL JDBC Driver
 
-### Installation
-1.  **Database**: Run `src/main/java/sql/schema.sql` to initialize the tables.
-2.  **Seed Data**: Run `src/main/java/sql/sample_data.sql` to populate 15+ events and test users.
-3.  **Connection**: Update `DBConnectionUtil.java` with your MySQL credentials.
-4.  **Run**: Execute `App.main()` to launch the CLI interface.
+### Installation Steps
+1.  **Database Setup**: Execute the scripts in `src/main/resources/sql/` (Schema first, then Sample Data).
+2.  **Configuration**: Update `DBConnectionUtil.java` with your MySQL environment credentials.
+3.  **Build & Run**: Run the `App.java` file from your IDE or use Maven to build the project.
 
 ---
 
-## 📈 Scalability
-The architecture is designed to be **Cloud-Ready**. The clean separation of the Service layer allows for a future migration from a CLI UI to a REST API or Web-based frontend without changing a single line of business logic or DAO code.
+## 📈 Future Readiness
+The architecture is designed for **Cloud-Scale adaptation**. By replacing the Action layer with a Spring Boot controller or a GraphQL API, this system can instantly migrate from a CLI application to a full-scale Web or Mobile backend without modifying a single line of business logic in the Service or DAO layers.

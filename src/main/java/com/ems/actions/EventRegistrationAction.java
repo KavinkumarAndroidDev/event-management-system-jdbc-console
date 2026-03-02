@@ -16,13 +16,13 @@ import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
+import com.ems.exception.DataAccessException;
 
 /*
  * Handles event registration and cancellation workflows.
  * Responsible for user interaction and validation only.
  */
 public class EventRegistrationAction {
-
 
     private final EventService eventService;
     private final OfferService offerService;
@@ -31,21 +31,24 @@ public class EventRegistrationAction {
         this.eventService = ApplicationUtil.eventService();
         this.offerService = ApplicationUtil.offerService();
     }
-
     /**
      * Initiates registration flow for available events.
      *
      * @param userId the ID of the user
      */
     public void registerForAvailableEvent(int userId) {
-        List<Event> events = eventService.listAvailableEvents();
+        try {
+            List<Event> events = eventService.listAvailableEvents();
 
-        if (events == null || events.isEmpty()) {
-            System.out.println("No events available for registration at the moment.");
-            return;
+            if (events == null || events.isEmpty()) {
+                System.out.println("No events available for registration at the moment.");
+                return;
+            }
+
+            performRegistration(userId, events);
+        } catch (DataAccessException e) {
+            System.out.println("Error during registration process: " + e.getMessage());
         }
-
-        performRegistration(userId, events);
     }
 
     /**
@@ -54,7 +57,7 @@ public class EventRegistrationAction {
      * @param userId the ID of the user
      * @param events list of available events
      */
-    private void performRegistration(int userId, List<Event> events) {
+    private void performRegistration(int userId, List<Event> events) throws DataAccessException {
         PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
         int eventChoice = MenuHelper.selectFromList(events.size(), "\nSelect an event");
@@ -87,14 +90,14 @@ public class EventRegistrationAction {
          * Displays payment options and retrieves user selection.
          */
         PaymentMethod selectedMethod = selectPaymentMethod();
-        if (selectedMethod == null) return;
+        if (selectedMethod == null)
+            return;
 
         /**
          * Calculates and displays total amount.
          */
         double totalAmount = quantity * selectedTicket.getPrice();
         System.out.println("\nTotal amount: ₹" + String.format("%.2f", totalAmount));
-
 
         /**
          * Reads optional offer code.
@@ -105,9 +108,8 @@ public class EventRegistrationAction {
         while (true) {
 
             offerCode = InputValidationUtil.readString(
-                ScannerUtil.getScanner(),
-                "\nEnter an offer code or press Enter to continue without one: "
-            );
+                    ScannerUtil.getScanner(),
+                    "\nEnter an offer code or press Enter to continue without one: ");
 
             // User skipped entering an offer code
             if (offerCode == null || offerCode.trim().isEmpty()) {
@@ -121,9 +123,9 @@ public class EventRegistrationAction {
                 System.out.println("\nSorry, that offer code does not exist.");
             }
             // Offer exists but is expired or not yet active
-            
+
             else if (now.isBefore(offer.getValidFrom()) || now.isAfter(offer.getValidTo())) {
-            	System.out.println("\nSorry, this offer code is no longer valid.");
+                System.out.println("\nSorry, this offer code is no longer valid.");
             }
             // Offer already used by the user
             else if (offerService.hasUserUsedOfferCode(userId, offer.getOfferId())) {
@@ -132,7 +134,7 @@ public class EventRegistrationAction {
             }
             // Offer is valid and applicable
             else {
-            	double initialPrice = selectedTicket.getPrice() * quantity;
+                double initialPrice = selectedTicket.getPrice() * quantity;
                 double discount = initialPrice * (offer.getDiscountPercentage() / 100.0);
                 double finalPrice = initialPrice - discount;
 
@@ -146,12 +148,11 @@ public class EventRegistrationAction {
 
             // Ask user whether to retry or continue
             String choice = InputValidationUtil.readString(
-                ScannerUtil.getScanner(),
-                "\nWhat would you like to do?\n" +
-                "[R] Enter a different offer code\n" +
-                "[C] Continue without an offer\n" +
-                "Your choice: "
-            );
+                    ScannerUtil.getScanner(),
+                    "\nWhat would you like to do?\n" +
+                            "[R] Enter a different offer code\n" +
+                            "[C] Continue without an offer\n" +
+                            "Your choice: ");
 
             if (choice != null && choice.equalsIgnoreCase("C")) {
                 offer = null;
@@ -160,22 +161,20 @@ public class EventRegistrationAction {
             }
         }
 
-
-        char paymentChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(), 
-        		"\nAre you sure you want to make payment [y/n]: ");
-        if(paymentChoice == 'y' || paymentChoice =='Y') {
+        char paymentChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(),
+                "\nAre you sure you want to make payment [y/n]: ");
+        if (paymentChoice == 'y' || paymentChoice == 'Y') {
             /**
              * Attempts event registration.
              */
             boolean success = eventService.registerForEvent(
-                userId,
-                eventId,
-                ticketId,
-                quantity,
-                selectedTicket.getPrice(),
-                selectedMethod,
-                offerCode
-            );
+                    userId,
+                    eventId,
+                    ticketId,
+                    quantity,
+                    selectedTicket.getPrice(),
+                    selectedMethod,
+                    offerCode);
 
             if (success) {
                 System.out.println("\nRegistration successful! Your tickets are confirmed.");
@@ -183,9 +182,9 @@ public class EventRegistrationAction {
             } else {
                 System.out.println("\nRegistration failed. Please try again or contact support.");
             }
-        	
-        }else {
-        	System.out.println("\nAction cancelled by the user");
+
+        } else {
+            System.out.println("\nAction cancelled by the user");
         }
 
     }
@@ -196,40 +195,41 @@ public class EventRegistrationAction {
      * @param userId the ID of the user
      */
     public void cancelRegistration(int userId) {
-        List<UserEventRegistration> upcoming = eventService.viewUpcomingEvents(userId);
+        try {
+            List<UserEventRegistration> upcoming = eventService.viewUpcomingEvents(userId);
 
-        if (upcoming == null || upcoming.isEmpty()) {
-            System.out.println("You have no upcoming events.");
-            return;
-        }
-
-        PaginationUtil.paginate(upcoming, MenuHelper::printEventsList);
-
-        int choice = MenuHelper.selectFromList(
-            upcoming.size(),
-            "Select a registration number"
-        );
-
-        UserEventRegistration registration = upcoming.get(choice - 1);
-
-        char cancelChoice = InputValidationUtil.readChar(
-            ScannerUtil.getScanner(),
-            "Are you sure you want to cancel this registration? (Y/N): "
-        );
-
-        if (cancelChoice == 'Y' || cancelChoice == 'y') {
-            boolean success = eventService.cancelRegistration(
-                userId,
-                registration.getRegistrationId()
-            );
-
-            if (success) {
-                System.out.println("Registration cancelled successfully. Refund will be processed.");
-            } else {
-                System.out.println("Unable to cancel registration. Please contact support.");
+            if (upcoming == null || upcoming.isEmpty()) {
+                System.out.println("You have no upcoming events.");
+                return;
             }
-        } else {
-            System.out.println("Cancellation aborted.");
+
+            PaginationUtil.paginate(upcoming, MenuHelper::printEventsList);
+
+            int choice = MenuHelper.selectFromList(
+                    upcoming.size(),
+                    "Select a registration number");
+
+            UserEventRegistration registration = upcoming.get(choice - 1);
+
+            char cancelChoice = InputValidationUtil.readChar(
+                    ScannerUtil.getScanner(),
+                    "Are you sure you want to cancel this registration? (Y/N): ");
+
+            if (cancelChoice == 'Y' || cancelChoice == 'y') {
+                boolean success = eventService.cancelRegistration(
+                        userId,
+                        registration.getRegistrationId());
+
+                if (success) {
+                    System.out.println("Registration cancelled successfully. Refund will be processed.");
+                } else {
+                    System.out.println("Unable to cancel registration. Please contact support.");
+                }
+            } else {
+                System.out.println("Cancellation aborted.");
+            }
+        } catch (DataAccessException e) {
+            System.out.println("Error cancelling registration: " + e.getMessage());
         }
     }
 
@@ -250,9 +250,8 @@ public class EventRegistrationAction {
 
         while (true) {
             quantity = InputValidationUtil.readInt(
-                ScannerUtil.getScanner(),
-                "\nEnter number of tickets (1-" + maxAvailable + "): "
-            );
+                    ScannerUtil.getScanner(),
+                    "\nEnter number of tickets (1-" + maxAvailable + "): ");
 
             if (quantity >= 1 && quantity <= maxAvailable) {
                 return quantity;
@@ -276,9 +275,8 @@ public class EventRegistrationAction {
         }
 
         int paymentChoice = MenuHelper.selectFromList(
-            methods.length,
-            "Select payment method"
-        );
+                methods.length,
+                "Select payment method");
 
         return methods[paymentChoice - 1];
     }

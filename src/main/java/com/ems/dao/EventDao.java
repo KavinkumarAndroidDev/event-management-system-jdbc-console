@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import com.ems.enums.EventStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.BookingDetail;
 import com.ems.model.Event;
@@ -158,7 +159,7 @@ public interface EventDao {
          * @return true if update succeeded
          * @throws DataAccessException
          */
-        boolean updateEventStatus(int eventId, String status) throws DataAccessException;
+        boolean updateEventStatus(int eventId, EventStatus status) throws DataAccessException;
 
         /**
          * Fetches all events created by the organizer

@@ -51,25 +51,19 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 *
 	 * Rule: - Newly created events are always saved as DRAFT
 	 */
-	public int createEvent(Event event) {
-		event.setStatus(EventStatus.DRAFT.name());
-		try {
+	@Override
+	public int createEvent(Event event) throws DataAccessException {
+		event.setStatus(EventStatus.DRAFT);
+		int eventId = eventDao.createEvent(event);
 
-			int eventId = eventDao.createEvent(event);
+		systemLogService.log(
+				event.getOrganizerId(),
+				"CREATE",
+				"EVENT",
+				eventId,
+				"Event created in DRAFT state");
 
-			systemLogService.log(
-					event.getOrganizerId(),
-					"CREATE",
-					"EVENT",
-					eventId,
-					"Event created in DRAFT state");
-
-			return eventId;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return 0;
+		return eventId;
 	}
 
 	/*
@@ -77,25 +71,21 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 *
 	 * Used when organizer edits title, description, category, or venue.
 	 */
-	public boolean updateEventDetails(int eventId, String title, String description, int categoryId, int venueId) {
-		try {
-			boolean updated = eventDao.updateEventDetails(eventId, title, description, categoryId, venueId);
+	@Override
+	public boolean updateEventDetails(int eventId, String title, String description, int categoryId, int venueId)
+			throws DataAccessException {
+		boolean updated = eventDao.updateEventDetails(eventId, title, description, categoryId, venueId);
 
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE",
-						"EVENT",
-						eventId,
-						"Event details updated");
-			}
-
-			return updated;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE",
+					"EVENT",
+					eventId,
+					"Event details updated");
 		}
-		return false;
+
+		return updated;
 	}
 
 	/*
@@ -103,76 +93,61 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 *
 	 * Used for rescheduling upcoming events.
 	 */
-	public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) {
-		try {
-			boolean updated = eventDao.updateEventSchedule(
+	@Override
+	public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) throws DataAccessException {
+		boolean updated = eventDao.updateEventSchedule(
+				eventId,
+				DateTimeUtil.toUtcInstant(start),
+				DateTimeUtil.toUtcInstant(end));
+
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE",
+					"EVENT",
 					eventId,
-					DateTimeUtil.toUtcInstant(start),
-					DateTimeUtil.toUtcInstant(end));
-
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE",
-						"EVENT",
-						eventId,
-						"Event schedule updated to " + start + " - " + end);
-			}
-
-			return updated;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+					"Event schedule updated to " + start + " - " + end);
 		}
-		return false;
+
+		return updated;
 	}
 
 	/*
 	 * Updates the maximum allowed capacity for an event.
 	 */
-	public boolean updateEventCapacity(int eventId, int capacity) {
-		try {
-			boolean updated = eventDao.updateEventCapacity(eventId, capacity);
+	@Override
+	public boolean updateEventCapacity(int eventId, int capacity) throws DataAccessException {
+		boolean updated = eventDao.updateEventCapacity(eventId, capacity);
 
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE",
-						"EVENT",
-						eventId,
-						"Event capacity updated to " + capacity);
-			}
-
-			return updated;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE",
+					"EVENT",
+					eventId,
+					"Event capacity updated to " + capacity);
 		}
-		return false;
+
+		return updated;
 	}
 
 	/*
 	 * Publishes an event and makes it visible to users.
 	 */
-	public boolean publishEvent(int eventId) {
-		try {
-			boolean published = eventDao.updateEventStatus(eventId, EventStatus.PUBLISHED.name());
+	@Override
+	public boolean publishEvent(int eventId) throws DataAccessException {
+		boolean published = eventDao.updateEventStatus(eventId, EventStatus.PUBLISHED);
 
-			if (published) {
-				systemLogService.log(
-						null,
-						"PUBLISH",
-						"EVENT",
-						eventId,
-						"Event published");
-			}
-
-			return published;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (published) {
+			systemLogService.log(
+					null,
+					"PUBLISH",
+					"EVENT",
+					eventId,
+					"Event published");
 		}
-		return false;
+
+		return published;
 	}
 
 	/*
@@ -180,25 +155,20 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 *
 	 * Used when an event cannot proceed as planned.
 	 */
-	public boolean cancelEvent(int eventId) {
-		try {
-			boolean cancelled = eventDao.updateEventStatus(eventId, EventStatus.CANCELLED.name());
+	@Override
+	public boolean cancelEvent(int eventId) throws DataAccessException {
+		boolean cancelled = eventDao.updateEventStatus(eventId, EventStatus.CANCELLED);
 
-			if (cancelled) {
-				systemLogService.log(
-						null,
-						"CANCEL",
-						"EVENT",
-						eventId,
-						"Event cancelled by organizer");
-			}
-
-			return cancelled;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (cancelled) {
+			systemLogService.log(
+					null,
+					"CANCEL",
+					"EVENT",
+					eventId,
+					"Event cancelled by organizer");
 		}
-		return false;
+
+		return cancelled;
 	}
 
 	/*
@@ -206,96 +176,73 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 *
 	 * Rule: - Available quantity is initialized to total quantity
 	 */
-	public boolean createTicket(Ticket ticket) {
-		try {
-			ticket.setAvailableQuantity(ticket.getTotalQuantity());
-			boolean created = ticketDao.createTicket(ticket);
+	@Override
+	public boolean createTicket(Ticket ticket) throws DataAccessException {
+		ticket.setAvailableQuantity(ticket.getTotalQuantity());
+		boolean created = ticketDao.createTicket(ticket);
 
-			if (created) {
-				systemLogService.log(
-						null,
-						"CREATE",
-						"TICKET",
-						ticket.getEventId(),
-						"Ticket type created: " + ticket.getTicketType());
-			}
-
-			return created;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (created) {
+			systemLogService.log(
+					null,
+					"CREATE",
+					"TICKET",
+					ticket.getEventId(),
+					"Ticket type created: " + ticket.getTicketType());
 		}
-		return false;
+
+		return created;
 	}
 
 	/*
 	 * Updates the price of an existing ticket type.
 	 */
-	public boolean updateTicketPrice(int ticketId, double price) {
-		try {
-			boolean updated = ticketDao.updateTicketPrice(ticketId, price);
-
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE",
-						"TICKET",
-						ticketId,
-						"Ticket price updated to ₹" + price);
-			}
-
-			return updated;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+	@Override
+	public boolean updateTicketPrice(int ticketId, double price) throws DataAccessException {
+		boolean updated = ticketDao.updateTicketPrice(ticketId, price);
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE",
+					"TICKET",
+					ticketId,
+					"Ticket price updated to: " + price);
 		}
-		return false;
+		return updated;
 	}
 
 	/*
 	 * Updates the total quantity of tickets available.
 	 */
-	public boolean updateTicketQuantity(int ticketId, int quantity) {
-		try {
-			boolean updated = ticketDao.updateTicketQuantity(ticketId, quantity);
+	@Override
+	public boolean updateTicketQuantity(int ticketId, int quantity) throws DataAccessException {
+		boolean updated = ticketDao.updateTicketQuantity(ticketId, quantity);
 
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE",
-						"TICKET",
-						ticketId,
-						"Ticket quantity updated to " + quantity);
-			}
-
-			return updated;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE",
+					"TICKET",
+					ticketId,
+					"Ticket quantity updated to " + quantity);
 		}
-		return false;
 
+		return updated;
 	}
 
 	/*
 	 * Retrieves current ticket availability for an event.
 	 */
-	public List<Ticket> viewTicketAvailability(int eventId) {
-		try {
-			return ticketDao.getTicketsByEvent(eventId);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return new ArrayList<>();
+	@Override
+	public List<Ticket> viewTicketAvailability(int eventId) throws DataAccessException {
+		return ticketDao.getTicketsByEvent(eventId);
 	}
 
 	/*
 	 * Returns the total number of registrations for an event.
 	 */
-	public int viewEventRegistrations(int eventId) {
-		try {
-			return registrationDao.getEventRegistrationCount(eventId);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-			return 0;
-		}
+	@Override
+	public int viewEventRegistrations(int eventId) throws DataAccessException {
+		return registrationDao.getEventRegistrationCount(eventId);
 	}
 
 	/*
@@ -303,87 +250,60 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * in reverse chronological order.
 	 */
 	@Override
-	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) {
-		try {
-			List<EventRegistrationReport> reports = registrationDao.getEventWiseRegistrations(eventId);
+	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) throws DataAccessException {
+		List<EventRegistrationReport> reports = registrationDao.getEventWiseRegistrations(eventId);
 
-			if (reports.isEmpty()) {
-				return new ArrayList<>();
-			}
-			return reports;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (reports.isEmpty()) {
+			return new ArrayList<>();
 		}
-		return new ArrayList<>();
+		return reports;
 	}
 
 	/*
 	 * Retrieves all events created by a specific organizer.
 	 */
-	public List<Event> getOrganizerEvents(int organizerId) {
-		try {
-			return eventDao.getEventsByOrganizer(organizerId);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return new ArrayList<>();
+	@Override
+	public List<Event> getOrganizerEvents(int organizerId) throws DataAccessException {
+		return eventDao.getEventsByOrganizer(organizerId);
 	}
 
 	/*
 	 * Sends a general update notification to all event attendees.
 	 */
-	public void sendEventUpdate(int eventId, String message) {
+	@Override
+	public void sendEventUpdate(int eventId, String message) throws DataAccessException {
 		notificationService.sendEventNotification(eventId, message, NotificationType.EVENT);
 	}
 
 	/*
 	 * Sends a schedule change notification to all event attendees.
 	 */
-	public void sendScheduleChange(int eventId, String message) {
+	@Override
+	public void sendScheduleChange(int eventId, String message) throws DataAccessException {
 		notificationService.sendEventNotification(eventId, message, NotificationType.EVENT);
 	}
 
-	public List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId) {
-		try {
-			return eventDao.getEventSummaryByOrganizer(organizerId);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return new ArrayList<>();
+	@Override
+	public List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId) throws DataAccessException {
+		return eventDao.getEventSummaryByOrganizer(organizerId);
 	}
 
 	@Override
-	public Event getOrganizerEventById(int organizerId, int eventId) {
-		try {
-			Event event = eventDao.getEventById(eventId);
-
-			if (event == null) {
-				return null;
-			}
-
-			if (event.getOrganizerId() != organizerId) {
-				return null;
-			}
-
+	public Event getOrganizerEventById(int organizerId, int eventId) throws DataAccessException {
+		Event event = eventDao.getEventById(eventId);
+		if (event != null && event.getOrganizerId() == organizerId) {
 			return event;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
 		}
 		return null;
 	}
 
-	public List<EventRevenueReport> getRevenueReport(int organizerId) {
-		try {
-			return eventDao.getEventWiseRevenueReportByOrganizer(organizerId);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return new ArrayList<>();
+	@Override
+	public List<EventRevenueReport> getRevenueReport(int organizerId) throws DataAccessException {
+		return eventDao.getEventWiseRevenueReportByOrganizer(organizerId);
 	}
 
 	@Override
-	public void sendCancellationRequest(Event event, String organizerMessage) {
+	public void sendCancellationRequest(Event event, String organizerMessage) throws DataAccessException {
 
 		String notificationMessage = "CANCELLATION REQUEST\n\n" +
 				"Event: " + event.getTitle() + "\n" +

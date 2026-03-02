@@ -1,6 +1,7 @@
 package com.ems.model;
 
 import java.time.Instant;
+import com.ems.enums.EventStatus;
 
 public class Event {
 	private int eventId;
@@ -15,7 +16,7 @@ public class Event {
 	private Instant createdAt;
 	private Instant updatedAt;
 	private int capacity;
-	private String status;
+	private EventStatus status;
 	private int approvedBy;
 
 	public Event() {
@@ -39,7 +40,7 @@ public class Event {
 	 */
 	public Event(int eventId, int organizerId, String title, String description, int categoryId, int venueId,
 			Instant startDateTime, Instant endDateTime, Instant approvedAt, Instant createdAt, Instant updatedAt,
-			int capacity, String status, int approvedBy) {
+			int capacity, EventStatus status, int approvedBy) {
 		this.eventId = eventId;
 		this.organizerId = organizerId;
 		this.title = title;
@@ -152,11 +153,11 @@ public class Event {
 		this.capacity = capacity;
 	}
 
-	public String getStatus() {
+	public EventStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(EventStatus status) {
 		this.status = status;
 	}
 

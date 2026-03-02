@@ -10,6 +10,7 @@ import java.sql.Types;
 import com.ems.dao.PaymentDao;
 import com.ems.enums.PaymentMethod;
 import com.ems.enums.PaymentStatus;
+import com.ems.enums.RegistrationStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.RegistrationResult;
 import com.ems.util.DBConnectionUtil;
@@ -107,7 +108,7 @@ public class PaymentDaoImpl implements PaymentDao {
 			try (PreparedStatement ps = con.prepareStatement(regSql, Statement.RETURN_GENERATED_KEYS)) {
 				ps.setInt(1, userId);
 				ps.setInt(2, eventId);
-				ps.setString(3, "CONFIRMED");
+				ps.setString(3, RegistrationStatus.CONFIRMED.name());
 				ps.executeUpdate();
 				try (ResultSet rs = ps.getGeneratedKeys()) {
 					if (rs.next()) {
@@ -132,15 +133,16 @@ public class PaymentDaoImpl implements PaymentDao {
 
 			String paySql = "INSERT INTO payments (registration_id, amount, payment_method, payment_status, created_at, offer_id) "
 					+
-					"VALUES (?, ?, ?, 'SUCCESS', CURRENT_TIMESTAMP, ?)";
+					"VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)";
 			try (PreparedStatement ps = con.prepareStatement(paySql)) {
 				ps.setInt(1, registrationId);
 				ps.setDouble(2, finalAmount);
 				ps.setString(3, paymentMethod.name());
+				ps.setString(4, PaymentStatus.SUCCESS.name());
 				if (offerId != null) {
-					ps.setInt(4, offerId);
+					ps.setInt(5, offerId);
 				} else {
-					ps.setNull(4, Types.INTEGER);
+					ps.setNull(5, Types.INTEGER);
 				}
 				ps.executeUpdate();
 			}
@@ -205,9 +207,9 @@ public class PaymentDaoImpl implements PaymentDao {
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, PaymentStatus.REFUNDED.toString());
+			ps.setString(1, PaymentStatus.REFUNDED.name());
 			ps.setInt(2, registrationId);
-			ps.setString(3, PaymentStatus.SUCCESS.toString());
+			ps.setString(3, PaymentStatus.SUCCESS.name());
 
 			int updatedRows = ps.executeUpdate();
 

@@ -8,6 +8,7 @@ import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
+import com.ems.exception.DataAccessException;
 
 /*
  * Handles viewing of user registration history and booking details.
@@ -26,16 +27,20 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      */
     public void listUpcomingEvents(int userId) {
-        List<UserEventRegistration> upcoming = eventService.viewUpcomingEvents(userId);
+        try {
+            List<UserEventRegistration> upcoming = getUpcomingEvents(userId);
 
-        if (upcoming == null || upcoming.isEmpty()) {
-            System.out.println("\nYou have no upcoming events.");
-            return;
+            if (upcoming == null || upcoming.isEmpty()) {
+                System.out.println("\nYou have no upcoming events.");
+                return;
+            }
+
+            // printEventsList is display-only here; lambda discards startIndex
+            PaginationUtil.paginate(upcoming,
+                    (page, i) -> MenuHelper.printEventsList(page));
+        } catch (DataAccessException e) {
+            System.out.println("Error listing upcoming events: " + e.getMessage());
         }
-
-        // printEventsList is display-only here; lambda discards startIndex
-        PaginationUtil.paginate(upcoming,
-                (page, i) -> MenuHelper.printEventsList(page));
     }
 
     /**
@@ -44,16 +49,20 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      */
     public void listPastEvents(int userId) {
-        List<UserEventRegistration> past = eventService.viewPastEvents(userId);
+        try {
+            List<UserEventRegistration> past = getPastEvents(userId);
 
-        if (past == null || past.isEmpty()) {
-            System.out.println("\nYou have no past events.");
-            return;
+            if (past == null || past.isEmpty()) {
+                System.out.println("\nYou have no past events.");
+                return;
+            }
+
+            // printEventsList is display-only here; lambda discards startIndex
+            PaginationUtil.paginate(past,
+                    (page, i) -> MenuHelper.printEventsList(page));
+        } catch (DataAccessException e) {
+            System.out.println("Error listing past events: " + e.getMessage());
         }
-
-        // printEventsList is display-only here; lambda discards startIndex
-        PaginationUtil.paginate(past,
-                (page, i) -> MenuHelper.printEventsList(page));
     }
 
     /**
@@ -62,16 +71,20 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      */
     public void viewBookingDetails(int userId) {
-        List<BookingDetail> bookingDetails = getBookingDetails(userId);
+        try {
+            List<BookingDetail> bookingDetails = getBookingDetails(userId);
 
-        if (bookingDetails == null || bookingDetails.isEmpty()) {
-            System.out.println("You have no bookings yet.");
-            return;
+            if (bookingDetails == null || bookingDetails.isEmpty()) {
+                System.out.println("You have no bookings yet.");
+                return;
+            }
+
+            // printBookingDetails is display-only; lambda discards startIndex
+            PaginationUtil.paginate(bookingDetails,
+                    (page, i) -> MenuHelper.printBookingDetails(page));
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing booking details: " + e.getMessage());
         }
-
-        // printBookingDetails is display-only; lambda discards startIndex
-        PaginationUtil.paginate(bookingDetails,
-                (page, i) -> MenuHelper.printBookingDetails(page));
     }
 
     /* ===================== DATA RETRIEVAL METHODS ===================== */
@@ -82,7 +95,7 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      * @return list of booking details
      */
-    public List<BookingDetail> getBookingDetails(int userId) {
+    public List<BookingDetail> getBookingDetails(int userId) throws DataAccessException {
         return eventService.viewBookingDetails(userId);
     }
 
@@ -92,7 +105,7 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      * @return list of upcoming user event registrations
      */
-    public List<UserEventRegistration> getUpcomingEvents(int userId) {
+    public List<UserEventRegistration> getUpcomingEvents(int userId) throws DataAccessException {
         return eventService.viewUpcomingEvents(userId);
     }
 
@@ -102,7 +115,7 @@ public class UserRegistrationAction {
      * @param userId the ID of the user
      * @return list of past user event registrations
      */
-    public List<UserEventRegistration> getPastEvents(int userId) {
+    public List<UserEventRegistration> getPastEvents(int userId) throws DataAccessException {
         return eventService.viewPastEvents(userId);
     }
 }

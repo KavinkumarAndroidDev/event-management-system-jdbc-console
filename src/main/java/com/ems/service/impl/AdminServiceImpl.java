@@ -59,14 +59,8 @@ public class AdminServiceImpl implements AdminService {
 	 * organizers.
 	 */
 	@Override
-	public List<User> getUsersList(String userType) {
-		List<User> users = new ArrayList<>();
-		try {
-			users = userDao.findAllUsers(userType);
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-
+	public List<User> getUsersList(String userType) throws DataAccessException {
+		List<User> users = userDao.findAllUsers(userType);
 		if (users.isEmpty()) {
 			System.out.println("No users available for the selected role");
 		}
@@ -79,32 +73,28 @@ public class AdminServiceImpl implements AdminService {
 	 * Rule: - Admin accounts cannot be modified
 	 */
 	@Override
-	public boolean changeStatus(UserStatus status, int userId) {
-		try {
-			boolean updated = userDao.updateUserStatus(userId, status);
-			if (updated && UserStatus.ACTIVE.equals(status)) {
-				userDao.resetFailedAttempts(userId);
-			}
-			if (updated) {
-				systemLogService.log(
-						null,
-						"UPDATE_STATUS",
-						"USER",
-						userId,
-						"User status changed to " + status.name());
-			}
-			return updated;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+	public boolean changeStatus(UserStatus status, int userId) throws DataAccessException {
+		boolean updated = userDao.updateUserStatus(userId, status);
+		if (updated && UserStatus.ACTIVE.equals(status)) {
+			userDao.resetFailedAttempts(userId);
 		}
-		return false;
+		if (updated) {
+			systemLogService.log(
+					null,
+					"UPDATE_STATUS",
+					"USER",
+					userId,
+					"User status changed to " + status.name());
+		}
+		return updated;
 	}
 
 	/*
 	 * Sends a notification message to all users in the system.
 	 */
 	@Override
-	public void sendSystemWideNotification(String message, NotificationType notificationType) {
+	public void sendSystemWideNotification(String message, NotificationType notificationType)
+			throws DataAccessException {
 		notificationService.sendSystemWideNotification(message, notificationType);
 		systemLogService.log(
 				null,
@@ -120,25 +110,19 @@ public class AdminServiceImpl implements AdminService {
 	 * Rule: - Organizer is notified after approval
 	 */
 	@Override
-	public boolean approveEvents(int userId, int eventId) {
-		try {
-			boolean isApproved = eventDao.approveEvent(eventId, userId);
-			if (isApproved) {
-				notificationDao.sendNotification(eventDao.getOrganizerId(eventId),
-						"Your event: " + eventId + " has been approved!", NotificationType.EVENT);
-				systemLogService.log(
-						userId,
-						"APPROVE",
-						"EVENT",
-						eventId,
-						"Event approved by admin");
-			}
-			return isApproved;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+	public boolean approveEvents(int userId, int eventId) throws DataAccessException {
+		boolean isApproved = eventDao.approveEvent(eventId, userId);
+		if (isApproved) {
+			notificationDao.sendNotification(eventDao.getOrganizerId(eventId),
+					"Your event: " + eventId + " has been approved!", NotificationType.EVENT);
+			systemLogService.log(
+					userId,
+					"APPROVE",
+					"EVENT",
+					eventId,
+					"Event approved by admin");
 		}
-		return false;
-
+		return isApproved;
 	}
 
 	/*
@@ -147,21 +131,17 @@ public class AdminServiceImpl implements AdminService {
 	 * Rule: - Organizer is notified after cancellation
 	 */
 	@Override
-	public void cancelEvent(int eventId) {
-		try {
-			boolean isCancelled = eventDao.cancelEvent(eventId);
-			if (isCancelled) {
-				notificationDao.sendNotification(eventDao.getOrganizerId(eventId),
-						"Your event: " + eventId + " has been cancelled!", NotificationType.EVENT);
-				systemLogService.log(
-						null,
-						"CANCEL",
-						"EVENT",
-						eventId,
-						"Event cancelled by admin");
-			}
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+	public void cancelEvent(int eventId) throws DataAccessException {
+		boolean isCancelled = eventDao.cancelEvent(eventId);
+		if (isCancelled) {
+			notificationDao.sendNotification(eventDao.getOrganizerId(eventId),
+					"Your event: " + eventId + " has been cancelled!", NotificationType.EVENT);
+			systemLogService.log(
+					null,
+					"CANCEL",
+					"EVENT",
+					eventId,
+					"Event cancelled by admin");
 		}
 	}
 
@@ -170,102 +150,73 @@ public class AdminServiceImpl implements AdminService {
 	 * in reverse chronological order.
 	 */
 	@Override
-	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) {
-		try {
-			List<EventRegistrationReport> reports = registrationDao.getEventWiseRegistrations(eventId);
+	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) throws DataAccessException {
+		List<EventRegistrationReport> reports = registrationDao.getEventWiseRegistrations(eventId);
 
-			if (reports.isEmpty()) {
-				return new ArrayList<>();
-			}
-			return reports;
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (reports.isEmpty()) {
+			return new ArrayList<>();
 		}
-		return new ArrayList<>();
+		return reports;
 	}
 
 	/*
 	 * Displays revenue generated per event.
 	 */
 	@Override
-	public List<EventRevenueReport> getRevenueReport() {
-		List<EventRevenueReport> eventRevenueReport = new ArrayList<>();
-		try {
-			eventRevenueReport = eventDao.getEventWiseRevenueReport();
-
-			return eventRevenueReport;
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
-		return eventRevenueReport;
-
+	public List<EventRevenueReport> getRevenueReport() throws DataAccessException {
+		return eventDao.getEventWiseRevenueReport();
 	}
 
 	/*
 	 * Displays organizer performance based on total events created.
 	 */
 	@Override
-	public void getOrganizerWisePerformance() {
-		try {
-			Map<String, Integer> organizerStats = eventDao.getOrganizerWiseEventCount();
+	public void getOrganizerWisePerformance() throws DataAccessException {
+		Map<String, Integer> organizerStats = eventDao.getOrganizerWiseEventCount();
 
-			if (organizerStats.isEmpty()) {
-				System.out.println("No organizer data available.");
-				return;
-			}
-
-			System.out.println("\nOrganizer Wise Performance");
-			System.out.println("-----------------------------------");
-
-			organizerStats.forEach((organizer, count) -> {
-				System.out.println("Organizer : " + organizer + " | Total Events : " + count);
-			});
-
-			System.out.println("-----------------------------------");
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
+		if (organizerStats.isEmpty()) {
+			System.out.println("No organizer data available.");
+			return;
 		}
+
+		System.out.println("\nOrganizer Wise Performance");
+		System.out.println("-----------------------------------");
+
+		organizerStats.forEach((organizer, count) -> {
+			System.out.println("Organizer : " + organizer + " | Total Events : " + count);
+		});
+
+		System.out.println("-----------------------------------");
 	}
 
 	/*
 	 * Sends a notification to all users of a specific role.
 	 */
 	@Override
-	public void sendNotificationByRole(String message, NotificationType selectedType, UserRole role) {
-		try {
-			notificationDao.sendNotificationByRole(message, selectedType, role);
-			systemLogService.log(
-					null,
-					"SEND_NOTIFICATION",
-					"ROLE",
-					null,
-					"Notification sent to role: " + role);
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+	public void sendNotificationByRole(String message, NotificationType selectedType, UserRole role)
+			throws DataAccessException {
+		notificationDao.sendNotificationByRole(message, selectedType, role);
+		systemLogService.log(
+				null,
+				"SEND_NOTIFICATION",
+				"ROLE",
+				null,
+				"Notification sent to role " + role.name());
 	}
 
 	/*
 	 * Sends a notification to a specific user.
 	 */
 	@Override
-	public void sendNotificationToUser(String message, NotificationType selectedType, int userId) {
-		try {
-			notificationDao.sendNotification(userId, message, selectedType);
-
-			systemLogService.log(
-					null,
-					"SEND_NOTIFICATION",
-					"USER",
-					userId,
-					"Notification sent to user");
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+	public void sendNotificationToUser(String message, NotificationType selectedType, int userId)
+			throws DataAccessException {
+		notificationDao.sendNotification(userId, message, selectedType);
+		systemLogService.log(
+				null,
+				"SEND_NOTIFICATION",
+				"USER",
+				userId,
+				"Notification sent to user ID " + userId);
 	}
 
 	/*
@@ -295,48 +246,32 @@ public class AdminServiceImpl implements AdminService {
 	 * Category management operations.
 	 */
 	@Override
-	public List<Category> getAllCategories() {
-		try {
-			return categoryDao.getAllCategories();
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-			return List.of();
-		}
+	public List<Category> getAllCategories() throws DataAccessException {
+		return categoryDao.getAllCategories();
 	}
 
 	@Override
-	public void addCategory(String name) {
-		try {
-			categoryDao.addCategory(name);
+	public void addCategory(String name) throws DataAccessException {
+		categoryDao.addCategory(name);
 
-			systemLogService.log(
-					null,
-					"CREATE",
-					"CATEGORY",
-					null,
-					"Category created: " + name);
-			System.out.println("Category added successfully.");
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+		systemLogService.log(
+				null,
+				"CREATE",
+				"CATEGORY",
+				null,
+				"Category created: " + name);
 	}
 
 	@Override
-	public void updateCategory(int categoryId, String name) {
-		try {
-			categoryDao.updateCategoryName(categoryId, name);
+	public void updateCategory(int categoryId, String name) throws DataAccessException {
+		categoryDao.updateCategoryName(categoryId, name);
 
-			systemLogService.log(
-					null,
-					"UPDATE",
-					"CATEGORY",
-					categoryId,
-					"Category name updated");
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+		systemLogService.log(
+				null,
+				"UPDATE",
+				"CATEGORY",
+				categoryId,
+				"Category name updated");
 	}
 
 	@Override
@@ -440,20 +375,15 @@ public class AdminServiceImpl implements AdminService {
 	}
 
 	@Override
-	public void activateVenue(int venueId) {
-		try {
-			venueDao.activateVenue(venueId);
+	public void activateVenue(int venueId) throws DataAccessException {
+		venueDao.activateVenue(venueId);
 
-			systemLogService.log(
-					null,
-					"ACTIVATE",
-					"VENUE",
-					venueId,
-					"Venue activated");
-
-		} catch (DataAccessException e) {
-			System.out.println(e.getMessage());
-		}
+		systemLogService.log(
+				null,
+				"ACTIVATE",
+				"VENUE",
+				venueId,
+				"Venue activated");
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.ems.model;
 
 import java.time.Instant;
+import com.ems.enums.RegistrationStatus;
 
 public class Registration {
 	private int registrationId;
@@ -9,7 +10,7 @@ public class Registration {
 	private Instant registrationDate;
 	private Instant eventStartDate;
 	private Instant eventEndDate;
-	private String status;
+	private RegistrationStatus status;
 	private String fullName;
 	private String email;
 	private String eventTitle;
@@ -17,7 +18,8 @@ public class Registration {
 	public Registration() {
 	}
 
-	public Registration(int registrationId, int userId, int eventId, Instant registrationDate, String status) {
+	public Registration(int registrationId, int userId, int eventId, Instant registrationDate,
+			RegistrationStatus status) {
 		this.registrationId = registrationId;
 		this.userId = userId;
 		this.eventId = eventId;
@@ -73,11 +75,11 @@ public class Registration {
 		this.eventEndDate = eventEndDate;
 	}
 
-	public String getStatus() {
+	public RegistrationStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(RegistrationStatus status) {
 		this.status = status;
 	}
 

@@ -1,7 +1,6 @@
 package com.ems.actions;
 
 import java.util.List;
-
 import com.ems.model.SystemLog;
 import com.ems.service.SystemLogService;
 import com.ems.util.AdminMenuHelper;
@@ -16,8 +15,11 @@ public class SystemLogAction {
     }
 
     public void printAllLogs() {
-    	List<SystemLog> logs = systemLogService.getAllLogs();
-    	PaginationUtil.paginate(logs, AdminMenuHelper::printSystemLogs);
-
+        List<SystemLog> logs = systemLogService.getAllLogs();
+        if (logs.isEmpty()) {
+            System.out.println("No system logs found.");
+        } else {
+            PaginationUtil.paginate(logs, AdminMenuHelper::printSystemLogs);
+        }
     }
 }

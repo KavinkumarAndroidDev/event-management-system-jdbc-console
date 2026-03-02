@@ -67,8 +67,8 @@ public class EventDaoImpl implements EventDao {
 
 		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, "PUBLISHED");
-			ps.setString(2, "DRAFT");
+			ps.setString(1, EventStatus.PUBLISHED.name());
+			ps.setString(2, EventStatus.DRAFT.name());
 			ResultSet rs = ps.executeQuery();
 			events = getEventList(rs);
 			rs.close();
@@ -104,7 +104,7 @@ public class EventDaoImpl implements EventDao {
 				"AND e.start_datetime > UTC_TIMESTAMP()";
 
 		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-			ps.setString(1, "DRAFT");
+			ps.setString(1, EventStatus.DRAFT.name());
 			ResultSet rs = ps.executeQuery();
 			events = getEventList(rs);
 			rs.close();
@@ -163,7 +163,7 @@ public class EventDaoImpl implements EventDao {
 					event.setCreatedAt(DateTimeUtil.fromTimestamp(createdAt));
 
 				event.setCapacity(rs.getInt("capacity"));
-				event.setStatus(rs.getString("status"));
+				event.setStatus(EventStatus.valueOf(rs.getString("status")));
 				Integer approvedBy = rs.getInt("approved_by");
 				if (approvedBy != 0) {
 					event.setApprovedBy(approvedBy);
@@ -311,7 +311,7 @@ public class EventDaoImpl implements EventDao {
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, EventStatus.APPROVED.toString());
+			ps.setString(1, EventStatus.APPROVED.name());
 			ps.setInt(2, userId);
 			ps.setTimestamp(3, Timestamp.from(now));
 			ps.setTimestamp(4, Timestamp.from(now));
@@ -332,7 +332,7 @@ public class EventDaoImpl implements EventDao {
 
 		try (Connection con = DBConnectionUtil.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, "CANCELLED");
+			ps.setString(1, EventStatus.CANCELLED.name());
 			ps.setTimestamp(2, Timestamp.from(DateTimeUtil.nowUtc()));
 			ps.setInt(3, eventId);
 			ps.setTimestamp(4, Timestamp.from(DateTimeUtil.nowUtc()));
@@ -398,7 +398,11 @@ public class EventDaoImpl implements EventDao {
 					event.setCreatedAt(DateTimeUtil.fromTimestamp(createdAt));
 
 				event.setCapacity(rs.getInt("capacity"));
-				event.setStatus(rs.getString("status"));
+				try {
+					event.setStatus(EventStatus.valueOf(rs.getString("status")));
+				} catch (IllegalArgumentException e) {
+					event.setStatus(EventStatus.DRAFT);
+				}
 				Integer approvedBy = rs.getInt("approved_by");
 				if (approvedBy != 0) {
 					event.setApprovedBy(approvedBy);
@@ -573,12 +577,12 @@ public class EventDaoImpl implements EventDao {
 	}
 
 	@Override
-	public boolean updateEventStatus(int eventId, String status) throws DataAccessException {
+	public boolean updateEventStatus(int eventId, EventStatus status) throws DataAccessException {
 		String sql = "update events set status=?, updated_at=? where event_id=?";
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, status);
+			ps.setString(1, status.name());
 			Instant now = DateTimeUtil.nowUtc();
 			ps.setTimestamp(2, Timestamp.from(now));
 

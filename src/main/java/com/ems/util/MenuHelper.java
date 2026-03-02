@@ -11,6 +11,7 @@ import com.ems.model.User;
 import com.ems.model.UserEventRegistration;
 import com.ems.model.Venue;
 import com.ems.service.EventService;
+import com.ems.exception.DataAccessException;
 
 /**
  * Utility class that provides reusable console display helpers
@@ -26,7 +27,7 @@ import com.ems.service.EventService;
 public class MenuHelper {
 
     private static final int TABLE_WIDTH = 110;
-    private static final String SEPARATOR    = "=".repeat(TABLE_WIDTH);
+    private static final String SEPARATOR = "=".repeat(TABLE_WIDTH);
     private static final String SUB_SEPARATOR = "-".repeat(TABLE_WIDTH);
 
     private static EventService eventService = ApplicationUtil.eventService();
@@ -41,40 +42,44 @@ public class MenuHelper {
      * @param event the event to display
      */
     public static void printEventDetails(Event event) {
-        String category     = eventService.getCategory(event.getCategoryId()).getName();
-        String venueName    = eventService.getVenueName(event.getVenueId());
-        String venueAddress = eventService.getVenueAddress(event.getVenueId());
-        int totalAvailable  = eventService.getAvailableTickets(event.getEventId());
-        List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
+        try {
+            String category = eventService.getCategory(event.getCategoryId()).getName();
+            String venueName = eventService.getVenueName(event.getVenueId());
+            String venueAddress = eventService.getVenueAddress(event.getVenueId());
+            int totalAvailable = eventService.getAvailableTickets(event.getEventId());
+            List<Ticket> tickets = eventService.getTicketTypes(event.getEventId());
 
-        System.out.println("\n==============================================");
-        System.out.println("Title           : " + event.getTitle());
+            System.out.println("\n==============================================");
+            System.out.println("Title           : " + event.getTitle());
 
-        if (event.getDescription() != null) {
-            System.out.println("Description     : " + event.getDescription());
+            if (event.getDescription() != null) {
+                System.out.println("Description     : " + event.getDescription());
+            }
+
+            System.out.println("Category        : " + category);
+            System.out.println("Duration        : "
+                    + DateTimeUtil.formatForDisplay(event.getStartDateTime())
+                    + " to "
+                    + DateTimeUtil.formatForDisplay(event.getEndDateTime()));
+            System.out.println("Total Tickets   : " + totalAvailable);
+
+            System.out.println("\nTicket Types");
+            System.out.println("----------------------------------------------");
+            for (Ticket ticket : tickets) {
+                System.out.println("• "
+                        + ticket.getTicketType()
+                        + " | Price: ₹" + ticket.getPrice()
+                        + " | Available: " + ticket.getAvailableQuantity());
+            }
+
+            System.out.println("\nVenue");
+            System.out.println("----------------------------------------------");
+            System.out.println("Name            : " + venueName);
+            System.out.println("Address         : " + venueAddress);
+            System.out.println("==============================================");
+        } catch (DataAccessException e) {
+            System.out.println("Error fetching event details: " + e.getMessage());
         }
-
-        System.out.println("Category        : " + category);
-        System.out.println("Duration        : "
-                + DateTimeUtil.formatForDisplay(event.getStartDateTime())
-                + " to "
-                + DateTimeUtil.formatForDisplay(event.getEndDateTime()));
-        System.out.println("Total Tickets   : " + totalAvailable);
-
-        System.out.println("\nTicket Types");
-        System.out.println("----------------------------------------------");
-        for (Ticket ticket : tickets) {
-            System.out.println("• "
-                    + ticket.getTicketType()
-                    + " | Price: ₹" + ticket.getPrice()
-                    + " | Available: " + ticket.getAvailableQuantity());
-        }
-
-        System.out.println("\nVenue");
-        System.out.println("----------------------------------------------");
-        System.out.println("Name            : " + venueName);
-        System.out.println("Address         : " + venueAddress);
-        System.out.println("==============================================");
     }
 
     /**
@@ -107,15 +112,20 @@ public class MenuHelper {
 
         int index = startIndex;
         for (Event event : events) {
-            String category = eventService.getCategory(event.getCategoryId()).getName();
-            int available   = eventService.getAvailableTickets(event.getEventId());
+            try {
+                String category = eventService.getCategory(event.getCategoryId()).getName();
+                int available = eventService.getAvailableTickets(event.getEventId());
 
-            System.out.printf("%-5d %-30s %-20s %-20s %-10d%n",
-                    index++,
-                    truncate(event.getTitle(), 29),
-                    category,
-                    DateTimeUtil.formatForDisplay(event.getStartDateTime()),
-                    available);
+                System.out.printf("%-5d %-30s %-20s %-20s %-10d%n",
+                        index++,
+                        truncate(event.getTitle(), 29),
+                        category,
+                        DateTimeUtil.formatForDisplay(event.getStartDateTime()),
+                        available);
+            } catch (DataAccessException e) {
+                System.out.printf("%-5d %-30s %-50s%n", index++, truncate(event.getTitle(), 29),
+                        "[Error fetching details]");
+            }
         }
 
         System.out.println(SEPARATOR);
@@ -167,7 +177,7 @@ public class MenuHelper {
     }
 
     // -----------------------------------------------------------------------
-    // Category / Venue display  (selection lists — index always starts at 1)
+    // Category / Venue display (selection lists — index always starts at 1)
     // -----------------------------------------------------------------------
 
     /**
@@ -372,8 +382,7 @@ public class MenuHelper {
         while (true) {
             choice = InputValidationUtil.readInt(
                     ScannerUtil.getScanner(),
-                    prompt + " (1-" + max + "): "
-            );
+                    prompt + " (1-" + max + "): ");
             if (choice >= 1 && choice <= max) {
                 return choice;
             }

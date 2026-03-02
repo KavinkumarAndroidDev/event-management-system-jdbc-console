@@ -15,202 +15,217 @@ import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
+import com.ems.exception.DataAccessException;
 
 public class AdminOfferManagementAction {
-    private final OfferService offerService;
-    private final EventService eventService;
+	private final OfferService offerService;
+	private final EventService eventService;
 
-    public AdminOfferManagementAction() {
-        this.offerService = ApplicationUtil.offerService();
-        this.eventService = ApplicationUtil.eventService();
-    }
+	public AdminOfferManagementAction() {
+		this.offerService = ApplicationUtil.offerService();
+		this.eventService = ApplicationUtil.eventService();
+	}
 
-    public List<Offer> getAllOffers() {
-        return offerService.getAllOffers();
-    }
+	public List<Offer> getAllOffers() throws DataAccessException {
+		return offerService.getAllOffers();
+	}
 
-    public boolean createOffer(int eventId, String code, int discount, LocalDateTime from, LocalDateTime to) {
-        return offerService.createOffer(eventId, code, discount, from, to);
-    }
+	public boolean createOffer(int eventId, String code, int discount, LocalDateTime from, LocalDateTime to)
+			throws DataAccessException {
+		return offerService.createOffer(eventId, code, discount, from, to);
+	}
 
-    public void toggleOfferStatus(int offerId, LocalDateTime newValidTo) {
-        offerService.toggleOfferStatus(offerId, newValidTo);
-    }
+	public void toggleOfferStatus(int offerId, LocalDateTime newValidTo) throws DataAccessException {
+		offerService.toggleOfferStatus(offerId, newValidTo);
+	}
 
-    public Map<String, Integer> getOfferUsageReport() {
-        return offerService.getOfferUsageReport();
-    }
-    
-    public void viewAllOffers() {
-    	List<Offer> offers = getAllOffers();
-		if (offers.isEmpty()) {
-			System.out.println("No offers found.");
-		} else {
-			PaginationUtil.paginate(offers, AdminMenuHelper::printOffers);
+	public Map<String, Integer> getOfferUsageReport() throws DataAccessException {
+		return offerService.getOfferUsageReport();
+	}
+
+	public void viewAllOffers() {
+		try {
+			List<Offer> offers = getAllOffers();
+			if (offers.isEmpty()) {
+				System.out.println("No offers found.");
+			} else {
+				PaginationUtil.paginate(offers, AdminMenuHelper::printOffers);
+			}
+		} catch (DataAccessException e) {
+			System.out.println("Error viewing offers: " + e.getMessage());
 		}
-    }
-    
-    
-    public void viewOfferUsageReport(){
-    	Map<String, Integer> report = getOfferUsageReport();
-		AdminMenuHelper.printOfferUsageReport(report);
-    }
+	}
+
+	public void viewOfferUsageReport() {
+		try {
+			Map<String, Integer> report = getOfferUsageReport();
+			AdminMenuHelper.printOfferUsageReport(report);
+		} catch (DataAccessException e) {
+			System.out.println("Error viewing offer usage report: " + e.getMessage());
+		}
+	}
+
 	public void changeOfferStatus() {
+		try {
+			System.out.println("\n1. Activate offer\n" + "2. Deactivate offer\n" + "3. Back\n" + ">");
 
-		System.out.println("\n1. Activate offer\n" + "2. Deactivate offer\n" + "3. Back\n" + ">");
+			int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
-		int option = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
+			if (option == 3) {
+				return;
+			}
 
-		if (option == 3) {
-			return;
-		}
+			List<Offer> offers = getAllOffers();
 
-		List<Offer> offers = getAllOffers();
+			if (offers.isEmpty()) {
+				System.out.println("No offers found.");
+				return;
+			}
 
-		if (offers.isEmpty()) {
-			System.out.println("No offers found.");
-			return;
-		}
+			List<Offer> filtered;
+			if (option == 1) {
+				filtered = AdminMenuHelper.filterExpiredOffers(offers);
+			} else if (option == 2) {
+				filtered = AdminMenuHelper.filterActiveOffers(offers);
+			} else {
+				System.out.println("Invalid option. Please select a valid menu number.");
+				return;
+			}
 
-		List<Offer> filtered;
-		if (option == 1) {
-			filtered = AdminMenuHelper.filterExpiredOffers(offers);
-		} else if (option == 2) {
-			filtered = AdminMenuHelper.filterActiveOffers(offers);
-		} else {
-			System.out.println("Invalid option. Please select a valid menu number.");
-			return;
-		}
+			if (filtered.isEmpty()) {
+				System.out.println("No applicable offers found");
+				return;
+			}
 
-		if (filtered.isEmpty()) {
-			System.out.println("No applicable offers found");
-			return;
-		}
+			PaginationUtil.paginate(filtered, AdminMenuHelper::printOffers);
 
-		PaginationUtil.paginate(filtered, AdminMenuHelper::printOffers);
+			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
+					"Select offer (1-" + filtered.size() + "): ");
 
-		int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
-				"Select offer (1-" + filtered.size() + "): ");
+			while (choice < 1 || choice > filtered.size()) {
+				choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
+			}
 
-		while (choice < 1 || choice > filtered.size()) {
-			choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-		}
+			Offer selectedOffer = filtered.get(choice - 1);
 
-		Offer selectedOffer = filtered.get(choice - 1);
+			LocalDateTime newValidTo;
 
-		LocalDateTime newValidTo;
+			if (option == 1) {
+				String dateInput = InputValidationUtil.readString(ScannerUtil.getScanner(),
+						"Activate until (dd-MM-yyyy HH:mm): ");
+				newValidTo = DateTimeUtil.parseLocalDateTime(dateInput);
+			} else {
+				newValidTo = DateTimeUtil.toLocalDateTime(DateTimeUtil.nowUtc());
+			}
+			Event event = eventService.getEventById(selectedOffer.getEventId());
+			if (event == null) {
+				System.out.println("No event found for the offer!");
+				return;
+			}
+			if (DateTimeUtil.toUtcInstant(newValidTo).isAfter(event.getStartDateTime())) {
+				System.out.println("Offer validity must end before the event starts.");
+				return;
+			}
 
-		if (option == 1) {
-			String dateInput = InputValidationUtil.readString(ScannerUtil.getScanner(),"Activate until (dd-MM-yyyy HH:mm): ");
-			newValidTo = DateTimeUtil.parseLocalDateTime(dateInput);
-		} else {
-		    newValidTo = DateTimeUtil.toLocalDateTime(DateTimeUtil.nowUtc());
-		}
-		Event event = eventService.getEventById(selectedOffer.getEventId());
-		if (event == null) {
-			System.out.println("No event found for the offer!");
-			return;
-		}
-		if (DateTimeUtil.toUtcInstant(newValidTo).isAfter(event.getStartDateTime())) {
-			System.out.println("Offer validity must end before the event starts.");
-			return;
-		}
+			char updateChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(),
+					"Are you sure you want to update offer status (Y/N)\n");
+			if (updateChoice == 'Y' || updateChoice == 'y') {
+				toggleOfferStatus(selectedOffer.getOfferId(), newValidTo);
 
-		char updateChoice = InputValidationUtil.readChar(ScannerUtil.getScanner(),
-				"Are you sure you want to update offer status (Y/N)\n");
-		if (updateChoice == 'Y' || updateChoice == 'y') {
-			toggleOfferStatus(selectedOffer.getOfferId(), newValidTo);
-
-			System.out.println(option == 1 ? "Offer activated successfully." : "Offer deactivated successfully.");
-		} else {
-			System.out.println("Process aborted!");
+				System.out.println(option == 1 ? "Offer activated successfully." : "Offer deactivated successfully.");
+			} else {
+				System.out.println("Process aborted!");
+			}
+		} catch (DataAccessException e) {
+			System.out.println("Error changing offer status: " + e.getMessage());
 		}
 
 	}
-	
-	
+
 	public void createOffer() {
+		try {
+			List<Event> events = eventService.listAvailableEvents();
 
-		List<Event> events = eventService.listAvailableEvents();
+			if (events.isEmpty()) {
+				System.out.println("No events available");
+				return;
+			}
 
-		if (events.isEmpty()) {
-			System.out.println("No events available");
-			return;
-		}
+			PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
-		PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
+			int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(),
+					"Select event (1-" + events.size() + "): ");
 
-		int eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Select event (1-" + events.size() + "): ");
+			while (eChoice < 1 || eChoice > events.size()) {
+				eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
+			}
 
-		while (eChoice < 1 || eChoice > events.size()) {
-			eChoice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter a valid choice: ");
-		}
+			Event event = events.get(eChoice - 1);
 
-		Event event = events.get(eChoice - 1);
+			String code = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the offer code: ");
 
-		String code = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter the offer code: ");
+			int discount = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the discount percentage: ");
+			while (discount < 0 || discount > 100) {
+				discount = InputValidationUtil.readInt(ScannerUtil.getScanner(),
+						"Enter the discount percentage (1 - 100): ");
+			}
+			/*
+			 * Offer start date must: - Not be in the past - Not exceed the event start time
+			 * 
+			 * This ensures offers are only active before the event begins.
+			 */
+			LocalDateTime from = null;
 
-		int discount = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the discount percentage: ");
-		while (discount < 0 || discount > 100) {
-			discount = InputValidationUtil.readInt(ScannerUtil.getScanner(), "Enter the discount percentage (1 - 100): ");
-		}
-		/*
-		 * Offer start date must: - Not be in the past - Not exceed the event start time
-		 * 
-		 * This ensures offers are only active before the event begins.
-		 */
-		LocalDateTime from = null;
+			while (from == null) {
+				String input = InputValidationUtil.readString(
+						ScannerUtil.getScanner(),
+						"Enter the valid from (dd-MM-yyyy HH:mm): ");
 
-		while (from == null) {
-		    String input = InputValidationUtil.readString(
-		            ScannerUtil.getScanner(),
-		            "Enter the valid from (dd-MM-yyyy HH:mm): "
-		    );
+				from = DateTimeUtil.parseLocalDateTime(input);
 
-		    from = DateTimeUtil.parseLocalDateTime(input);
+				if (from == null
+						|| DateTimeUtil.toUtcInstant(from).isBefore(DateTimeUtil.nowUtc())
+						|| DateTimeUtil.toUtcInstant(from).isAfter(event.getStartDateTime())) {
 
-		    if (from == null
-		    		|| DateTimeUtil.toUtcInstant(from).isBefore(DateTimeUtil.nowUtc())
-		            || DateTimeUtil.toUtcInstant(from).isAfter(event.getStartDateTime())) {
+					System.out.println("Invalid 'from' date time. Please try again.");
+					from = null;
+				}
+			}
 
-		        System.out.println("Invalid 'from' date time. Please try again.");
-		        from = null;
-		    }
-		}
+			/*
+			 * Offer end date must: - Not be in the past - Be after the offer start date -
+			 * Not exceed the event start time
+			 * 
+			 * This prevents invalid or overlapping offer periods.
+			 */
+			LocalDateTime to = null;
 
+			while (to == null) {
+				String input = InputValidationUtil.readString(
+						ScannerUtil.getScanner(),
+						"Enter the valid to (dd-MM-yyyy HH:mm): ");
 
-		/*
-		 * Offer end date must: - Not be in the past - Be after the offer start date -
-		 * Not exceed the event start time
-		 * 
-		 * This prevents invalid or overlapping offer periods.
-		 */
-		LocalDateTime to = null;
+				to = DateTimeUtil.parseLocalDateTime(input);
 
-		while (to == null) {
-		    String input = InputValidationUtil.readString(
-		            ScannerUtil.getScanner(),
-		            "Enter the valid to (dd-MM-yyyy HH:mm): "
-		    );
+				if (to == null
+						|| DateTimeUtil.toUtcInstant(to).isBefore(DateTimeUtil.nowUtc())
+						|| to.isBefore(from)
+						|| DateTimeUtil.toUtcInstant(to).isAfter(event.getStartDateTime())) {
 
-		    to = DateTimeUtil.parseLocalDateTime(input);
+					System.out.println("Invalid 'to' date time. Please try again.");
+					to = null;
+				}
+			}
 
-		    if (to == null
-		    		|| DateTimeUtil.toUtcInstant(to).isBefore(DateTimeUtil.nowUtc())
-		            || to.isBefore(from)
-		            || DateTimeUtil.toUtcInstant(to).isAfter(event.getStartDateTime())) {
+			boolean isCreated = createOffer(event.getEventId(), code, discount, from, to);
 
-		        System.out.println("Invalid 'to' date time. Please try again.");
-		        to = null;
-		    }
-		}
-
-		boolean isCreated = createOffer(event.getEventId(), code, discount, from, to);
-
-		if(isCreated) {
-			System.out.println("Offer created successfully. Offer: " + code);
-		}else {
-			System.out.println("Offer creation failed");
+			if (isCreated) {
+				System.out.println("Offer created successfully. Offer: " + code);
+			} else {
+				System.out.println("Offer creation failed");
+			}
+		} catch (DataAccessException e) {
+			System.out.println("Error creating offer: " + e.getMessage());
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package com.ems.model;
 
 import java.time.Instant;
+import com.ems.enums.UserStatus;
 
 public class User implements Comparable<User> {
 
@@ -10,14 +11,15 @@ public class User implements Comparable<User> {
 	private final String phone;
 	private final String passwordHash;
 	private final int roleId;
-	private final String status;
+	private final UserStatus status;
 	private final Instant createdAt;
 	private final Instant updatedAt;
 	private final String gender;
 	private final int failedAttempts;
 	private final Instant lastLogin;
 
-	public User(int userId, String fullName, String email, String phone, String passwordHash, int roleId, String status,
+	public User(int userId, String fullName, String email, String phone, String passwordHash, int roleId,
+			UserStatus status,
 			Instant createdAt, Instant updatedAt, String gender, int failedAttempts, Instant lastLogin) {
 		this.userId = userId;
 		this.fullName = fullName;
@@ -57,7 +59,7 @@ public class User implements Comparable<User> {
 		return roleId;
 	}
 
-	public String getStatus() {
+	public UserStatus getStatus() {
 		return status;
 	}
 

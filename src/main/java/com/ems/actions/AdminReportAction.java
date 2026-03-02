@@ -1,6 +1,7 @@
 package com.ems.actions;
 
 import java.util.List;
+import com.ems.exception.DataAccessException;
 
 import com.ems.enums.UserRole;
 import com.ems.model.Event;
@@ -23,68 +24,77 @@ public class AdminReportAction {
     private final OrganizerService organizerService;
 
     public AdminReportAction() {
-        this.adminService    = ApplicationUtil.adminService();
-        this.eventService    = ApplicationUtil.eventService();
+        this.adminService = ApplicationUtil.adminService();
+        this.eventService = ApplicationUtil.eventService();
         this.organizerService = ApplicationUtil.organizerService();
     }
 
     public void viewEventWiseRegistrations() {
-        List<Event> events = eventService.getAllEvents();
+        try {
+            List<Event> events = eventService.getAllEvents();
+            if (events.isEmpty()) {
+                System.out.println("No events available at the moment.");
+                return;
+            }
 
-        if (events.isEmpty()) {
-            System.out.println("No events available at the moment.");
-            return;
+            PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
+
+            int selectedChoice = MenuHelper.selectFromList(events.size(), "Select an event");
+            Event selectedEvent = events.get(selectedChoice - 1);
+
+            List<EventRegistrationReport> reports = getEventWiseRegistrations(selectedEvent.getEventId());
+            PaginationUtil.paginate(reports, AdminMenuHelper::printEventRegistrationReport);
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing event registrations: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(events, AdminMenuHelper::printAllEventsWithStatus);
-
-        int selectedChoice = MenuHelper.selectFromList(events.size(), "Select an event");
-        Event selectedEvent = events.get(selectedChoice - 1);
-
-        List<EventRegistrationReport> reports = getEventWiseRegistrations(selectedEvent.getEventId());
-        PaginationUtil.paginate(reports, AdminMenuHelper::printEventRegistrationReport);
     }
 
     public void viewOrganizerReport() {
-        List<User> users = adminService.getUsersList(UserRole.ORGANIZER.toString());
+        try {
+            List<User> users = adminService.getUsersList(UserRole.ORGANIZER.name());
+            if (users.isEmpty()) {
+                System.out.println("No organizers found.");
+                return;
+            }
 
-        if (users.isEmpty()) {
-            System.out.println("No organizers found.");
-            return;
+            PaginationUtil.paginate(users, MenuHelper::displayUsers);
+
+            int organizerChoice = MenuHelper.selectFromList(users.size(), "Select an organizer");
+            List<OrganizerEventSummary> summary = getOrganizerEventSummary(users.get(organizerChoice - 1).getUserId());
+
+            if (summary.isEmpty()) {
+                System.out.println("No events conducted by this organizer.");
+                return;
+            }
+
+            PaginationUtil.paginate(summary, AdminMenuHelper::printOrganizerEventSummary);
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing organizer report: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(users, MenuHelper::displayUsers);
-
-        int organizerChoice = MenuHelper.selectFromList(users.size(), "Select an organizer");
-        List<OrganizerEventSummary> summary =
-                getOrganizerEventSummary(users.get(organizerChoice - 1).getUserId());
-
-        if (summary.isEmpty()) {
-            System.out.println("No events conducted by this organizer.");
-            return;
-        }
-
-        PaginationUtil.paginate(summary, AdminMenuHelper::printOrganizerEventSummary);
     }
 
     public void viewRevenueReport() {
-        List<EventRevenueReport> reports = getRevenueReport();
-        AdminMenuHelper.printEventRevenueReport(reports);
+        try {
+            List<EventRevenueReport> reports = getRevenueReport();
+            AdminMenuHelper.printEventRevenueReport(reports);
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing revenue report: " + e.getMessage());
+        }
     }
 
     // -----------------------------------------------------------------------
     // Data access helpers
     // -----------------------------------------------------------------------
 
-    public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) {
+    public List<EventRegistrationReport> getEventWiseRegistrations(int eventId) throws DataAccessException {
         return adminService.getEventWiseRegistrations(eventId);
     }
 
-    public List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId) {
+    public List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId) throws DataAccessException {
         return organizerService.getOrganizerEventSummary(organizerId);
     }
 
-    public List<EventRevenueReport> getRevenueReport() {
+    public List<EventRevenueReport> getRevenueReport() throws DataAccessException {
         return adminService.getRevenueReport();
     }
 }

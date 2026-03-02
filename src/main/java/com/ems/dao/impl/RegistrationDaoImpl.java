@@ -12,6 +12,7 @@ import com.ems.exception.DataAccessException;
 import com.ems.model.EventRegistrationReport;
 import com.ems.model.Registration;
 import com.ems.model.RegistrationTicket;
+import com.ems.enums.RegistrationStatus;
 import com.ems.util.DBConnectionUtil;
 import com.ems.util.DateTimeUtil;
 
@@ -137,7 +138,7 @@ public class RegistrationDaoImpl implements RegistrationDao {
 						rs.getInt("user_id"),
 						rs.getInt("event_id"),
 						DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")),
-						rs.getString("status"));
+						RegistrationStatus.valueOf(rs.getString("status")));
 			}
 
 		} catch (SQLException e) {
@@ -146,14 +147,14 @@ public class RegistrationDaoImpl implements RegistrationDao {
 	}
 
 	@Override
-	public void updateStatus(int registrationId, String string) throws DataAccessException {
+	public void updateStatus(int registrationId, RegistrationStatus status) throws DataAccessException {
 		String sql = "update registrations "
 				+ "set status = ? "
 				+ "where registration_id = ?";
 		try (Connection con = DBConnectionUtil.getConnection();
 				PreparedStatement ps = con.prepareStatement(sql)) {
 
-			ps.setString(1, string);
+			ps.setString(1, status.name());
 			ps.setInt(2, registrationId);
 			ps.executeUpdate();
 		} catch (Exception e) {

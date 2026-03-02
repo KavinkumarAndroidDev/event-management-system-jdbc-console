@@ -12,6 +12,7 @@ import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
+import com.ems.exception.DataAccessException;
 
 /*
  * Handles guest user console interactions.
@@ -23,141 +24,145 @@ import com.ems.util.ScannerUtil;
  */
 public class GuestMenu extends BaseMenu {
 	UserAction userAction = new UserAction();
-    EventSelectionAction eventAction = new EventSelectionAction();
-    TicketAction ticketAction = new TicketAction();
+	EventSelectionAction eventAction = new EventSelectionAction();
+	TicketAction ticketAction = new TicketAction();
 
-    public GuestMenu() {
-        super(null);
-    }
+	public GuestMenu() {
+		super(null);
+	}
+
 	public void start() {
 		System.out.println("Guest access provides limited features.\n");
-		while(true) {
+		while (true) {
 			System.out.println(
-				    "\nGuest menu\n" +
-				    "1 Browse events\n" +
-				    "2 Register account\n" +
-				    "3 Exit guest mode\n\n" +
-				    "Choice:"
-				);
+					"\nGuest menu\n" +
+							"1 Browse events\n" +
+							"2 Register account\n" +
+							"3 Exit guest mode\n\n" +
+							"Choice:");
 			int input = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
-			switch(input) {
-			case 1:
-                browseEventsMenu();
-                break;
-			case 2:
-				createAccount(UserRole.ATTENDEE);
-				break;
-			case 3:
-				System.out.println("Returning to main menu.\n");
-			    return;   
-			default:
-				System.out.println("Please select a valid option from the menu.");
-				break;
+			switch (input) {
+				case 1:
+					browseEventsMenu();
+					break;
+				case 2:
+					createAccount(UserRole.ATTENDEE);
+					break;
+				case 3:
+					System.out.println("Returning to main menu.\n");
+					return;
+				default:
+					System.out.println("Please select a valid option from the menu.");
+					break;
 			}
-			
+
 		}
 	}
-	
+
 	private void createAccount(UserRole role) {
-        userAction.createAccount(role);
-    }
-	
+		userAction.createAccount(role);
+	}
+
 	private void browseEventsMenu() {
 
 		while (true) {
 			System.out.println(
-				    "\nBrowse events\n" +
-				    "1 View all events\n" +
-				    "2 View event details\n" +
-				    "3 View ticket options\n" +
-				    "4 Back\n\n" +
-				    "Choice:"
-				);
+					"\nBrowse events\n" +
+							"1 View all events\n" +
+							"2 View event details\n" +
+							"3 View ticket options\n" +
+							"4 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-				printAllAvailableEvents();
-				break;
-			case 2:
-				viewEventDetails();
-				break;
-			case 3:
-				viewTicketOptions();
-				break;
-			case 4:
-				return;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 1:
+					printAllAvailableEvents();
+					break;
+				case 2:
+					viewEventDetails();
+					break;
+				case 3:
+					viewTicketOptions();
+					break;
+				case 4:
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
+
 	private void printAllAvailableEvents() {
-		List<Event> filteredEvents = eventAction.getAvailableEvents();
-		if(filteredEvents.isEmpty()) {
-			System.out.println("No events available at the moment.\n");
-			return;
+		try {
+			List<Event> filteredEvents = eventAction.getAvailableEvents();
+			if (filteredEvents.isEmpty()) {
+				System.out.println("No events available at the moment.\n");
+				return;
+			}
+			PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
+		} catch (DataAccessException e) {
+			System.out.println("Error displaying events: " + e.getMessage());
 		}
-		PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
 	}
-	
+
 	private void viewEventDetails() {
+		try {
+			List<Event> events = eventAction.getAvailableEvents();
+			if (events.isEmpty()) {
+				System.out.println("No events available at the moment.\n");
+				return;
+			}
 
-	    List<Event> events = eventAction.getAvailableEvents();
-	    if (events.isEmpty()) {
-	        System.out.println("No events	 available at the moment.\n");
-	        return;
-	    }
+			PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
 
-	    PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
+			int choice = InputValidationUtil.readInt(
+					ScannerUtil.getScanner(),
+					"Select an event (1-" + events.size() + "): ");
 
-	    int choice = InputValidationUtil.readInt(
-	        ScannerUtil.getScanner(),
-	        "Select an event (1-" + events.size() + "): "
-	    );
+			Event selectedEvent = eventAction.getEventByIndex(events, choice);
+			if (selectedEvent == null) {
+				System.out.println("Invalid selection.");
+				return;
+			}
 
-	    Event selectedEvent = eventAction.getEventByIndex(events, choice);
-	    if (selectedEvent == null) {
-	        System.out.println("Invalid selection.");
-	        return;
-	    }
-
-	    MenuHelper.printEventDetails(selectedEvent);
+			MenuHelper.printEventDetails(selectedEvent);
+		} catch (DataAccessException e) {
+			System.out.println("Error viewing event details: " + e.getMessage());
+		}
 	}
-	
+
 	private void viewTicketOptions() {
-	
-	    List<Event> events = eventAction.getAvailableEvents();
-	    if (events.isEmpty()) {
-	        System.out.println("No events available at the moment.\n");
-	        return;
-	    }
-	
-	    PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
-	
-	    int choice = InputValidationUtil.readInt(
-	        ScannerUtil.getScanner(),
-	        "Select an event (1-" + events.size() + "): "
-	    );
-	
-	    Event selectedEvent = eventAction.getEventByIndex(events, choice);
-	    if (selectedEvent == null) {
-	        System.out.println("Invalid selection.");
-	        return;
-	    }
-	
-	    List<Ticket> tickets =
-	        ticketAction.getTicketsForEvent(selectedEvent.getEventId());
-	
-	    if (tickets.isEmpty()) {
-	    	System.out.println("No ticket options available.\n");
-	        return;
-	    }
-	
-	    MenuHelper.printTicketSummaries(tickets);
+		try {
+			List<Event> events = eventAction.getAvailableEvents();
+			if (events.isEmpty()) {
+				System.out.println("No events available at the moment.\n");
+				return;
+			}
+
+			PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
+
+			int choice = InputValidationUtil.readInt(
+					ScannerUtil.getScanner(),
+					"Select an event (1-" + events.size() + "): ");
+
+			Event selectedEvent = eventAction.getEventByIndex(events, choice);
+			if (selectedEvent == null) {
+				System.out.println("Invalid selection.");
+				return;
+			}
+
+			List<Ticket> tickets = ticketAction.getTicketsForEvent(selectedEvent.getEventId());
+
+			if (tickets.isEmpty()) {
+				System.out.println("No ticket options available.\n");
+				return;
+			}
+
+			MenuHelper.printTicketSummaries(tickets);
+		} catch (DataAccessException e) {
+			System.out.println("Error viewing ticket options: " + e.getMessage());
+		}
 	}
-
-
-
 }

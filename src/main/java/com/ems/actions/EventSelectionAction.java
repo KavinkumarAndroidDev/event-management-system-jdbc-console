@@ -5,15 +5,16 @@ import java.util.List;
 import com.ems.model.Event;
 import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
+import com.ems.exception.DataAccessException;
 
 public class EventSelectionAction {
-	private final EventService eventService;
+    private final EventService eventService;
 
     public EventSelectionAction() {
         this.eventService = ApplicationUtil.eventService();
     }
 
-    public List<Event> getAvailableEvents() {
+    public List<Event> getAvailableEvents() throws DataAccessException {
         return eventService.listAvailableEvents();
     }
 

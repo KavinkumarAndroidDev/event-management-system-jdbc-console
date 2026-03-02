@@ -8,6 +8,7 @@ import com.ems.service.EventService;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
+import com.ems.exception.DataAccessException;
 
 /*
  * Handles read-only event browsing operations.
@@ -15,9 +16,8 @@ import com.ems.util.PaginationUtil;
  */
 public class EventBrowsingAction {
 
-    
     private final EventService eventService;
-    
+
     public EventBrowsingAction() {
         this.eventService = ApplicationUtil.eventService();
     }
@@ -27,7 +27,7 @@ public class EventBrowsingAction {
      *
      * @return list of available events
      */
-    public List<Event> getAllAvailableEvents() {
+    public List<Event> getAllAvailableEvents() throws DataAccessException {
         return eventService.listAvailableEvents();
     }
 
@@ -37,7 +37,7 @@ public class EventBrowsingAction {
      * @param eventId the ID of the event
      * @return list of ticket types for the event
      */
-    public List<Ticket> getTicketsForEvent(int eventId) {
+    public List<Ticket> getTicketsForEvent(int eventId) throws DataAccessException {
         return eventService.getTicketTypes(eventId);
     }
 
@@ -45,14 +45,18 @@ public class EventBrowsingAction {
      * Displays a summarized list of all available events.
      */
     public void printAllAvailableEvents() {
-        List<Event> filteredEvents = getAllAvailableEvents();
+        try {
+            List<Event> filteredEvents = getAllAvailableEvents();
 
-        if (filteredEvents == null || filteredEvents.isEmpty()) {
-            System.out.println("There are no available events!");
-            return;
+            if (filteredEvents == null || filteredEvents.isEmpty()) {
+                System.out.println("There are no available events!");
+                return;
+            }
+
+            PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
+        } catch (DataAccessException e) {
+            System.out.println("Error listing events: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
     }
 
     /**
@@ -60,22 +64,25 @@ public class EventBrowsingAction {
      * Allows the user to choose an event from the available list.
      */
     public void viewEventDetails() {
-        List<Event> events = getAllAvailableEvents();
+        try {
+            List<Event> events = getAllAvailableEvents();
 
-        if (events == null || events.isEmpty()) {
-            System.out.println("No events available at the moment.");
-            return;
+            if (events == null || events.isEmpty()) {
+                System.out.println("No events available at the moment.");
+                return;
+            }
+
+            PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
+
+            int choice = MenuHelper.selectFromList(
+                    events.size(),
+                    "Select an event number");
+
+            Event selectedEvent = events.get(choice - 1);
+            MenuHelper.printEventDetails(selectedEvent);
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing event details: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
-
-        int choice = MenuHelper.selectFromList(
-            events.size(),
-            "Select an event number"
-        );
-
-        Event selectedEvent = events.get(choice - 1);
-        MenuHelper.printEventDetails(selectedEvent);
     }
 
     /**
@@ -83,30 +90,33 @@ public class EventBrowsingAction {
      * Allows the user to view available ticket types.
      */
     public void viewTicketOptions() {
-        List<Event> events = getAllAvailableEvents();
+        try {
+            List<Event> events = getAllAvailableEvents();
 
-        if (events == null || events.isEmpty()) {
-            System.out.println("No events available at the moment.");
-            return;
+            if (events == null || events.isEmpty()) {
+                System.out.println("No events available at the moment.");
+                return;
+            }
+
+            PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
+
+            int choice = MenuHelper.selectFromList(
+                    events.size(),
+                    "Select an event number");
+
+            Event selectedEvent = events.get(choice - 1);
+            int eventId = selectedEvent.getEventId();
+
+            List<Ticket> tickets = getTicketsForEvent(eventId);
+
+            if (tickets == null || tickets.isEmpty()) {
+                System.out.println("No ticket types available for this event.");
+                return;
+            }
+
+            MenuHelper.printTicketSummaries(tickets);
+        } catch (DataAccessException e) {
+            System.out.println("Error viewing ticket options: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(events, MenuHelper::printEventSummaries);
-
-        int choice = MenuHelper.selectFromList(
-            events.size(),
-            "Select an event number"
-        );
-
-        Event selectedEvent = events.get(choice - 1);
-        int eventId = selectedEvent.getEventId();
-
-        List<Ticket> tickets = getTicketsForEvent(eventId);
-
-        if (tickets == null || tickets.isEmpty()) {
-            System.out.println("No ticket types available for this event.");
-            return;
-        }
-
-        MenuHelper.printTicketSummaries(tickets);
     }
 }

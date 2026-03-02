@@ -8,6 +8,7 @@ import com.ems.service.OrganizerService;
 import com.ems.util.AdminMenuHelper;
 import com.ems.util.ApplicationUtil;
 import com.ems.util.PaginationUtil;
+import com.ems.exception.DataAccessException;
 
 /**
  * Action class for organizer report and analytics operations.
@@ -28,28 +29,33 @@ public class OrganizerReportAction {
      * @return the total revenue amount
      */
     public void getEventSummary(int organizerId) {
-    	List<OrganizerEventSummary> summary =
-        		organizerService.getOrganizerEventSummary(organizerId);
+        try {
+            List<OrganizerEventSummary> summary = organizerService.getOrganizerEventSummary(organizerId);
 
-        if (summary.isEmpty()) {
-            System.out.println("No events conducted by this organizer.");
-            return;
+            if (summary.isEmpty()) {
+                System.out.println("No events conducted by this organizer.");
+                return;
+            }
+
+            PaginationUtil.paginate(summary, AdminMenuHelper::printOrganizerEventSummary);
+        } catch (DataAccessException e) {
+            System.out.println("Error getting event summary: " + e.getMessage());
         }
-
-        PaginationUtil.paginate(summary, AdminMenuHelper::printOrganizerEventSummary);
     }
-    
+
     public void getRevenueSummary(int organizerId) {
+        try {
+            List<EventRevenueReport> reports = organizerService.getRevenueReport(organizerId);
 
-        List<EventRevenueReport> reports =
-                organizerService.getRevenueReport(organizerId);
+            if (reports.isEmpty()) {
+                System.out.println("No revenue generated yet.");
+                return;
+            }
 
-        if (reports.isEmpty()) {
-            System.out.println("No revenue generated yet.");
-            return;
+            AdminMenuHelper.printEventRevenueReport(reports);
+        } catch (DataAccessException e) {
+            System.out.println("Error getting revenue summary: " + e.getMessage());
         }
-
-        AdminMenuHelper.printEventRevenueReport(reports);
     }
 
 }

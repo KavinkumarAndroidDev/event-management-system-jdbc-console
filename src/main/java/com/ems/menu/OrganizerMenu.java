@@ -17,6 +17,7 @@ import com.ems.util.InputValidationUtil;
 import com.ems.util.MenuHelper;
 import com.ems.util.PaginationUtil;
 import com.ems.util.ScannerUtil;
+import com.ems.exception.DataAccessException;
 
 /*
  * Handles all organizer facing menu navigation.
@@ -51,53 +52,51 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nOrganizer menu\n" +
-				    "1 Event management\n" +
-				    "2 Ticket management\n" +
-				    "3 Registrations\n" +
-				    "4 Reports\n" +
-				    "5 Notifications\n"+
-				    "6 Offer management\n" +
-				    "7 Update profile\n" +
-				    "8 Logout\n\n" +
-				    "Choice:"
-				);
-
+					"\nOrganizer menu\n" +
+							"1 Event management\n" +
+							"2 Ticket management\n" +
+							"3 Registrations\n" +
+							"4 Reports\n" +
+							"5 Notifications\n" +
+							"6 Offer management\n" +
+							"7 Update profile\n" +
+							"8 Logout\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-				eventManagementMenu();
-				break;
-			case 2:
-				ticketManagementMenu();
-				break;
-			case 3:
-				registrationMenu();
-				break;
-			case 4:
-				reportMenu();
-				break;
-			case 5:
-				notificationMenu();
-				break;
-			case 6:
-				offerManagementMenu();
-				break;
-			case 7:
-				boolean updated = userAction.updateProfile(loggedInUser);
-				if(updated) {
-					return;
-				}
-				break;
-			case 8:
-				if (confirmLogout()) {
-					return;
-				}
-				break;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 1:
+					eventManagementMenu();
+					break;
+				case 2:
+					ticketManagementMenu();
+					break;
+				case 3:
+					registrationMenu();
+					break;
+				case 4:
+					reportMenu();
+					break;
+				case 5:
+					notificationMenu();
+					break;
+				case 6:
+					offerManagementMenu();
+					break;
+				case 7:
+					boolean updated = userAction.updateProfile(loggedInUser);
+					if (updated) {
+						return;
+					}
+					break;
+				case 8:
+					if (confirmLogout()) {
+						return;
+					}
+					break;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -108,43 +107,41 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nEvent management\n" +
-				    "1 Create new event\n" +
-				    "2 View my events\n" +
-				    "3 Update event details\n" +
-				    "4 Update event capacity\n" +
-				    "5 Publish event\n" +
-				    "6 Cancel event\n" +
-				    "7 Back\n\n" +
-				    "Choice:"
-				);
-
+					"\nEvent management\n" +
+							"1 Create new event\n" +
+							"2 View my events\n" +
+							"3 Update event details\n" +
+							"4 Update event capacity\n" +
+							"5 Publish event\n" +
+							"6 Cancel event\n" +
+							"7 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-				eventManagementAction.createEvent(loggedInUser.getUserId());
-				break;
-			case 2:
-				eventManagementAction.viewMyEventDetails(loggedInUser.getUserId());
-				break;
-			case 3:
-				eventManagementAction.updateEventDetails(loggedInUser.getUserId());
-				break;
-			case 4:
-				eventManagementAction.updateEventCapacity(loggedInUser.getUserId());
-				break;
-			case 5:
-				eventManagementAction.publishEvent(loggedInUser.getUserId());
-				break;
-			case 6:
-				eventManagementAction.cancelEvent(loggedInUser.getUserId());
-				break;
-			case 7:
-				return;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 1:
+					eventManagementAction.createEvent(loggedInUser.getUserId());
+					break;
+				case 2:
+					eventManagementAction.viewMyEventDetails(loggedInUser.getUserId());
+					break;
+				case 3:
+					eventManagementAction.updateEventDetails(loggedInUser.getUserId());
+					break;
+				case 4:
+					eventManagementAction.updateEventCapacity(loggedInUser.getUserId());
+					break;
+				case 5:
+					eventManagementAction.publishEvent(loggedInUser.getUserId());
+					break;
+				case 6:
+					eventManagementAction.cancelEvent(loggedInUser.getUserId());
+					break;
+				case 7:
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -155,30 +152,29 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nTicket management\n" +
-				    "1 Update ticket price\n" +
-				    "2 Update ticket quantity\n" +
-				    "3 View ticket availability\n" +
-				    "4 Back\n\n" +
-				    "Choice:"
-				);
+					"\nTicket management\n" +
+							"1 Update ticket price\n" +
+							"2 Update ticket quantity\n" +
+							"3 View ticket availability\n" +
+							"4 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-				ticketManagementAction.updateTicketPrice(loggedInUser.getUserId());
-				break;
-			case 2:
-				ticketManagementAction.updateTicketQuantity(loggedInUser.getUserId());
-				break;
-			case 3:
-				ticketManagementAction.viewTicketAvailability(loggedInUser.getUserId());
-				break;
-			case 4:
-				return;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 1:
+					ticketManagementAction.updateTicketPrice(loggedInUser.getUserId());
+					break;
+				case 2:
+					ticketManagementAction.updateTicketQuantity(loggedInUser.getUserId());
+					break;
+				case 3:
+					ticketManagementAction.viewTicketAvailability(loggedInUser.getUserId());
+					break;
+				case 4:
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -189,26 +185,24 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nRegistrations and attendees\n" +
-				    "1 View event registrations\n" +
-				    "2 Back\n\n" +
-				    "Choice:"
-				);
-
+					"\nRegistrations and attendees\n" +
+							"1 View event registrations\n" +
+							"2 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
 
-			case 1: {
-				registrationAction.viewEventRegistrations(loggedInUser.getUserId());
-				break;
+				case 1: {
+					registrationAction.viewEventRegistrations(loggedInUser.getUserId());
+					break;
 
-			}
-			case 2:
-				return;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				}
+				case 2:
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
@@ -219,33 +213,30 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nReports\n" +
-				    "1 Revenue summary\n" +
-				    "2 My events summary\n" +
-				    "3 Back\n\n" +
-				    "Choice:"
-				);
-
+					"\nReports\n" +
+							"1 Revenue summary\n" +
+							"2 My events summary\n" +
+							"3 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1: {
-			    reportAction.getRevenueSummary(loggedInUser.getUserId());
-			    break;
-			}
-			case 2:{
-		        reportAction.getEventSummary(loggedInUser.getUserId());
-		        break;
-			}
-			case 3:
-				return;
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 1: {
+					reportAction.getRevenueSummary(loggedInUser.getUserId());
+					break;
+				}
+				case 2: {
+					reportAction.getEventSummary(loggedInUser.getUserId());
+					break;
+				}
+				case 3:
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
-
 
 	/* ===================== NOTIFICATIONS ===================== */
 
@@ -253,62 +244,63 @@ public class OrganizerMenu extends BaseMenu {
 
 		while (true) {
 			System.out.println(
-				    "\nNotifications\n" +
-				    "1 Send event update\n" +
-				    "2 Send schedule change\n" +
-				    "3 View notifications\n" +
-				    "4 Back\n\n" +
-				    "Choice:"
-				);
-
+					"\nNotifications\n" +
+							"1 Send event update\n" +
+							"2 Send schedule change\n" +
+							"3 View notifications\n" +
+							"4 Back\n\n" +
+							"Choice:");
 
 			int choice = InputValidationUtil.readInt(ScannerUtil.getScanner(), "");
 
 			switch (choice) {
-			case 1:
-			case 2:
-				List<Event> events =
-					eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
+				case 1:
+				case 2:
+					try {
+						List<Event> events = eventManagementAction.getOrganizerEvents(loggedInUser.getUserId());
 
-				List<Event> filteredEvents = events.stream()
-					.filter(e ->
-						e.getStatus().equals(EventStatus.PUBLISHED.toString())
-						&& e.getStartDateTime().isAfter(DateTimeUtil.nowUtc())
-					)
-					.toList();
+						List<Event> filteredEvents = events.stream()
+								.filter(e -> e.getStatus().equals(EventStatus.PUBLISHED.toString())
+										&& e.getStartDateTime().isAfter(DateTimeUtil.nowUtc()))
+								.toList();
 
-				PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
+						if (filteredEvents.isEmpty()) {
+							System.out.println("No published upcoming events found.");
+							break;
+						}
 
-				int eventChoice =
-					MenuHelper.selectFromList(filteredEvents.size(), "Select an event");
-				Event selectedEvent = filteredEvents.get(eventChoice - 1);
+						PaginationUtil.paginate(filteredEvents, MenuHelper::printEventSummaries);
 
-				String msg =
-					InputValidationUtil.readString(
-						ScannerUtil.getScanner(),
-						"Enter the message to be send to all registered users:\n"
-					);
+						int eventChoice = MenuHelper.selectFromList(filteredEvents.size(), "Select an event");
+						Event selectedEvent = filteredEvents.get(eventChoice - 1);
 
-				if (choice == 1) {
-					notificationAction.sendEventUpdate(selectedEvent.getEventId(), msg);
-				} else {
-					notificationAction.sendScheduleChange(selectedEvent.getEventId(), msg);
-				}
-				break;
+						String msg = InputValidationUtil.readString(
+								ScannerUtil.getScanner(),
+								"Enter the message to be send to all registered users:\n");
 
-			case 3:
-				notificationAction.displayAllNotifications(loggedInUser.getUserId());
-				break;
+						if (choice == 1) {
+							notificationAction.sendEventUpdate(selectedEvent.getEventId(), msg);
+						} else {
+							notificationAction.sendScheduleChange(selectedEvent.getEventId(), msg);
+						}
+					} catch (DataAccessException e) {
+						System.out.println("Error processing notification: " + e.getMessage());
+					}
+					break;
 
-			case 4:
-				return;
+				case 3:
+					notificationAction.displayAllNotifications(loggedInUser.getUserId());
+					break;
 
-			default:
-				System.out.println("Invalid choice. Please try again.");
+				case 4:
+					return;
+
+				default:
+					System.out.println("Invalid choice. Please try again.");
 			}
 		}
 	}
-	
+
 	/* ===================== OFFER MANAGEMENT ===================== */
 	private void offerManagementMenu() {
 
@@ -324,22 +316,23 @@ public class OrganizerMenu extends BaseMenu {
 					break;
 				}
 				case 2: {
-				    offerManagementAction.viewAllOffers(loggedInUser.getUserId());
-				    break;
+					offerManagementAction.viewAllOffers(loggedInUser.getUserId());
+					break;
 				}
 				case 3: {
-				    offerManagementAction.activateOffer(loggedInUser.getUserId());
-				    break;
+					offerManagementAction.activateOffer(loggedInUser.getUserId());
+					break;
 				}
 				case 4: {
-				    offerManagementAction.deactivateOffer(loggedInUser.getUserId());
-				    break;
+					offerManagementAction.deactivateOffer(loggedInUser.getUserId());
+					break;
 				}
-				case 5:{
+				case 5: {
 					return;
-				}default:
+				}
+				default:
 					System.out.println("Invalid choice. Please try again.");
-				
+
 			}
 		}
 	}
@@ -347,11 +340,9 @@ public class OrganizerMenu extends BaseMenu {
 	/* ===================== LOGOUT ===================== */
 
 	private boolean confirmLogout() {
-		char choice =
-			InputValidationUtil.readChar(
+		char choice = InputValidationUtil.readChar(
 				ScannerUtil.getScanner(),
-				"Are you sure you want to logout? (Y/N): "
-			);
+				"Are you sure you want to logout? (Y/N): ");
 		return Character.toUpperCase(choice) == 'Y';
 	}
 }

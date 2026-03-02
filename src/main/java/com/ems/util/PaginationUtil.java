@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 public class PaginationUtil {
-	private PaginationUtil() {
-		
-	}
-	
+    private PaginationUtil() {
+
+    }
+
     private static final int PAGE_SIZE = 10;
 
     // Splits a list into pages and prints one page at a time
@@ -25,7 +25,7 @@ public class PaginationUtil {
             printer.accept(data, 1);
             return;
         }
-        
+
         int totalPages = (int) Math.ceil((double) totalItems / PAGE_SIZE);
         int currentPage = 1;
 
