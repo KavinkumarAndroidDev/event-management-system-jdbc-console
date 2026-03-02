@@ -6,6 +6,7 @@ import java.util.List;
 import com.ems.dao.RoleDao;
 import com.ems.dao.UserDao;
 import com.ems.enums.UserRole;
+import com.ems.enums.UserStatus;
 import com.ems.exception.AuthorizationException;
 import com.ems.exception.DataAccessException;
 import com.ems.exception.InvalidPasswordFormatException;
@@ -45,78 +46,70 @@ public class UserServiceImpl implements UserService {
 	 */
 	@Override
 	public User login(String emailId, String password)
-	        throws AuthorizationException, AuthenticationException {
+			throws AuthorizationException, AuthenticationException {
 
-	    try {
-	        User user = userDao.findByEmail(emailId.toLowerCase());
+		try {
+			User user = userDao.findByEmail(emailId.toLowerCase());
 
-	        if (user == null) {
-	            throw new AuthorizationException("Account not found. Please register first.");
-	        }
+			if (user == null) {
+				throw new AuthorizationException("Account not found. Please register first.");
+			}
 
-	        if ("SUSPENDED".equalsIgnoreCase(user.getStatus())) {
-	        	systemLogService.log(
-                	    user.getUserId(),
-                	    "LOGIN_BLOCKED",
-                	    "USER",
-                	    user.getUserId(),
-                	    "Login attempt blocked. Account is suspended"
-                	);
-	            throw new AuthorizationException(
-	                "\nYour account has been suspended!\ncontact admin@ems.com for more info"
-	            );
-	        }
+			if (UserStatus.SUSPENDED.name().equals(user.getStatus())) {
+				systemLogService.log(
+						user.getUserId(),
+						"LOGIN_BLOCKED",
+						"USER",
+						user.getUserId(),
+						"Login attempt blocked. Account is suspended");
+				throw new AuthorizationException(
+						"\nYour account has been suspended!\ncontact admin@ems.com for more info");
+			}
 
-	        if (!PasswordUtil.verifyPassword(password, user.getPasswordHash())) {
-	        	systemLogService.log(
-	        		    user.getUserId(),
-	        		    "LOGIN_FAILED",
-	        		    "USER",
-	        		    user.getUserId(),
-	        		    "Invalid password attempt"
-	        		);
+			if (!PasswordUtil.verifyPassword(password, user.getPasswordHash())) {
+				systemLogService.log(
+						user.getUserId(),
+						"LOGIN_FAILED",
+						"USER",
+						user.getUserId(),
+						"Invalid password attempt");
 
-	            int attempts = user.getFailedAttempts() + 1;
+				int attempts = user.getFailedAttempts() + 1;
 				userDao.incrementFailedAttempts(user.getUserId());
 				if (attempts >= 3) {
 
-				    if (!"admin".equalsIgnoreCase(userDao.getRole(user).name().toString())) {
-				    	try {
-						    userDao.updateUserStatus(user.getUserId(), "SUSPENDED");
+					if (!UserRole.ADMIN.equals(userDao.getRole(user))) {
+						try {
+							userDao.updateUserStatus(user.getUserId(), UserStatus.SUSPENDED);
 						} catch (DataAccessException ex) {
-						    throw new AuthorizationException("Account locked. Contact admin@ems.com");
+							throw new AuthorizationException("Account locked. Contact admin@ems.com");
 						}
-					    systemLogService.log(
-					        user.getUserId(),
-					        "ACCOUNT_SUSPENDED",
-					        "USER",
-					        user.getUserId(),
-					        "Account suspended due to multiple failed login attempts"
-					    );
-					    throw new AuthorizationException(
-					        "Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info"
-					    );
-				    }
+						systemLogService.log(
+								user.getUserId(),
+								"ACCOUNT_SUSPENDED",
+								"USER",
+								user.getUserId(),
+								"Account suspended due to multiple failed login attempts");
+						throw new AuthorizationException(
+								"Account suspended due to multiple failed login attempts\ncontact admin@ems.com for more info");
+					}
 
-				    throw new AuthorizationException("Account locked.");
+					throw new AuthorizationException("Account locked.");
 				}
 
-				
 				throw new AuthenticationException(
-				        "Invalid password. Attempt " + attempts + " of 3"
-				    );
-	        }
+						"Invalid password. Attempt " + attempts + " of 3");
+			}
 
-	        userDao.resetFailedAttempts(user.getUserId());
+			userDao.resetFailedAttempts(user.getUserId());
 
-	        System.out.println("\nWelcome, " + user.getFullName());
-	        return user;
+			System.out.println("\nWelcome, " + user.getFullName());
+			return user;
 
-	    } catch (DataAccessException e) {
-	        throw new AuthenticationException("Login failed");
-	    }
+		} catch (DataAccessException e) {
+			throw new AuthenticationException("Login failed");
+		}
 	}
-
 
 	/*
 	 * Creates a new user account with the specified role.
@@ -137,7 +130,8 @@ public class UserServiceImpl implements UserService {
 
 				String hashedPassword = PasswordUtil.hashPassword(password);
 
-				boolean isUserCreated = userDao.createUser(fullName, email, phone, hashedPassword, selectedRole.getRoleId(), "ACTIVE",
+				boolean isUserCreated = userDao.createUser(fullName, email, phone, hashedPassword,
+						selectedRole.getRoleId(), UserStatus.ACTIVE,
 						LocalDateTime.now(), null, gender);
 				return isUserCreated;
 
@@ -177,16 +171,15 @@ public class UserServiceImpl implements UserService {
 		}
 		return false;
 	}
-	
-	
+
 	@Override
 	public boolean updateUserProfile(User user) {
-	    try {
-	        return userDao.updateUser(user);
-	    } catch (DataAccessException e) {
-	        System.out.println(e.getMessage());
-	    }
-	    return false;
+		try {
+			return userDao.updateUser(user);
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		return false;
 	}
 
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.ems.enums.NotificationType;
 import com.ems.enums.UserRole;
+import com.ems.enums.UserStatus;
 import com.ems.model.Category;
 import com.ems.model.EventRegistrationReport;
 import com.ems.model.EventRevenueReport;
@@ -17,10 +18,10 @@ public interface AdminService {
 
 	List<User> getAllUsers();
 
-	boolean changeStatus(String status, int userId);
+	boolean changeStatus(UserStatus status, int userId);
 
 	// notification management
-	void sendSystemWideNotification(String message, String notificationType);
+	void sendSystemWideNotification(String message, NotificationType notificationType);
 
 	void sendNotificationByRole(String message, NotificationType selectedType, UserRole role);
 
@@ -33,7 +34,7 @@ public interface AdminService {
 
 	void markCompletedEvents();
 
-	// reports & analytics 
+	// reports & analytics
 	List<EventRegistrationReport> getEventWiseRegistrations(int eventId);
 
 	List<EventRevenueReport> getRevenueReport();
@@ -46,7 +47,7 @@ public interface AdminService {
 	void addCategory(String name);
 
 	void updateCategory(int categoryId, String name);
-	
+
 	void updateCategory(int categoryId);
 
 	void deleteCategory(int categoryId);

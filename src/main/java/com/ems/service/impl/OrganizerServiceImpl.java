@@ -8,6 +8,7 @@ import com.ems.dao.EventDao;
 import com.ems.dao.RegistrationDao;
 import com.ems.dao.TicketDao;
 import com.ems.enums.EventStatus;
+import com.ems.enums.NotificationType;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Event;
 import com.ems.model.EventRegistrationReport;
@@ -35,7 +36,7 @@ public class OrganizerServiceImpl implements OrganizerService {
 	private final RegistrationDao registrationDao;
 	private final NotificationService notificationService;
 	private final SystemLogService systemLogService;
-	
+
 	public OrganizerServiceImpl(EventDao eventDao, TicketDao ticketDao, RegistrationDao registrationDao,
 			NotificationService notificationService, SystemLogService systemLogService) {
 		this.eventDao = eventDao;
@@ -51,18 +52,17 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * Rule: - Newly created events are always saved as DRAFT
 	 */
 	public int createEvent(Event event) {
-		event.setStatus(EventStatus.DRAFT.toString());
+		event.setStatus(EventStatus.DRAFT.name());
 		try {
 
 			int eventId = eventDao.createEvent(event);
 
 			systemLogService.log(
-			    event.getOrganizerId(),
-			    "CREATE",
-			    "EVENT",
-			    eventId,
-			    "Event created in DRAFT state"
-			);
+					event.getOrganizerId(),
+					"CREATE",
+					"EVENT",
+					eventId,
+					"Event created in DRAFT state");
 
 			return eventId;
 
@@ -82,13 +82,12 @@ public class OrganizerServiceImpl implements OrganizerService {
 			boolean updated = eventDao.updateEventDetails(eventId, title, description, categoryId, venueId);
 
 			if (updated) {
-			    systemLogService.log(
-			        null,
-			        "UPDATE",
-			        "EVENT",
-			        eventId,
-			        "Event details updated"
-			    );
+				systemLogService.log(
+						null,
+						"UPDATE",
+						"EVENT",
+						eventId,
+						"Event details updated");
 			}
 
 			return updated;
@@ -105,21 +104,19 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * Used for rescheduling upcoming events.
 	 */
 	public boolean updateEventSchedule(int eventId, LocalDateTime start, LocalDateTime end) {
-	    try {
-	        boolean updated = eventDao.updateEventSchedule(
-	            eventId,
-	            DateTimeUtil.toUtcInstant(start),
-	            DateTimeUtil.toUtcInstant(end)
-	        );
+		try {
+			boolean updated = eventDao.updateEventSchedule(
+					eventId,
+					DateTimeUtil.toUtcInstant(start),
+					DateTimeUtil.toUtcInstant(end));
 
 			if (updated) {
-			    systemLogService.log(
-			        null,
-			        "UPDATE",
-			        "EVENT",
-			        eventId,
-			        "Event schedule updated to " + start + " - " + end
-			    );
+				systemLogService.log(
+						null,
+						"UPDATE",
+						"EVENT",
+						eventId,
+						"Event schedule updated to " + start + " - " + end);
 			}
 
 			return updated;
@@ -138,13 +135,12 @@ public class OrganizerServiceImpl implements OrganizerService {
 			boolean updated = eventDao.updateEventCapacity(eventId, capacity);
 
 			if (updated) {
-			    systemLogService.log(
-			        null,
-			        "UPDATE",
-			        "EVENT",
-			        eventId,
-			        "Event capacity updated to " + capacity
-			    );
+				systemLogService.log(
+						null,
+						"UPDATE",
+						"EVENT",
+						eventId,
+						"Event capacity updated to " + capacity);
 			}
 
 			return updated;
@@ -160,16 +156,15 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 */
 	public boolean publishEvent(int eventId) {
 		try {
-			boolean published = eventDao.updateEventStatus(eventId, EventStatus.PUBLISHED.toString());
+			boolean published = eventDao.updateEventStatus(eventId, EventStatus.PUBLISHED.name());
 
 			if (published) {
-			    systemLogService.log(
-			        null,
-			        "PUBLISH",
-			        "EVENT",
-			        eventId,
-			        "Event published"
-			    );
+				systemLogService.log(
+						null,
+						"PUBLISH",
+						"EVENT",
+						eventId,
+						"Event published");
 			}
 
 			return published;
@@ -187,16 +182,15 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 */
 	public boolean cancelEvent(int eventId) {
 		try {
-			boolean cancelled = eventDao.updateEventStatus(eventId, EventStatus.CANCELLED.toString());
+			boolean cancelled = eventDao.updateEventStatus(eventId, EventStatus.CANCELLED.name());
 
 			if (cancelled) {
-			    systemLogService.log(
-			        null,
-			        "CANCEL",
-			        "EVENT",
-			        eventId,
-			        "Event cancelled by organizer"
-			    );
+				systemLogService.log(
+						null,
+						"CANCEL",
+						"EVENT",
+						eventId,
+						"Event cancelled by organizer");
 			}
 
 			return cancelled;
@@ -217,15 +211,13 @@ public class OrganizerServiceImpl implements OrganizerService {
 			ticket.setAvailableQuantity(ticket.getTotalQuantity());
 			boolean created = ticketDao.createTicket(ticket);
 
-
 			if (created) {
-			    systemLogService.log(
-			        null,
-			        "CREATE",
-			        "TICKET",
-			        ticket.getEventId(),
-			        "Ticket type created: " + ticket.getTicketType()
-			    );
+				systemLogService.log(
+						null,
+						"CREATE",
+						"TICKET",
+						ticket.getEventId(),
+						"Ticket type created: " + ticket.getTicketType());
 			}
 
 			return created;
@@ -243,13 +235,12 @@ public class OrganizerServiceImpl implements OrganizerService {
 			boolean updated = ticketDao.updateTicketPrice(ticketId, price);
 
 			if (updated) {
-			    systemLogService.log(
-			        null,
-			        "UPDATE",
-			        "TICKET",
-			        ticketId,
-			        "Ticket price updated to ₹" + price
-			    );
+				systemLogService.log(
+						null,
+						"UPDATE",
+						"TICKET",
+						ticketId,
+						"Ticket price updated to ₹" + price);
 			}
 
 			return updated;
@@ -267,13 +258,12 @@ public class OrganizerServiceImpl implements OrganizerService {
 			boolean updated = ticketDao.updateTicketQuantity(ticketId, quantity);
 
 			if (updated) {
-			    systemLogService.log(
-			        null,
-			        "UPDATE",
-			        "TICKET",
-			        ticketId,
-			        "Ticket quantity updated to " + quantity
-			    );
+				systemLogService.log(
+						null,
+						"UPDATE",
+						"TICKET",
+						ticketId,
+						"Ticket quantity updated to " + quantity);
 			}
 
 			return updated;
@@ -281,7 +271,6 @@ public class OrganizerServiceImpl implements OrganizerService {
 			System.out.println(e.getMessage());
 		}
 		return false;
-
 
 	}
 
@@ -301,14 +290,13 @@ public class OrganizerServiceImpl implements OrganizerService {
 	 * Returns the total number of registrations for an event.
 	 */
 	public int viewEventRegistrations(int eventId) {
-	    try {
-	        return registrationDao.getEventRegistrationCount(eventId);
-	    } catch (DataAccessException e) {
-	        System.out.println(e.getMessage());
-	        return 0; 
-	    }
+		try {
+			return registrationDao.getEventRegistrationCount(eventId);
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+			return 0;
+		}
 	}
-	
 
 	/*
 	 * Displays registration details for a specific event. Registrations are shown
@@ -341,79 +329,74 @@ public class OrganizerServiceImpl implements OrganizerService {
 		return new ArrayList<>();
 	}
 
-	
-
 	/*
 	 * Sends a general update notification to all event attendees.
 	 */
 	public void sendEventUpdate(int eventId, String message) {
-		notificationService.sendEventNotification(eventId, message, "EVENT_UPDATE");
+		notificationService.sendEventNotification(eventId, message, NotificationType.EVENT);
 	}
 
 	/*
 	 * Sends a schedule change notification to all event attendees.
 	 */
 	public void sendScheduleChange(int eventId, String message) {
-		notificationService.sendEventNotification(eventId, message, "SCHEDULE_CHANGE");
+		notificationService.sendEventNotification(eventId, message, NotificationType.EVENT);
 	}
-	
+
 	public List<OrganizerEventSummary> getOrganizerEventSummary(int organizerId) {
-	    try {
+		try {
 			return eventDao.getEventSummaryByOrganizer(organizerId);
 		} catch (DataAccessException e) {
 			System.out.println(e.getMessage());
 		}
 		return new ArrayList<>();
 	}
-	
-	
+
 	@Override
 	public Event getOrganizerEventById(int organizerId, int eventId) {
-	    try {
-	        Event event = eventDao.getEventById(eventId);
+		try {
+			Event event = eventDao.getEventById(eventId);
 
-	        if (event == null) {
-	            return null;
-	        }
+			if (event == null) {
+				return null;
+			}
 
-	        if (event.getOrganizerId() != organizerId) {
-	            return null;
-	        }
+			if (event.getOrganizerId() != organizerId) {
+				return null;
+			}
 
-	        return event;
+			return event;
 
-	    } catch (DataAccessException e) {
-	        System.out.println(e.getMessage());
-	    }
-	    return null;
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		return null;
 	}
 
 	public List<EventRevenueReport> getRevenueReport(int organizerId) {
-	    try {
-	        return eventDao.getEventWiseRevenueReportByOrganizer(organizerId);
-	    } catch (DataAccessException e) {
-	        System.out.println(e.getMessage());
-	    }
-	    return new ArrayList<>();
+		try {
+			return eventDao.getEventWiseRevenueReportByOrganizer(organizerId);
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+		}
+		return new ArrayList<>();
 	}
 
 	@Override
 	public void sendCancellationRequest(Event event, String organizerMessage) {
 
-	    String notificationMessage =
-	        "CANCELLATION REQUEST\n\n" +
-	        "Event: " + event.getTitle() + "\n" +
-	        "Event ID: " + event.getEventId() + "\n" +
-	        "Start Time: " + DateTimeUtil.formatForDisplay(event.getStartDateTime()) + "\n\n" +
-	        "Requested by Organizer:\n" +
-	        event.getOrganizerId() + " (User ID: " + event.getOrganizerId() + ")\n\n" +
-	        "Organizer Message:\n" +
-	        organizerMessage;
+		String notificationMessage = "CANCELLATION REQUEST\n\n" +
+				"Event: " + event.getTitle() + "\n" +
+				"Event ID: " + event.getEventId() + "\n" +
+				"Start Time: " + DateTimeUtil.formatForDisplay(event.getStartDateTime()) + "\n\n" +
+				"Requested by Organizer:\n" +
+				event.getOrganizerId() + " (User ID: " + event.getOrganizerId() + ")\n\n" +
+				"Organizer Message:\n" +
+				organizerMessage;
 
-	    notificationService.sendPersonalNotification(
-	        event.getApprovedBy(),
-	        notificationMessage,
-	        "CANCELLATION REQUEST"
-	    );
+		notificationService.sendPersonalNotification(
+				event.getApprovedBy(),
+				notificationMessage,
+				NotificationType.EVENT);
 	}
 }

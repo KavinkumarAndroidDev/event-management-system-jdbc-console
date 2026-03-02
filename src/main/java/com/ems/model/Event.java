@@ -3,24 +3,24 @@ package com.ems.model;
 import java.time.Instant;
 
 public class Event {
-    private int eventId;
-    private int organizerId;
-    private String title;
-    private String description;
-    private int categoryId;
-    private int venueId;
-    private Instant startDateTime;
-    private Instant endDateTime;
-    private Instant approvedAt;
-    private Instant createdAt;
-    private Instant updatedAt;
-    private int capacity;
-    private String status;
-    private int approvedBy;
-	
+	private int eventId;
+	private int organizerId;
+	private String title;
+	private String description;
+	private int categoryId;
+	private int venueId;
+	private Instant startDateTime;
+	private Instant endDateTime;
+	private Instant approvedAt;
+	private Instant createdAt;
+	private Instant updatedAt;
+	private int capacity;
+	private String status;
+	private int approvedBy;
+
 	public Event() {
 	}
-	
+
 	/**
 	 * @param eventId
 	 * @param organizerId
@@ -56,163 +56,109 @@ public class Event {
 		this.approvedBy = approvedBy;
 	}
 
-
-
 	public int getEventId() {
 		return eventId;
 	}
-
-
 
 	public void setEventId(int eventId) {
 		this.eventId = eventId;
 	}
 
-
-
 	public int getOrganizerId() {
 		return organizerId;
 	}
-
-
 
 	public void setOrganizerId(int organizerId) {
 		this.organizerId = organizerId;
 	}
 
-
-
 	public String getTitle() {
 		return title;
 	}
-
-
 
 	public void setTitle(String title) {
 		this.title = title;
 	}
 
-
-
 	public String getDescription() {
 		return description;
 	}
-
-
 
 	public void setDescription(String description) {
 		this.description = description;
 	}
 
-
-
 	public int getCategoryId() {
 		return categoryId;
 	}
-
-
 
 	public void setCategoryId(int categoryId) {
 		this.categoryId = categoryId;
 	}
 
-
-
 	public int getVenueId() {
 		return venueId;
 	}
-
-
 
 	public void setVenueId(int venueId) {
 		this.venueId = venueId;
 	}
 
-
-
 	public Instant getStartDateTime() {
 		return startDateTime;
 	}
-
-
 
 	public void setStartDateTime(Instant startDateTime) {
 		this.startDateTime = startDateTime;
 	}
 
-
-
 	public Instant getEndDateTime() {
 		return endDateTime;
 	}
-
-
 
 	public void setEndDateTime(Instant endDateTime) {
 		this.endDateTime = endDateTime;
 	}
 
-
-
 	public Instant getApprovedAt() {
 		return approvedAt;
 	}
-
-
 
 	public void setApprovedAt(Instant approvedAt) {
 		this.approvedAt = approvedAt;
 	}
 
-
-
 	public Instant getCreatedAt() {
 		return createdAt;
 	}
-
-
 
 	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
 	}
 
-
-
 	public Instant getUpdatedAt() {
 		return updatedAt;
 	}
-
-
 
 	public void setUpdatedAt(Instant updatedAt) {
 		this.updatedAt = updatedAt;
 	}
 
-
-
 	public int getCapacity() {
 		return capacity;
 	}
-
-
 
 	public void setCapacity(int capacity) {
 		this.capacity = capacity;
 	}
 
-
-
 	public String getStatus() {
 		return status;
 	}
 
-
-
 	public void setStatus(String status) {
 		this.status = status;
 	}
-
-
 
 	public int getApprovedBy() {
 		return approvedBy;
@@ -230,6 +176,5 @@ public class Event {
 				+ ", approvedBy=" + approvedBy + ", approvedAt=" + approvedAt + ", createdAt=" + createdAt
 				+ ", updatedAt=" + updatedAt + "]";
 	}
-	
-	
+
 }

@@ -1,10 +1,10 @@
 package com.ems.dao;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ems.enums.UserRole;
+import com.ems.enums.UserStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.User;
 
@@ -22,7 +22,7 @@ public interface UserDao {
      * @param createdAt
      * @param updatedAt
      * @param gender
-     * @return 
+     * @return
      * @throws DataAccessException
      */
     boolean createUser(
@@ -31,11 +31,10 @@ public interface UserDao {
             String phone,
             String passwordHash,
             int roleId,
-            String status,
+            UserStatus status,
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
-            String gender
-    ) throws DataAccessException;
+            String gender) throws DataAccessException;
 
     /**
      * Finds a user by email address
@@ -54,7 +53,7 @@ public interface UserDao {
      * @return true if update succeeded
      * @throws DataAccessException
      */
-    boolean updateUserStatus(int userId, String status) throws DataAccessException;
+    boolean updateUserStatus(int userId, UserStatus status) throws DataAccessException;
 
     /**
      * Retrieves all users of a given role
@@ -106,7 +105,7 @@ public interface UserDao {
      * @throws DataAccessException
      */
     void resetFailedAttempts(int userId) throws DataAccessException;
-    
+
     /**
      * update the user details
      * 

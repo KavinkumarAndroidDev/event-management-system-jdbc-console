@@ -61,7 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
 			    notificationDao.sendNotification(
 			        userId,
 			        "Registration confirmed. Amount paid: ₹" + result.getFinalAmount(),
-			        NotificationType.EVENT.name()
+			        NotificationType.EVENT
 			    );
 			} else {
 			    systemLogService.log(

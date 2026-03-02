@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.ems.dao.*;
 import com.ems.enums.NotificationType;
 import com.ems.enums.PaymentMethod;
+import com.ems.enums.RegistrationStatus;
 import com.ems.exception.DataAccessException;
 import com.ems.model.BookingDetail;
 import com.ems.model.Event;
@@ -69,14 +70,14 @@ public class EventServiceImpl implements EventService {
         if (minPrice < 0 || maxPrice < 0) {
             return new ArrayList<>();
         }
-        
+
         if (minPrice > maxPrice) {
             return new ArrayList<>();
         }
 
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
-            
+
             if (allEvents.isEmpty()) {
                 return new ArrayList<>();
             }
@@ -88,7 +89,7 @@ public class EventServiceImpl implements EventService {
                         return false;
                     }
                     return tickets.stream()
-                        .anyMatch(t -> t.getPrice() >= minPrice && t.getPrice() <= maxPrice);
+                            .anyMatch(t -> t.getPrice() >= minPrice && t.getPrice() <= maxPrice);
                 } catch (DataAccessException e) {
                     return false;
                 }
@@ -114,11 +115,11 @@ public class EventServiceImpl implements EventService {
     public List<Event> searchByCity(int venueId) {
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
-            
+
             return allEvents.stream()
-                .filter(e -> e.getVenueId() == venueId)
-                .collect(Collectors.toList());
-                
+                    .filter(e -> e.getVenueId() == venueId)
+                    .collect(Collectors.toList());
+
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0, "City search failed: " + e.getMessage());
             return new ArrayList<>();
@@ -133,11 +134,11 @@ public class EventServiceImpl implements EventService {
 
         try {
             List<Event> allEvents = eventDao.listAvailableEvents();
-            
+
             return allEvents.stream()
-                .filter(e -> e.getStartDateTime() != null &&
-                        DateTimeUtil.toLocalDateTime(e.getStartDateTime()).toLocalDate().isEqual(localDate))
-                .collect(Collectors.toList());
+                    .filter(e -> e.getStartDateTime() != null &&
+                            DateTimeUtil.toLocalDateTime(e.getStartDateTime()).toLocalDate().isEqual(localDate))
+                    .collect(Collectors.toList());
 
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0, "Date search failed: " + e.getMessage());
@@ -150,7 +151,7 @@ public class EventServiceImpl implements EventService {
         if (startDate == null || endDate == null) {
             return new ArrayList<>();
         }
-        
+
         if (startDate.isAfter(endDate)) {
             return new ArrayList<>();
         }
@@ -175,10 +176,10 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> searchBycategory(int selectedCategoryId) {
         try {
-            List<Event> allEvents = eventDao.listAvailableEvents();            
+            List<Event> allEvents = eventDao.listAvailableEvents();
             return allEvents.stream()
-                .filter(e -> e.getCategoryId() == selectedCategoryId)
-                .collect(Collectors.toList());
+                    .filter(e -> e.getCategoryId() == selectedCategoryId)
+                    .collect(Collectors.toList());
 
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0, "Category search failed: " + e.getMessage());
@@ -195,47 +196,46 @@ public class EventServiceImpl implements EventService {
             double price,
             PaymentMethod paymentMethod,
             String offerCode) {
-        
+
         String normalizedOfferCode = "";
         if (offerCode != null && !offerCode.trim().isEmpty()) {
             normalizedOfferCode = offerCode.trim().toUpperCase();
         }
-        
+
         try {
             return paymentService.processRegistration(
-                userId,
-                eventId,
-                ticketId,
-                quantity,
-                price,
-                paymentMethod,
-                normalizedOfferCode
-            );
-        }catch(Exception e) {
-        	systemLogService.log(
+                    userId,
+                    eventId,
+                    ticketId,
+                    quantity,
+                    price,
+                    paymentMethod,
+                    normalizedOfferCode);
+        } catch (Exception e) {
+            systemLogService.log(
                     userId,
                     "REGISTRATION_FAILED",
                     "EVENT",
                     eventId,
-                    "Registration failed: " + e.getMessage()
-                );
-                return false;
+                    "Registration failed: " + e.getMessage());
+            return false;
         }
     }
+
     @Override
     public List<UserEventRegistration> viewUpcomingEvents(int userId) {
         try {
             List<UserEventRegistration> registrations = eventDao.getUserRegistrations(userId);
 
             return registrations.stream()
-                .filter(r -> r.getStartDateTime() != null &&
-                        r.getStartDateTime().isAfter(DateTimeUtil.nowUtc()) &&
-                        "CONFIRMED".equals(r.getRegistrationStatus()))
-                .collect(Collectors.toList());
+                    .filter(r -> r.getStartDateTime() != null &&
+                            r.getStartDateTime().isAfter(DateTimeUtil.nowUtc()) &&
+                            "CONFIRMED".equals(r.getRegistrationStatus()))
+                    .collect(Collectors.toList());
 
         } catch (DataAccessException e) {
-            systemLogService.log(userId, "ERROR", "REGISTRATION", 0, 
-                "Failed to get upcoming events: " + e.getMessage());
+            systemLogService.log(userId, "ERROR", "REGISTRATION", 0,
+                    "Failed to get upcoming events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -245,12 +245,12 @@ public class EventServiceImpl implements EventService {
         try {
             List<UserEventRegistration> registrations = eventDao.getUserRegistrations(userId);
             return registrations.stream()
-            	    .filter(r -> r.getEndDateTime() != null
-            	            && r.getEndDateTime().isBefore(DateTimeUtil.nowUtc()))
-            	    .collect(Collectors.toList());
+                    .filter(r -> r.getEndDateTime() != null
+                            && r.getEndDateTime().isBefore(DateTimeUtil.nowUtc()))
+                    .collect(Collectors.toList());
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "REGISTRATION", 0,
-                "Failed to get past events: " + e.getMessage());
+                    "Failed to get past events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -262,7 +262,7 @@ public class EventServiceImpl implements EventService {
             return bookings;
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "BOOKING", 0,
-                "Failed to get booking details: " + e.getMessage());
+                    "Failed to get booking details: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -270,30 +270,29 @@ public class EventServiceImpl implements EventService {
     @Override
     public boolean submitRating(int userId, int eventId, int rating, String comments) {
         try {
-            String normalizedComments = (comments == null || comments.trim().isEmpty()) 
-                ? null 
-                : comments.trim();
+            String normalizedComments = (comments == null || comments.trim().isEmpty())
+                    ? null
+                    : comments.trim();
             boolean isFeedbackAlreadySubmitted = feedbackDao.isRatingAlreadySubmitted(eventId, userId);
             if (isFeedbackAlreadySubmitted) {
                 return false;
             }
 
             boolean isSuccess = feedbackDao.submitRating(eventId, userId, rating, normalizedComments);
-            if(isSuccess) {
-            	systemLogService.log(
+            if (isSuccess) {
+                systemLogService.log(
                         userId,
                         "SUBMIT_FEEDBACK",
                         "EVENT",
                         eventId,
-                        "User submitted rating: " + rating
-                    );
+                        "User submitted rating: " + rating);
             }
             return isSuccess;
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "FEEDBACK", eventId,
-                "Failed to submit rating: " + e.getMessage());
+                    "Failed to submit rating: " + e.getMessage());
         }
-		return false;
+        return false;
     }
 
     @Override
@@ -303,7 +302,7 @@ public class EventServiceImpl implements EventService {
             return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
-                "Failed to get all events: " + e.getMessage());
+                    "Failed to get all events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -314,18 +313,18 @@ public class EventServiceImpl implements EventService {
             return categoryDao.getCategory(categoryId);
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "CATEGORY", categoryId,
-                "Failed to get category: " + e.getMessage());
+                    "Failed to get category: " + e.getMessage());
             return null;
         }
     }
-    
+
     @Override
     public int getAvailableTickets(int eventId) {
         try {
             return ticketDao.getAvailableTickets(eventId);
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "TICKET", eventId,
-                "Failed to get available tickets: " + e.getMessage());
+                    "Failed to get available tickets: " + e.getMessage());
             return 0;
         }
     }
@@ -337,7 +336,7 @@ public class EventServiceImpl implements EventService {
             return name;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
-                "Failed to get venue name: " + e.getMessage());
+                    "Failed to get venue name: " + e.getMessage());
             return "";
         }
     }
@@ -349,7 +348,7 @@ public class EventServiceImpl implements EventService {
             return address;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
-                "Failed to get venue address: " + e.getMessage());
+                    "Failed to get venue address: " + e.getMessage());
             return "";
         }
     }
@@ -361,7 +360,7 @@ public class EventServiceImpl implements EventService {
             return categories;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "CATEGORY", 0,
-                "Failed to get categories: " + e.getMessage());
+                    "Failed to get categories: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -369,20 +368,20 @@ public class EventServiceImpl implements EventService {
     @Override
     public Map<Integer, String> getAllCities() {
         try {
-            Map<Integer, String> cities = venueDao.getAllCities();            
+            Map<Integer, String> cities = venueDao.getAllCities();
             if (!(cities instanceof LinkedHashMap)) {
                 Map<Integer, String> sortedCities = new LinkedHashMap<>();
                 cities.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue()) // Sort by city name
-                    .forEachOrdered(e -> sortedCities.put(e.getKey(), e.getValue()));
+                        .sorted(Map.Entry.comparingByValue()) // Sort by city name
+                        .forEachOrdered(e -> sortedCities.put(e.getKey(), e.getValue()));
                 return sortedCities;
             }
-            
+
             return cities;
-            
+
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", 0,
-                "Failed to get cities: " + e.getMessage());
+                    "Failed to get cities: " + e.getMessage());
             return new LinkedHashMap<>();
         }
     }
@@ -394,7 +393,7 @@ public class EventServiceImpl implements EventService {
             return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
-                "Failed to list available events: " + e.getMessage());
+                    "Failed to list available events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -406,11 +405,11 @@ public class EventServiceImpl implements EventService {
             return venues;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", 0,
-                "Failed to get all venues: " + e.getMessage());
+                    "Failed to get all venues: " + e.getMessage());
             return new ArrayList<>();
         }
     }
-    
+
     @Override
     public List<Venue> getAllVenues() {
         try {
@@ -418,25 +417,25 @@ public class EventServiceImpl implements EventService {
             return venues;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", 0,
-                "Failed to get all venues: " + e.getMessage());
+                    "Failed to get all venues: " + e.getMessage());
             return new ArrayList<>();
         }
     }
+
     @Override
     public boolean isVenueAvailable(int venueId, LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime == null || endTime == null) {
             return false;
         }
-        
+
         try {
             return venueDao.isVenueAvailable(
-                venueId,
-                DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(startTime)),
-                DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(endTime))
-            );
+                    venueId,
+                    DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(startTime)),
+                    DateTimeUtil.toTimestamp(DateTimeUtil.toUtcInstant(endTime)));
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
-                "Failed to check venue availability: " + e.getMessage());
+                    "Failed to check venue availability: " + e.getMessage());
             return false;
         }
     }
@@ -447,7 +446,7 @@ public class EventServiceImpl implements EventService {
             return venueDao.getVenueById(venueId);
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "VENUE", venueId,
-                "Failed to get venue: " + e.getMessage());
+                    "Failed to get venue: " + e.getMessage());
             return null;
         }
     }
@@ -459,7 +458,7 @@ public class EventServiceImpl implements EventService {
             return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
-                "Failed to list pending events: " + e.getMessage());
+                    "Failed to list pending events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -471,7 +470,7 @@ public class EventServiceImpl implements EventService {
             return events;
         } catch (DataAccessException e) {
             systemLogService.log(0, "ERROR", "EVENT", 0,
-                "Failed to list available and draft events: " + e.getMessage());
+                    "Failed to list available and draft events: " + e.getMessage());
             return new ArrayList<>();
         }
     }
@@ -480,29 +479,29 @@ public class EventServiceImpl implements EventService {
     public boolean cancelRegistration(int userId, int registrationId) {
         try {
             Registration reg = registrationDao.getById(registrationId);
-            
+
             if (reg == null) {
                 systemLogService.log(userId, "CANCEL_FAILED", "REGISTRATION", registrationId,
-                    "Registration not found");
+                        "Registration not found");
                 return false;
             }
-            
+
             if (reg.getUserId() != userId) {
                 systemLogService.log(userId, "CANCEL_FAILED", "REGISTRATION", registrationId,
-                    "User does not own this registration");
-                return false;
-            }
-            
-            if (!"CONFIRMED".equals(reg.getStatus())) {
-                systemLogService.log(userId, "CANCEL_FAILED", "REGISTRATION", registrationId,
-                    "Registration status is: " + reg.getStatus());
+                        "User does not own this registration");
                 return false;
             }
 
-            registrationDao.updateStatus(registrationId, "CANCELLED");
+            if (!RegistrationStatus.CONFIRMED.name().equals(reg.getStatus())) {
+                systemLogService.log(userId, "CANCEL_FAILED", "REGISTRATION", registrationId,
+                        "Registration status is: " + reg.getStatus());
+                return false;
+            }
+
+            registrationDao.updateStatus(registrationId, RegistrationStatus.CANCELLED.name());
 
             List<RegistrationTicket> tickets = registrationDao.getRegistrationTickets(registrationId);
-            
+
             for (RegistrationTicket rt : tickets) {
                 ticketDao.updateAvailableQuantity(rt.getTicketId(), rt.getQuantity());
             }
@@ -510,34 +509,32 @@ public class EventServiceImpl implements EventService {
             paymentDao.updatePaymentStatus(registrationId);
 
             systemLogService.log(
-                userId,
-                "REGISTRATION_CANCELLED",
-                "EVENT",
-                reg.getEventId(),
-                "Registration cancelled and refund initiated"
-            );
+                    userId,
+                    "REGISTRATION_CANCELLED",
+                    "EVENT",
+                    reg.getEventId(),
+                    "Registration cancelled and refund initiated");
 
             notificationDao.sendNotification(
-                userId,
-                "Your registration has been cancelled. Refund will be processed within 5-7 business days.",
-                NotificationType.EVENT.name()
-            );
+                    userId,
+                    "Your registration has been cancelled. Refund will be processed within 5-7 business days.",
+                    NotificationType.EVENT);
 
             return true;
-            
+
         } catch (DataAccessException e) {
             systemLogService.log(userId, "ERROR", "REGISTRATION", registrationId,
-                "Cancellation failed: " + e.getMessage());
+                    "Cancellation failed: " + e.getMessage());
             return false;
         }
     }
 
-	@Override
-	public boolean isRatingAlreadySubmitted(int eventId, int userId) {
-		try {
-			return feedbackDao.isRatingAlreadySubmitted(eventId, userId);
-		} catch (DataAccessException e) {
-			return false;
-		}
-	}
+    @Override
+    public boolean isRatingAlreadySubmitted(int eventId, int userId) {
+        try {
+            return feedbackDao.isRatingAlreadySubmitted(eventId, userId);
+        } catch (DataAccessException e) {
+            return false;
+        }
+    }
 }

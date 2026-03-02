@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.ems.dao.NotificationDao;
 import com.ems.dao.RegistrationDao;
+import com.ems.enums.NotificationType;
 import com.ems.exception.DataAccessException;
 import com.ems.model.Notification;
 import com.ems.service.NotificationService;
@@ -31,8 +32,8 @@ public class NotificationServiceImpl implements NotificationService {
      */
     public NotificationServiceImpl(NotificationDao notificationDao,
             RegistrationDao registrationDao, SystemLogService systemLogService) {
-        this.notificationDao  = notificationDao;
-        this.registrationDao  = registrationDao;
+        this.notificationDao = notificationDao;
+        this.registrationDao = registrationDao;
         this.systemLogService = systemLogService;
     }
 
@@ -41,7 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
      * Used for system-level or promotional announcements.
      */
     @Override
-    public void sendSystemWideNotification(String message, String notificationType) {
+    public void sendSystemWideNotification(String message, NotificationType notificationType) {
         try {
             notificationDao.sendSystemWideNotification(message, notificationType);
             systemLogService.log(null, "SEND_NOTIFICATION", "SYSTEM", null,
@@ -107,7 +108,7 @@ public class NotificationServiceImpl implements NotificationService {
      * Used for event updates or schedule changes.
      */
     @Override
-    public void sendEventNotification(int eventId, String message, String type) {
+    public void sendEventNotification(int eventId, String message, NotificationType type) {
         try {
             List<Integer> userIds = registrationDao.getRegisteredUserIdsByEvent(eventId);
             for (Integer userId : userIds) {
@@ -121,7 +122,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendPersonalNotification(int userId, String message, String type) {
+    public void sendPersonalNotification(int userId, String message, NotificationType type) {
         try {
             notificationDao.sendNotification(userId, message, type);
         } catch (DataAccessException e) {

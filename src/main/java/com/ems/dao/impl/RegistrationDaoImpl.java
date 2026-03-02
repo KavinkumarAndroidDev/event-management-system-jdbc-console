@@ -25,134 +25,125 @@ import com.ems.util.DateTimeUtil;
  */
 public class RegistrationDaoImpl implements RegistrationDao {
 
-	
 	@Override
 	public List<EventRegistrationReport> getEventWiseRegistrations(int eventId)
-	        throws DataAccessException {
+			throws DataAccessException {
 
-	    // Returns only confirmed registrations for reporting
-	    List<EventRegistrationReport> reports = new ArrayList<>();
-	
-	    String sql =
-	        "select e.title as event_title, u.full_name, t.ticket_type, " +
-	        "rt.quantity, r.registration_date " +
-	        "from registrations r " +
-	        "inner join users u on r.user_id = u.user_id " +
-	        "inner join registration_tickets rt on r.registration_id = rt.registration_id " +
-	        "inner join tickets t on rt.ticket_id = t.ticket_id " +
-	        "inner join events e on r.event_id = e.event_id " +
-	        "where r.event_id = ? " +
-	        "  and r.status = 'CONFIRMED'";
+		// Returns only confirmed registrations for reporting
+		List<EventRegistrationReport> reports = new ArrayList<>();
 
-	
-	    try (Connection con = DBConnectionUtil.getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
-	
-	        ps.setInt(1, eventId);
-	        ResultSet rs = ps.executeQuery();
-	
-	        while (rs.next()) {
-	            EventRegistrationReport report = new EventRegistrationReport();
-	            report.setEventTitle(rs.getString("event_title"));
-	            report.setUserName(rs.getString("full_name"));
-	            report.setTicketType(rs.getString("ticket_type"));
-	            report.setQuantity(rs.getInt("quantity"));
-	            report.setRegistrationDate(DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")));
-	            reports.add(report);
-	        }
-	        rs.close();
-	
-	    } catch (SQLException e) {
-	        throw new DataAccessException(
-	            "Error while fetching event wise registration"
-	        );
-	    }
+		String sql = "select e.title as event_title, u.full_name, t.ticket_type, " +
+				"rt.quantity, r.registration_date " +
+				"from registrations r " +
+				"inner join users u on r.user_id = u.user_id " +
+				"inner join registration_tickets rt on r.registration_id = rt.registration_id " +
+				"inner join tickets t on rt.ticket_id = t.ticket_id " +
+				"inner join events e on r.event_id = e.event_id " +
+				"where r.event_id = ? " +
+				"  and r.status = 'CONFIRMED'";
 
-	    return reports;
+		try (Connection con = DBConnectionUtil.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql)) {
+
+			ps.setInt(1, eventId);
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+				EventRegistrationReport report = new EventRegistrationReport();
+				report.setEventTitle(rs.getString("event_title"));
+				report.setUserName(rs.getString("full_name"));
+				report.setTicketType(rs.getString("ticket_type"));
+				report.setQuantity(rs.getInt("quantity"));
+				report.setRegistrationDate(DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")));
+				reports.add(report);
+			}
+			rs.close();
+
+		} catch (SQLException e) {
+			throw new DataAccessException(
+					"Error while fetching event wise registration");
+		}
+
+		return reports;
 	}
 
-	
 	@Override
 	public List<Integer> getRegisteredUserIdsByEvent(int eventId)
-	        throws DataAccessException {
+			throws DataAccessException {
 
-	    // Used for bulk notification or follow up actions
+		// Used for bulk notification or follow up actions
 
-	    String sql = "select distinct user_id from registrations where event_id=?";
-	    List<Integer> userIds = new ArrayList<>();
+		String sql = "select distinct user_id from registrations where event_id=?";
+		List<Integer> userIds = new ArrayList<>();
 
-	    try (Connection con = DBConnectionUtil.getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection con = DBConnectionUtil.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql)) {
 
-	        ps.setInt(1, eventId);
-	        ResultSet rs = ps.executeQuery();
+			ps.setInt(1, eventId);
+			ResultSet rs = ps.executeQuery();
 
-	        while (rs.next()) {
-	            userIds.add(rs.getInt("user_id"));
-	        }
+			while (rs.next()) {
+				userIds.add(rs.getInt("user_id"));
+			}
 
-	        return userIds;
+			return userIds;
 
-	    } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch registered users", e);
-	    }
+		} catch (Exception e) {
+			throw new DataAccessException("Unable to fetch registered users", e);
+		}
 	}
 
-	
-	
-	//organizer functions:
+	// organizer functions:
 	@Override
 	public int getEventRegistrationCount(int eventId)
-	        throws DataAccessException {
+			throws DataAccessException {
 
-	    // Lightweight count query for capacity checks
-       String sql = "select count(*) from registrations where event_id=? and status='CONFIRMED' ";
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+		// Lightweight count query for capacity checks
+		String sql = "select count(*) from registrations where event_id=? and status='CONFIRMED' ";
+		try (Connection con = DBConnectionUtil.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, eventId);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() ? rs.getInt(1) : 0;
-        } catch (Exception e) {
-	        throw new DataAccessException("Unable to fetch registered count");
-	    }
-    }
+			ps.setInt(1, eventId);
+			ResultSet rs = ps.executeQuery();
+			return rs.next() ? rs.getInt(1) : 0;
+		} catch (Exception e) {
+			throw new DataAccessException("Unable to fetch registered count");
+		}
+	}
 
 	@Override
 	public Registration getById(int registrationId)
-	        throws DataAccessException {
+			throws DataAccessException {
 
-	    // Fetches core registration details without ticket breakdown
+		// Fetches core registration details without ticket breakdown
 
-        String sql = "SELECT registration_id, user_id, event_id, registration_date, status "
-                   + "FROM registrations "
-                   + "WHERE registration_id = ?";
+		String sql = "SELECT registration_id, user_id, event_id, registration_date, status "
+				+ "FROM registrations "
+				+ "WHERE registration_id = ?";
 
-        try (Connection con = DBConnectionUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection con = DBConnectionUtil.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, registrationId);
+			ps.setInt(1, registrationId);
 
-            try (ResultSet rs = ps.executeQuery()) {
+			try (ResultSet rs = ps.executeQuery()) {
 
-                if (!rs.next()) {
-                	throw new DataAccessException("Data not found");
-                }
+				if (!rs.next()) {
+					throw new DataAccessException("Data not found");
+				}
 
-                return new Registration(
-                	    rs.getInt("registration_id"),
-                	    rs.getInt("user_id"),
-                	    rs.getInt("event_id"),
-                	    DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")),
-                	    rs.getString("status")
-                	);
-            }
+				return new Registration(
+						rs.getInt("registration_id"),
+						rs.getInt("user_id"),
+						rs.getInt("event_id"),
+						DateTimeUtil.fromTimestamp(rs.getTimestamp("registration_date")),
+						rs.getString("status"));
+			}
 
-        } catch (SQLException e) {
-            throw new DataAccessException("Unable to fetch registration with id: " + registrationId);
-        }
-    }
-
+		} catch (SQLException e) {
+			throw new DataAccessException("Unable to fetch registration with id: " + registrationId);
+		}
+	}
 
 	@Override
 	public void updateStatus(int registrationId, String string) throws DataAccessException {
@@ -160,51 +151,48 @@ public class RegistrationDaoImpl implements RegistrationDao {
 				+ "set status = ? "
 				+ "where registration_id = ?";
 		try (Connection con = DBConnectionUtil.getConnection();
-	             PreparedStatement ps = con.prepareStatement(sql)) {
+				PreparedStatement ps = con.prepareStatement(sql)) {
 
-	            ps.setString(1, string);
-	            ps.setInt(2, registrationId);
-	            ps.executeUpdate();
-	        } catch (Exception e) {
-		        throw new DataAccessException("Unable to update registration status");
-		    }
-		
+			ps.setString(1, string);
+			ps.setInt(2, registrationId);
+			ps.executeUpdate();
+		} catch (Exception e) {
+			throw new DataAccessException("Unable to update registration status");
+		}
+
 	}
 
 	@Override
 	public List<RegistrationTicket> getRegistrationTickets(int registrationId)
-	        throws DataAccessException {
+			throws DataAccessException {
 
-	    // Used during cancellation or refund processing
+		// Used during cancellation or refund processing
 
-	    String sql = "select ticket_id, quantity " +
-	                 "from registration_tickets " +
-	                 "where registration_id = ?";
+		String sql = "select ticket_id, quantity " +
+				"from registration_tickets " +
+				"where registration_id = ?";
 
-	    List<RegistrationTicket> tickets = new ArrayList<>();
+		List<RegistrationTicket> tickets = new ArrayList<>();
 
-	    try (Connection con = DBConnectionUtil.getConnection();
-	         PreparedStatement ps = con.prepareStatement(sql)) {
+		try (Connection con = DBConnectionUtil.getConnection();
+				PreparedStatement ps = con.prepareStatement(sql)) {
 
-	        ps.setInt(1, registrationId);
+			ps.setInt(1, registrationId);
 
-	        try (ResultSet rs = ps.executeQuery()) {
-	            while (rs.next()) {
-	                RegistrationTicket rt = new RegistrationTicket();
-	                rt.setTicketId(rs.getInt("ticket_id"));
-	                rt.setQuantity(rs.getInt("quantity"));
-	                tickets.add(rt);
-	            }
-	        }
-	        return tickets;
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					RegistrationTicket rt = new RegistrationTicket();
+					rt.setTicketId(rs.getInt("ticket_id"));
+					rt.setQuantity(rs.getInt("quantity"));
+					tickets.add(rt);
+				}
+			}
+			return tickets;
 
-	    } catch (SQLException e) {
-	        throw new DataAccessException("Error fetching registration tickets");
-	    }
-	    
+		} catch (SQLException e) {
+			throw new DataAccessException("Error fetching registration tickets");
+		}
+
 	}
 
-
-
-   
 }

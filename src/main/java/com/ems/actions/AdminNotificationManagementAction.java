@@ -21,7 +21,7 @@ public class AdminNotificationManagementAction {
 
     public void sendSystemWideNotification(NotificationType type) {
 		String message = InputValidationUtil.readNonEmptyString(ScannerUtil.getScanner(), "Enter message to send: ");
-        adminService.sendSystemWideNotification(message, type.toString());
+        adminService.sendSystemWideNotification(message, type);
     }
 
     private void sendNotificationByRole(String message, NotificationType type, UserRole role) {
