@@ -97,6 +97,3 @@ src/main/java/com/ems/
 3.  **Build & Run**: Run the `App.java` file from your IDE or use Maven to build the project.
 
 ---
-
-## 📈 Future Readiness
-The architecture is designed for **Cloud-Scale adaptation**. By replacing the Action layer with a Spring Boot controller or a GraphQL API, this system can instantly migrate from a CLI application to a full-scale Web or Mobile backend without modifying a single line of business logic in the Service or DAO layers.
