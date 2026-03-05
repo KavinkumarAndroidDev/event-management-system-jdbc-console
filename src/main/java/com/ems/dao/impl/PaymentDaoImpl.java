@@ -42,7 +42,7 @@ public class PaymentDaoImpl implements PaymentDao {
 			con = DBConnectionUtil.getConnection();
 			con.setAutoCommit(false); // Start Transaction
 
-			// Step 1 & 2: Lock and validate ticket availability
+			// Lock and validate ticket availability
 			String lockTicketSql = "SELECT available_quantity FROM tickets WHERE ticket_id = ? FOR UPDATE";
 			int availableQuantity = 0;
 			try (PreparedStatement ps = con.prepareStatement(lockTicketSql)) {
@@ -64,7 +64,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				return result;
 			}
 
-			// Step 3: Validate offer code if provided
+			// Validate offer code if provided
 			Integer offerId = null;
 			int discount = 0;
 			if (offerCode != null && !offerCode.trim().isEmpty()) {
@@ -102,7 +102,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				}
 			}
 
-			// Step 4: Create registration record
+			// Create registration record
 			String regSql = "INSERT INTO registrations (user_id, event_id, registration_date, status) VALUES (?, ?, CURRENT_TIMESTAMP, ?)";
 			int registrationId = 0;
 			try (PreparedStatement ps = con.prepareStatement(regSql, Statement.RETURN_GENERATED_KEYS)) {
@@ -117,7 +117,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				}
 			}
 
-			// Step 5: Link tickets to registration
+			// Link tickets to registration
 			String regTicketSql = "INSERT INTO registration_tickets (registration_id, ticket_id, quantity) VALUES (?, ?, ?)";
 			try (PreparedStatement ps = con.prepareStatement(regTicketSql)) {
 				ps.setInt(1, registrationId);
@@ -126,7 +126,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				ps.executeUpdate();
 			}
 
-			// Step 6 & 7: Calculate amount and record payment
+			// Calculate amount and record payment
 			double baseAmount = price * quantity;
 			double discountAmount = (baseAmount * discount) / 100.0;
 			double finalAmount = baseAmount - discountAmount;
@@ -147,7 +147,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				ps.executeUpdate();
 			}
 
-			// Step 8: Deduct ticket quantity
+			// Deduct ticket quantity
 			String updateTicketSql = "UPDATE tickets SET available_quantity = available_quantity - ? WHERE ticket_id = ?";
 			try (PreparedStatement ps = con.prepareStatement(updateTicketSql)) {
 				ps.setInt(1, quantity);
@@ -155,7 +155,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				ps.executeUpdate();
 			}
 
-			// Step 9: Record offer usage
+			// Record offer usage
 			if (offerId != null) {
 				String recordUsageSql = "INSERT INTO offer_usages (offer_id, user_id, registration_id, used_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
 				try (PreparedStatement ps = con.prepareStatement(recordUsageSql)) {
@@ -166,7 +166,7 @@ public class PaymentDaoImpl implements PaymentDao {
 				}
 			}
 
-			con.commit(); // Step 10: Commit
+			con.commit(); // Commit
 			result.setSuccess(true);
 			result.setMessage("Registration successful");
 			result.setRegistrationId(registrationId);
